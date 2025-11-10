@@ -2,7 +2,7 @@
  * Authentication Context
  *
  * Manages user authentication state across the app
- * Supports Google, Apple, and Anonymous sign-in
+ * Supports Auth0 (Google, Apple, Email/Password) and Anonymous sign-in
  */
 import React, {
   createContext,
@@ -15,11 +15,9 @@ import React, {
 } from "react"
 import { storage } from "@/utils/storage"
 import {
-  signInWithGoogle,
-  signInWithApple,
+  signInWithAuth0,
   signInAnonymously,
   signOut as authSignOut,
-  configureGoogleSignIn,
   type JustDeenUser,
 } from "@/services/auth/authService"
 import { d1Api } from "@/services/cloudflare/d1Api"
@@ -31,8 +29,7 @@ export type AuthContextType = {
   user: JustDeenUser | null
 
   // Sign-in methods
-  signInWithGoogle: () => Promise<{ success: boolean; error?: string }>
-  signInWithApple: () => Promise<{ success: boolean; error?: string }>
+  signInWithAuth0: () => Promise<{ success: boolean; error?: string }>
   signInAnonymously: () => Promise<{ success: boolean; error?: string }>
 
   // Sign-out
@@ -60,15 +57,11 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
 
   /**
    * Initialize authentication on mount
-   * - Configure Google Sign-In
    * - Load saved user from storage
    */
   useEffect(() => {
     const initialize = async () => {
       try {
-        // Configure Google Sign-In
-        configureGoogleSignIn()
-
         // Load saved user from storage
         const savedUserStr = storage.getString(STORAGE_KEYS.USER)
         if (savedUserStr) {
@@ -115,50 +108,24 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
   }, [])
 
   /**
-   * Sign in with Google
+   * Sign in with Auth0
    */
-  const handleSignInWithGoogle = useCallback(async () => {
+  const handleSignInWithAuth0 = useCallback(async () => {
     try {
       setIsLoading(true)
       setError(null)
 
-      const result = await signInWithGoogle()
+      const result = await signInWithAuth0()
 
       if (result.success && result.user) {
         saveUser(result.user)
         return { success: true }
       }
 
-      setError(result.error || "Google sign-in failed")
+      setError(result.error || "Sign-in failed")
       return { success: false, error: result.error }
     } catch (err: any) {
-      const errorMessage = err.message || "Google sign-in failed"
-      setError(errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      setIsLoading(false)
-    }
-  }, [saveUser])
-
-  /**
-   * Sign in with Apple
-   */
-  const handleSignInWithApple = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-
-      const result = await signInWithApple()
-
-      if (result.success && result.user) {
-        saveUser(result.user)
-        return { success: true }
-      }
-
-      setError(result.error || "Apple sign-in failed")
-      return { success: false, error: result.error }
-    } catch (err: any) {
-      const errorMessage = err.message || "Apple sign-in failed"
+      const errorMessage = err.message || "Sign-in failed"
       setError(errorMessage)
       return { success: false, error: errorMessage }
     } finally {
@@ -226,8 +193,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
     user,
 
     // Sign-in methods
-    signInWithGoogle: handleSignInWithGoogle,
-    signInWithApple: handleSignInWithApple,
+    signInWithAuth0: handleSignInWithAuth0,
     signInAnonymously: handleSignInAnonymously,
 
     // Sign-out

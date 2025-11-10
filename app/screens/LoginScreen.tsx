@@ -1,11 +1,11 @@
 /**
  * Login Screen
  *
- * Provides Google, Apple, and Anonymous sign-in options
+ * Provides Auth0 (Google, Apple, Email/Password) and Anonymous sign-in options
  * Follows iOS HIG and WWDC design principles
  */
 import { FC } from "react"
-import { View, ViewStyle, TextStyle, ActivityIndicator, Platform, Alert } from "react-native"
+import { View, ViewStyle, TextStyle, ActivityIndicator, Alert } from "react-native"
 import { Button } from "@/components/Button"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
@@ -18,14 +18,7 @@ import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
 
 export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
-  const {
-    signInWithGoogle,
-    signInWithApple,
-    signInAnonymously,
-    isLoading,
-    error,
-    clearError,
-  } = useAuth()
+  const { signInWithAuth0, signInAnonymously, isLoading, error, clearError } = useAuth()
 
   const {
     themed,
@@ -35,37 +28,17 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
 
   /**
-   * Handle Google Sign-In
+   * Handle Auth0 Sign-In
    */
-  const handleGoogleSignIn = async () => {
+  const handleAuth0SignIn = async () => {
     clearError()
-    const result = await signInWithGoogle()
+    const result = await signInWithAuth0()
 
     if (result.success) {
       // Navigation is handled automatically by AuthContext
       navigation.navigate("MainTabs")
     } else {
-      Alert.alert("Sign-In Failed", result.error || "Could not sign in with Google")
-    }
-  }
-
-  /**
-   * Handle Apple Sign-In (iOS only)
-   */
-  const handleAppleSignIn = async () => {
-    if (Platform.OS !== "ios") {
-      Alert.alert("Not Available", "Apple Sign-In is only available on iOS devices")
-      return
-    }
-
-    clearError()
-    const result = await signInWithApple()
-
-    if (result.success) {
-      // Navigation is handled automatically by AuthContext
-      navigation.navigate("MainTabs")
-    } else {
-      Alert.alert("Sign-In Failed", result.error || "Could not sign in with Apple")
+      Alert.alert("Sign-In Failed", result.error || "Could not sign in")
     }
   }
 
@@ -104,27 +77,14 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
           </View>
         )}
 
-        {/* Apple Sign-In (iOS only) */}
-        {Platform.OS === "ios" && (
-          <Button
-            testID="apple-sign-in-button"
-            text="Continue with Apple"
-            style={themed($appleButton)}
-            textStyle={themed($appleButtonText)}
-            preset="default"
-            onPress={handleAppleSignIn}
-            disabled={isLoading}
-          />
-        )}
-
-        {/* Google Sign-In */}
+        {/* Auth0 Sign-In (Google, Apple, Email/Password) */}
         <Button
-          testID="google-sign-in-button"
-          text="Continue with Google"
-          style={themed($googleButton)}
-          textStyle={themed($googleButtonText)}
+          testID="auth0-sign-in-button"
+          text="Sign In"
+          style={themed($auth0Button)}
+          textStyle={themed($auth0ButtonText)}
           preset="default"
-          onPress={handleGoogleSignIn}
+          onPress={handleAuth0SignIn}
           disabled={isLoading}
         />
 
@@ -203,33 +163,17 @@ const $errorText: ThemedStyle<TextStyle> = ({ colors }) => ({
   textAlign: "center",
 })
 
-// Apple Sign-In Button (Black background, white text)
-const $appleButton: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  backgroundColor: colors.palette.black,
+// Auth0 Sign-In Button (Primary action - purple/pray color)
+const $auth0Button: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  backgroundColor: colors.pray, // Purple - primary brand color
   borderRadius: 12,
   paddingVertical: spacing.md,
   marginBottom: spacing.sm,
   borderWidth: 0,
 })
 
-const $appleButtonText: ThemedStyle<TextStyle> = ({ colors }) => ({
+const $auth0ButtonText: ThemedStyle<TextStyle> = ({ colors }) => ({
   color: colors.palette.white,
-  fontSize: 17,
-  fontWeight: "600",
-})
-
-// Google Sign-In Button (White background, dark text, border)
-const $googleButton: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  backgroundColor: colors.palette.white,
-  borderRadius: 12,
-  paddingVertical: spacing.md,
-  marginBottom: spacing.sm,
-  borderWidth: 1,
-  borderColor: colors.separator,
-})
-
-const $googleButtonText: ThemedStyle<TextStyle> = ({ colors }) => ({
-  color: colors.text,
   fontSize: 17,
   fontWeight: "600",
 })

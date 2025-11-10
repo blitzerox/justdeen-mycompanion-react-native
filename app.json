@@ -1,7 +1,7 @@
 {
-  "name": "HelloWorld",
-  "slug": "HelloWorld",
-  "scheme": "helloworld",
+  "name": "JustDeen MyCompanion",
+  "slug": "JustDeen",
+  "scheme": "justdeen",
   "version": "1.0.0",
   "orientation": "portrait",
   "userInterfaceStyle": "automatic",
@@ -16,7 +16,7 @@
   ],
   "android": {
     "icon": "./assets/images/app-icon-android-legacy.png",
-    "package": "com.helloworld",
+    "package": "com.justdeenmycompanion",
     "adaptiveIcon": {
       "foregroundImage": "./assets/images/app-icon-android-adaptive-foreground.png",
       "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
@@ -27,7 +27,14 @@
   "ios": {
     "icon": "./assets/images/app-icon-ios.png",
     "supportsTablet": true,
-    "bundleIdentifier": "com.husainshah101.justdeen"
+    "bundleIdentifier": "com.husainshah.justdeen",
+    "infoPlist": {
+      "CFBundleURLTypes": [
+        {
+          "CFBundleURLSchemes": ["com.husainshah.justdeen.auth0"]
+        }
+      ]
+    }
   },
   "web": {
     "favicon": "./assets/images/app-icon-web-favicon.png",

@@ -110,7 +110,7 @@ export class CloudflareD1Api {
 
   async signIn(
     idToken: string,
-    provider: "google" | "apple",
+    provider: "google" | "apple" | "auth0",
   ): Promise<{ userId: string; token: string }> {
     const response = await this.api.post<{ userId: string; token: string }>("/auth/signin", {
       idToken,
