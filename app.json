@@ -27,7 +27,7 @@
   "ios": {
     "icon": "./assets/images/app-icon-ios.png",
     "supportsTablet": true,
-    "bundleIdentifier": "com.helloworld"
+    "bundleIdentifier": "com.husainshah101.justdeen"
   },
   "web": {
     "favicon": "./assets/images/app-icon-web-favicon.png",
