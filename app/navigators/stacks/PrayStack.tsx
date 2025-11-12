@@ -37,6 +37,9 @@ export const PrayStackNavigator = () => {
           backgroundColor: colors.background,
         },
         headerShadowVisible: false,
+        headerLargeTitleShadowVisible: false,
+        headerBlurEffect: undefined,
+        headerTransparent: false,
         contentStyle: {
           backgroundColor: colors.background,
         },
@@ -46,8 +49,7 @@ export const PrayStackNavigator = () => {
         name="PrayerTimesHome"
         component={PrayerTimesHomeScreen}
         options={{
-          title: "Prayer Times",
-          headerLargeTitle: true,
+          headerShown: false,
         }}
       />
       <Stack.Screen

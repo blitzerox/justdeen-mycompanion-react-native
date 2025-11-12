@@ -1,5 +1,5 @@
 # Migration Progress Tracker
-Last Updated: 2025-11-10
+Last Updated: 2025-11-11
 
 ## ✅ Completed
 
@@ -136,6 +136,28 @@ Last Updated: 2025-11-10
 ## 🚧 In Progress
 - [ ] Week 18-19: Additional Islamic Content - Next phase
 
+### Week 5: Settings Screen (Nov 11, 2025)
+- [x] Created Settings home screen with grouped sections - 2025-11-11
+- [x] Added user profile section (avatar, name, email) - 2025-11-11
+- [x] Implemented Appearance settings (Theme toggle, Text size) - 2025-11-11
+- [x] Implemented Prayer settings (Calculation method, Notifications, Location) - 2025-11-11
+- [x] Implemented Quran settings (Translation, Audio reciter, Text size) - 2025-11-11
+- [x] Implemented General settings (Language, Storage, About, Help) - 2025-11-11
+- [x] Added Account section (Sign out, Delete account) - 2025-11-11
+- [x] Integrated with Auth0 context for user data - 2025-11-11
+- [x] Added theme switching functionality - 2025-11-11
+- [x] Built and deployed to iPhone for testing - 2025-11-11
+
+### Week 21: AI Chatbot (Nov 11, 2025)
+- [x] Created Cloudflare RAG API service (cloudflareRagApi.ts) - 2025-11-11
+- [x] Integrated with existing Cloudflare Workers AI infrastructure - 2025-11-11
+- [x] Implemented streaming responses with Server-Sent Events (SSE) - 2025-11-11
+- [x] Added JWT authentication with Auth0 tokens - 2025-11-11
+- [x] Implemented chat UI with message bubbles and streaming indicators - 2025-11-11
+- [x] Added citations display for Quran/Hadith sources - 2025-11-11
+- [x] Integrated with existing Auth0 authentication - 2025-11-11
+- [x] Built and deployed to iPhone for testing - 2025-11-11
+
 ## 📋 Pending
 
 ### Phase 2: Core Setup
@@ -247,6 +269,29 @@ None currently
 - **Sample Data**: 6 duas including morning/evening adhkar
 - **Display**: Arabic text (Uthman font), transliteration, English translation
 - **UI**: Expandable/collapsible cards for better readability
+
+### Settings Screen
+- **Layout**: Grouped sections with iOS-style design (rounded cards)
+- **Profile Section**: Avatar, display name, email (Auth0 integration)
+- **Sections**: Appearance, Prayer, Quran, General, Account
+- **Theme Switching**: Light/Dark/Auto with immediate effect
+- **Row Types**: Navigation (chevron), Toggle (Switch), Picker (dropdown), Action (buttons)
+- **Conditional Display**: Account section only shown when authenticated
+- **Interactive Elements**: All settings rows interactive with proper feedback
+- **Coming Soon**: Placeholders for future features (Text size, Calculation method, etc.)
+- **Destructive Actions**: Red text for Delete Account
+- **Version Info**: Footer with app version and build info
+
+### AI Chatbot
+- **Backend**: Cloudflare Workers AI with Llama 3.3 70B
+- **RAG System**: Vectorize for semantic search across Quran/Hadith knowledge base
+- **Authentication**: JWT tokens from Auth0 Universal Login
+- **Streaming**: Server-Sent Events (SSE) for real-time token streaming
+- **Citations**: Automatic source attribution with Quran/Hadith references
+- **Rate Limiting**: IP-based rate limits and daily message quotas
+- **Security**: Prompt injection detection and content filtering
+- **Chat History**: D1 database for conversation persistence
+- **API Endpoint**: https://justdeen-rag-chatbot.husainshah101-682.workers.dev/api/chat
 - **Features**: Search, audio placeholder, save/share actions
 
 ## 📊 Progress Statistics

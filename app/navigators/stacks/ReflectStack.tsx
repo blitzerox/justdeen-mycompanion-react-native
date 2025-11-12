@@ -1,8 +1,8 @@
 /**
- * Reflect Tab Stack Navigator
+ * Home Tab Stack Navigator (Reflect/Spiritual Journey)
  *
  * Screens:
- * - ReflectHome: Main screen with Duas, Hadith, Names (P0)
+ * - ReflectHome: Home dashboard with daily stats and spiritual progress (P0)
  * - DuasCategories: Categories of duas (P0)
  * - DuasListScreen: List of duas in category (P0)
  * - DuaDetails: Full dua with translation (P0)
@@ -44,11 +44,14 @@ export const ReflectStackNavigator = () => {
     <Stack.Navigator
       screenOptions={{
         headerShown: true,
-        headerTintColor: colors.reflect,
+        headerTintColor: colors.home,
         headerStyle: {
           backgroundColor: colors.background,
         },
         headerShadowVisible: false,
+        headerLargeTitleShadowVisible: false,
+        headerBlurEffect: undefined,
+        headerTransparent: false,
         contentStyle: {
           backgroundColor: colors.background,
         },
@@ -58,8 +61,7 @@ export const ReflectStackNavigator = () => {
         name="ReflectHome"
         component={ReflectHomeScreen}
         options={{
-          title: "Reflect",
-          headerLargeTitle: true,
+          headerShown: false,
         }}
       />
       <Stack.Screen

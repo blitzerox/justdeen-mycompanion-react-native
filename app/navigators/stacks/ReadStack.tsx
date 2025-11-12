@@ -19,6 +19,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { useAppTheme } from "@/theme/context"
 
 // Screens
+import { ReadHomeScreen } from "@/screens/read/ReadHomeScreen"
 import { QuranHomeScreen } from "@/screens/read/QuranHomeScreen"
 import { QuranReaderScreen } from "@/screens/read/QuranReaderScreen"
 import { SurahDetailsScreen } from "@/screens/read/SurahDetailsScreen"
@@ -49,16 +50,26 @@ export const ReadStackNavigator = () => {
           backgroundColor: colors.background,
         },
         headerShadowVisible: false,
+        headerLargeTitleShadowVisible: false,
+        headerBlurEffect: undefined,
+        headerTransparent: false,
         contentStyle: {
           backgroundColor: colors.background,
         },
       }}
     >
       <Stack.Screen
+        name="ReadHome"
+        component={ReadHomeScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
         name="QuranHome"
         component={QuranHomeScreen}
         options={{
-          title: "Quran",
+          title: "Al-Qur'an",
           headerLargeTitle: true,
         }}
       />

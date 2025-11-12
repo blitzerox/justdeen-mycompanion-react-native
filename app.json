@@ -1,5 +1,5 @@
 {
-  "name": "JustDeen MyCompanion",
+  "name": "JustDeen",
   "slug": "JustDeen",
   "scheme": "justdeen",
   "version": "1.0.0",
@@ -22,7 +22,11 @@
       "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
     },
     "allowBackup": false,
-    "edgeToEdgeEnabled": true
+    "edgeToEdgeEnabled": true,
+    "permissions": [
+      "ACCESS_FINE_LOCATION",
+      "ACCESS_COARSE_LOCATION"
+    ]
   },
   "ios": {
     "icon": "./assets/images/app-icon-ios.png",
@@ -33,7 +37,9 @@
         {
           "CFBundleURLSchemes": ["com.husainshah.justdeen.auth0"]
         }
-      ]
+      ],
+      "NSLocationWhenInUseUsageDescription": "We need your location to show accurate prayer times for your area.",
+      "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location to show accurate prayer times and send prayer time notifications."
     }
   },
   "web": {

@@ -38,6 +38,7 @@ export type PrayStackParamList = {
  * Screens: Quran reading, translations, bookmarks, reading groups
  */
 export type ReadStackParamList = {
+  ReadHome: undefined
   QuranHome: undefined
   QuranReader: {
     surahNumber: number
@@ -90,20 +91,41 @@ export type ReflectStackParamList = {
 }
 
 /**
- * AI Tab Stack (Indigo)
- * Screens: AI chatbot, chat history
+ * AI Tab Stack (Red)
+ * Screens: AI landing page, chatbot, chat history
  */
 export type AIStackParamList = {
-  AIChatHome: undefined
+  AIHome: undefined
+  AIChatHome: {
+    initialPrompt?: string
+    chatId?: string
+  } | undefined
   ChatHistory: undefined
   AISettings: undefined
 }
 
 /**
- * Settings Tab Stack (Green)
+ * Settings Tab Stack (Legacy - kept for backward compatibility)
  * Screens: App settings, profile, theme, language, privacy, about
  */
 export type SettingsStackParamList = {
+  SettingsHome: undefined
+  ProfileSettings: undefined
+  ThemeSettings: undefined
+  LanguageSettings: undefined
+  AudioSettings: undefined
+  StorageSettings: undefined
+  PrivacySettings: undefined
+  About: undefined
+  Subscription: undefined
+}
+
+/**
+ * More Tab Stack (Orange)
+ * Screens: Feature list, settings, profile, theme, language, privacy, about
+ */
+export type MoreStackParamList = {
+  MoreHome: undefined
   SettingsHome: undefined
   ProfileSettings: undefined
   ThemeSettings: undefined
@@ -121,14 +143,15 @@ export type SettingsStackParamList = {
 
 /**
  * Main Tab Navigator (Bottom tabs)
- * 5 tabs: Pray, Read, Reflect, AI, Settings
+ * 5 tabs: Home (Green), Pray (Purple), Read (Blue), AI (Cyan), More (Orange)
  */
 export type TabParamList = {
+  ReflectTab: NavigatorScreenParams<ReflectStackParamList>  // Home tab
   PrayTab: NavigatorScreenParams<PrayStackParamList>
   ReadTab: NavigatorScreenParams<ReadStackParamList>
-  ReflectTab: NavigatorScreenParams<ReflectStackParamList>
   AITab: NavigatorScreenParams<AIStackParamList>
-  SettingsTab: NavigatorScreenParams<SettingsStackParamList>
+  MoreTab: NavigatorScreenParams<MoreStackParamList>
+  SettingsTab?: NavigatorScreenParams<SettingsStackParamList>  // Legacy, kept for compatibility
 }
 
 // =============================================================================
@@ -187,6 +210,11 @@ export type AIStackScreenProps<T extends keyof AIStackParamList> = CompositeScre
 export type SettingsStackScreenProps<T extends keyof SettingsStackParamList> = CompositeScreenProps<
   NativeStackScreenProps<SettingsStackParamList, T>,
   TabScreenProps<"SettingsTab">
+>
+
+export type MoreStackScreenProps<T extends keyof MoreStackParamList> = CompositeScreenProps<
+  NativeStackScreenProps<MoreStackParamList, T>,
+  TabScreenProps<"MoreTab">
 >
 
 export interface NavigationProps

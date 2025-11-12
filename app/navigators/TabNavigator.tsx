@@ -2,23 +2,24 @@
  * JustDeen Tab Navigator
  *
  * WWDC 5-Tab Design:
+ * - 🏠 Home (Green): Daily stats, spiritual journey, progress tracking
  * - 🕌 Pray (Purple): Prayer times, Qibla, Adhan settings
  * - 📖 Read (Blue): Quran reading, translations, bookmarks
- * - 💭 Reflect (Orange): Duas, Hadith, Islamic names, Tasbih
- * - 🤖 AI (Indigo): AI chatbot, Islamic Q&A
- * - ⚙️ Settings (Green): App settings, profile, preferences
+ * - 🤖 AI (Cyan): AI chatbot, Islamic Q&A
+ * - ⋯ More (Orange): Additional features, settings, about
  */
 import React from "react"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { useAppTheme } from "@/theme/context"
 import { Icon } from "@/components"
+import { FontAwesome6 } from "@expo/vector-icons"
 
 // Tab Stack Navigators
 import { PrayStackNavigator } from "./stacks/PrayStack"
 import { ReadStackNavigator } from "./stacks/ReadStack"
 import { ReflectStackNavigator } from "./stacks/ReflectStack"
 import { AIStackNavigator } from "./stacks/AIStack"
-import { SettingsStackNavigator } from "./stacks/SettingsStack"
+import { MoreStackNavigator } from "./stacks/MoreStack"
 
 import type { TabParamList } from "./navigationTypes"
 
@@ -40,8 +41,8 @@ export const TabNavigator = () => {
           borderTopColor: colors.border,
           borderTopWidth: 1,
           paddingTop: 8,
-          paddingBottom: 8,
-          height: 60,
+          paddingBottom: 24,
+          height: 84,
         },
         tabBarLabelStyle: {
           fontSize: 11,
@@ -50,13 +51,24 @@ export const TabNavigator = () => {
       }}
     >
       <Tab.Screen
+        name="ReflectTab"
+        component={ReflectStackNavigator}
+        options={{
+          tabBarLabel: "Home",
+          tabBarActiveTintColor: colors.home,
+          tabBarIcon: ({ focused, color, size }) => (
+            <FontAwesome6 name="house" color={color} size={size} solid={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
         name="PrayTab"
         component={PrayStackNavigator}
         options={{
           tabBarLabel: "Pray",
           tabBarActiveTintColor: colors.pray,
           tabBarIcon: ({ focused, color, size }) => (
-            <Icon icon="community" color={color} size={size} />
+            <FontAwesome6 name="person-praying" color={color} size={size} solid={focused} />
           ),
         }}
       />
@@ -67,18 +79,7 @@ export const TabNavigator = () => {
           tabBarLabel: "Read",
           tabBarActiveTintColor: colors.read,
           tabBarIcon: ({ focused, color, size }) => (
-            <Icon icon="components" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="ReflectTab"
-        component={ReflectStackNavigator}
-        options={{
-          tabBarLabel: "Reflect",
-          tabBarActiveTintColor: colors.reflect,
-          tabBarIcon: ({ focused, color, size }) => (
-            <Icon icon="heart" color={color} size={size} />
+            <FontAwesome6 name="book-quran" color={color} size={size} solid={focused} />
           ),
         }}
       />
@@ -89,18 +90,18 @@ export const TabNavigator = () => {
           tabBarLabel: "AI",
           tabBarActiveTintColor: colors.ai,
           tabBarIcon: ({ focused, color, size }) => (
-            <Icon icon="settings" color={color} size={size} />
+            <FontAwesome6 name="robot" color={color} size={size} solid={focused} />
           ),
         }}
       />
       <Tab.Screen
-        name="SettingsTab"
-        component={SettingsStackNavigator}
+        name="MoreTab"
+        component={MoreStackNavigator}
         options={{
-          tabBarLabel: "Settings",
-          tabBarActiveTintColor: colors.settings,
+          tabBarLabel: "More",
+          tabBarActiveTintColor: colors.more,
           tabBarIcon: ({ focused, color, size }) => (
-            <Icon icon="settings" color={color} size={size} />
+            <FontAwesome6 name="ellipsis" color={color} size={size} solid={focused} />
           ),
         }}
       />

@@ -1,0 +1,1011 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm.
+Could not find a shared URI scheme for the dev client between the local /ios and /android directories. App launches (QR code, interstitial, terminal keys) may not work as expected. You can configure a custom scheme using the --scheme option, or by running npx expo prebuild to regenerate the native directories with URI schemes.
+Starting project at /Users/husainshah/Documents/Projects/justDeen-Master/justdeen-myCompanionApp
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+iOS ./index.tsx ▓▓░░░░░░░░░░░░░░ 13.2% ( 68/271)
+iOS ./index.tsx ▓▓▓▓▓▓▓▓▓▓░░░░░░ 67.3% (1185/1505)
+iOS Bundled 6555ms index.tsx (1995 modules)
+ LOG  ReflectHome
+iOS ./index.tsx ░░░░░░░░░░░░░░░░  0.0% (0/1)
+iOS Bundled 44ms index.tsx (1 module)
+ LOG  ReflectHome
+ ERROR  [ReferenceError: Property '$circleProgress' doesn't exist] 
+
+Code: ReflectHomeScreen.tsx
+[0m [90m 265 |[39m               {[90m/* Ring Chart on Left */[39m}
+ [90m 266 |[39m               [33m<[39m[33mView[39m style[33m=[39m{themed($ringContainer)}[33m>[39m
+[31m[1m>[22m[39m[90m 267 |[39m                 [33m<[39m[33mView[39m style[33m=[39m{themed($circleProgress)}[33m>[39m
+ [90m     |[39m                                     [31m[1m^[22m[39m
+ [90m 268 |[39m                   {[90m/* Background Circle */[39m}
+ [90m 269 |[39m                   [33m<[39m[33mView[39m style[33m=[39m{themed($circleBackground(activityType[33m,[39m colors))} [33m/[39m[33m>[39m
+ [90m 270 |[39m                   {[90m/* Progress Circle */[39m}[0m
+Call Stack
+  ReflectHomeScreen (app/screens/reflect/ReflectHomeScreen.tsx:267:37) 
+
+Code: ReflectStack.tsx
+[0m [90m 42 |[39m
+ [90m 43 |[39m   [36mreturn[39m (
+[31m[1m>[22m[39m[90m 44 |[39m     [33m<[39m[33mStack[39m[33m.[39m[33mNavigator[39m
+ [90m    |[39m     [31m[1m^[22m[39m
+ [90m 45 |[39m       screenOptions[33m=[39m{{
+ [90m 46 |[39m         headerShown[33m:[39m [36mtrue[39m[33m,[39m
+ [90m 47 |[39m         headerTintColor[33m:[39m colors[33m.[39mhome[33m,[39m[0m
+Call Stack
+  ReflectStackNavigator (app/navigators/stacks/ReflectStack.tsx:44:5)
+  TabNavigator (app/navigators/TabNavigator.tsx:34:5)
+  AppStack (app/navigators/AppNavigator.tsx:39:5)
+  AppNavigator (app/navigators/AppNavigator.tsx:73:9)
+  App (app/app.tsx:108:17)
+ LOG  PrayerTimesHome
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: SubscriptionScreen.tsx
+[0m [90m 24 |[39m         [33m<[39m[33mText[39m style[33m=[39m{[styles[33m.[39mplaceholder[33m,[39m { color[33m:[39m colors[33m.[39mtextDim }]}[33m>[39m
+ [90m 25 |[39m           🚧 [33mThis[39m screen will be implemented [36min[39m future phases[33m.[39m
+[31m[1m>[22m[39m[90m 26 |[39m         [33m<[39m[33m/[39m[33mText[39m[33m>[39m
+ [90m    |[39m         [31m[1m^[22m[39m
+ [90m 27 |[39m       [33m<[39m[33m/[39m[33mView[39m[33m>[39m
+ [90m 28 |[39m     [33m<[39m[33m/[39m[33mScreen[39m[33m>[39m
+ [90m 29 |[39m   )[0m
+Call Stack
+  SubscriptionScreen (app/screens/settings/SubscriptionScreen.tsx:26:9)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: ErrorDetails.tsx
+[0m [90m 65 |[39m [36mconst[39m $topSection[33m:[39m [33mViewStyle[39m [33m=[39m {
+ [90m 66 |[39m   flex[33m:[39m [35m1[39m[33m,[39m
+[31m[1m>[22m[39m[90m 67 |[39m   alignItems[33m:[39m [32m"center"[39m[33m,[39m
+ [90m    |[39m               [31m[1m^[22m[39m
+ [90m 68 |[39m }
+ [90m 69 |[39m
+ [90m 70 |[39m [36mconst[39m $heading[33m:[39m [33mThemedStyle[39m[33m<[39m[33mTextStyle[39m[33m>[39m [33m=[39m ({ colors[33m,[39m spacing }) [33m=>[39m ({[0m
+Call Stack
+  <global> (app/screens/ErrorScreen/ErrorDetails.tsx:67:15)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: ErrorDetails.tsx
+[0m [90m 64 |[39m
+ [90m 65 |[39m [36mconst[39m $topSection[33m:[39m [33mViewStyle[39m [33m=[39m {
+[31m[1m>[22m[39m[90m 66 |[39m   flex[33m:[39m [35m1[39m[33m,[39m
+ [90m    |[39m          [31m[1m^[22m[39m
+ [90m 67 |[39m   alignItems[33m:[39m [32m"center"[39m[33m,[39m
+ [90m 68 |[39m }
+ [90m 69 |[39m[0m
+Call Stack
+  <global> (app/screens/ErrorScreen/ErrorDetails.tsx:66:10)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 77 |[39m       })
+ [90m 78 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 79 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m    |[39m                    [31m[1m^[22m[39m
+ [90m 80 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m [32m"Could not get your location. Please try again."[39m)
+ [90m 81 |[39m     } [36mfinally[39m {
+ [90m 82 |[39m       setLoadingLocation([36mfalse[39m)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:79:20)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: ErrorDetails.tsx
+[0m [90m 80 |[39m })
+ [90m 81 |[39m
+[31m[1m>[22m[39m[90m 82 |[39m [36mconst[39m $errorSectionContentContainer[33m:[39m [33mThemedStyle[39m[33m<[39m[33mViewStyle[39m[33m>[39m [33m=[39m ({ spacing }) [33m=>[39m ({
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 83 |[39m   padding[33m:[39m spacing[33m.[39mmd[33m,[39m
+ [90m 84 |[39m })
+ [90m 85 |[39m[0m
+Call Stack
+  <global> (app/screens/ErrorScreen/ErrorDetails.tsx:82:7)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 77 |[39m       })
+ [90m 78 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 79 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m    |[39m                    [31m[1m^[22m[39m
+ [90m 80 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m [32m"Could not get your location. Please try again."[39m)
+ [90m 81 |[39m     } [36mfinally[39m {
+ [90m 82 |[39m       setLoadingLocation([36mfalse[39m)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:79:20)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: ErrorDetails.tsx
+[0m [90m 64 |[39m
+ [90m 65 |[39m [36mconst[39m $topSection[33m:[39m [33mViewStyle[39m [33m=[39m {
+[31m[1m>[22m[39m[90m 66 |[39m   flex[33m:[39m [35m1[39m[33m,[39m
+ [90m    |[39m          [31m[1m^[22m[39m
+ [90m 67 |[39m   alignItems[33m:[39m [32m"center"[39m[33m,[39m
+ [90m 68 |[39m }
+ [90m 69 |[39m[0m
+Call Stack
+  <global> (app/screens/ErrorScreen/ErrorDetails.tsx:66:10)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 77 |[39m       })
+ [90m 78 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 79 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m    |[39m                    [31m[1m^[22m[39m
+ [90m 80 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m [32m"Could not get your location. Please try again."[39m)
+ [90m 81 |[39m     } [36mfinally[39m {
+ [90m 82 |[39m       setLoadingLocation([36mfalse[39m)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:79:20)
+ ERROR  [ReferenceError: Property '$monthYearHeader' doesn't exist] 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 205 |[39m       [33m>[39m
+ [90m 206 |[39m         {[90m/* Month and Year Header */[39m}
+[31m[1m>[22m[39m[90m 207 |[39m         [33m<[39m[33mView[39m style[33m=[39m{themed($monthYearHeader)}[33m>[39m
+ [90m     |[39m                             [31m[1m^[22m[39m
+ [90m 208 |[39m           [33m<[39m[33mView[39m[33m>[39m
+ [90m 209 |[39m             [33m<[39m[33mText[39m style[33m=[39m{themed($monthText(colors))}[33m>[39m
+ [90m 210 |[39m               {currentMonth[33m.[39msplit([32m' '[39m)[[35m0[39m]}[0m
+Call Stack
+  PrayerTimesHomeScreen (app/screens/pray/PrayerTimesHomeScreen.tsx:207:29) 
+
+Code: PrivacySettingsScreen.tsx
+[0m [90m 31 |[39m
+ [90m 32 |[39m [36mconst[39m styles [33m=[39m [33mStyleSheet[39m[33m.[39mcreate({
+[31m[1m>[22m[39m[90m 33 |[39m   container[33m:[39m { flex[33m:[39m [35m1[39m }[33m,[39m
+ [90m    |[39m                      [31m[1m^[22m[39m
+ [90m 34 |[39m   content[33m:[39m { flex[33m:[39m [35m1[39m[33m,[39m padding[33m:[39m [35m20[39m }[33m,[39m
+ [90m 35 |[39m   title[33m:[39m { fontSize[33m:[39m [35m28[39m[33m,[39m fontWeight[33m:[39m [32m"700"[39m[33m,[39m marginBottom[33m:[39m [35m12[39m }[33m,[39m
+ [90m 36 |[39m   description[33m:[39m { fontSize[33m:[39m [35m15[39m[33m,[39m lineHeight[33m:[39m [35m22[39m[33m,[39m marginBottom[33m:[39m [35m16[39m }[33m,[39m[0m
+Call Stack
+  <global> (app/screens/settings/PrivacySettingsScreen.tsx:33:22)
+  TabNavigator (app/navigators/TabNavigator.tsx:34:5)
+  AppStack (app/navigators/AppNavigator.tsx:39:5)
+  AppNavigator (app/navigators/AppNavigator.tsx:73:9)
+  App (app/app.tsx:108:17)
+ LOG  ReflectHome
+ LOG  PrayerTimesHome
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: ErrorDetails.tsx
+[0m [90m 50 |[39m         style[33m=[39m{themed($resetButton)}
+ [90m 51 |[39m         onPress[33m=[39m{props[33m.[39monReset}
+[31m[1m>[22m[39m[90m 52 |[39m         tx[33m=[39m[32m"errorScreen:reset"[39m
+ [90m    |[39m                               [31m[1m^[22m[39m
+ [90m 53 |[39m       [33m/[39m[33m>[39m
+ [90m 54 |[39m     [33m<[39m[33m/[39m[33mScreen[39m[33m>[39m
+ [90m 55 |[39m   )[0m
+Call Stack
+  ErrorDetails (app/screens/ErrorScreen/ErrorDetails.tsx:52:31)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 77 |[39m       })
+ [90m 78 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 79 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m    |[39m                    [31m[1m^[22m[39m
+ [90m 80 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m [32m"Could not get your location. Please try again."[39m)
+ [90m 81 |[39m     } [36mfinally[39m {
+ [90m 82 |[39m       setLoadingLocation([36mfalse[39m)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:79:20)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: ErrorDetails.tsx
+[0m [90m 50 |[39m         style[33m=[39m{themed($resetButton)}
+ [90m 51 |[39m         onPress[33m=[39m{props[33m.[39monReset}
+[31m[1m>[22m[39m[90m 52 |[39m         tx[33m=[39m[32m"errorScreen:reset"[39m
+ [90m    |[39m                               [31m[1m^[22m[39m
+ [90m 53 |[39m       [33m/[39m[33m>[39m
+ [90m 54 |[39m     [33m<[39m[33m/[39m[33mScreen[39m[33m>[39m
+ [90m 55 |[39m   )[0m
+Call Stack
+  ErrorDetails (app/screens/ErrorScreen/ErrorDetails.tsx:52:31)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 78 |[39m       })
+ [90m 79 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 80 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m    |[39m                    [31m[1m^[22m[39m
+ [90m 81 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m [32m"Could not get your location. Please try again."[39m)
+ [90m 82 |[39m     } [36mfinally[39m {
+ [90m 83 |[39m       setLoadingLocation([36mfalse[39m)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:80:20)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: ErrorDetails.tsx
+[0m [90m 43 |[39m           style[33m=[39m{themed($errorBacktrace)}
+ [90m 44 |[39m           text[33m=[39m{[32m`${props.errorInfo?.componentStack ?? ""}`[39m[33m.[39mtrim()}
+[31m[1m>[22m[39m[90m 45 |[39m         [33m/[39m[33m>[39m
+ [90m    |[39m           [31m[1m^[22m[39m
+ [90m 46 |[39m       [33m<[39m[33m/[39m[33mScrollView[39m[33m>[39m
+ [90m 47 |[39m
+ [90m 48 |[39m       [33m<[39m[33mButton[39m[0m
+Call Stack
+  ErrorDetails (app/screens/ErrorScreen/ErrorDetails.tsx:45:11)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 80 |[39m       })
+ [90m 81 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 82 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m    |[39m                    [31m[1m^[22m[39m
+ [90m 83 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m [32m"Could not get your location. Please try again."[39m)
+ [90m 84 |[39m     } [36mfinally[39m {
+ [90m 85 |[39m       setLoadingLocation([36mfalse[39m)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:82:20)
+ ERROR  [ReferenceError: Property '$monthYearContainer' doesn't exist] 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 209 |[39m         {[90m/* Month and Year Header */[39m}
+ [90m 210 |[39m         [33m<[39m[33mView[39m style[33m=[39m{themed($monthYearHeader)}[33m>[39m
+[31m[1m>[22m[39m[90m 211 |[39m           [33m<[39m[33mView[39m style[33m=[39m{themed($monthYearContainer)}[33m>[39m
+ [90m     |[39m                               [31m[1m^[22m[39m
+ [90m 212 |[39m             [33m<[39m[33mTouchableOpacity[39m onPress[33m=[39m{() [33m=>[39m setShowMonthPicker([36mtrue[39m)} activeOpacity[33m=[39m{[35m0.7[39m}[33m>[39m
+ [90m 213 |[39m               [33m<[39m[33mText[39m style[33m=[39m{themed($monthText(colors))}[33m>[39m
+ [90m 214 |[39m                 {currentMonth[33m.[39msplit([32m' '[39m)[[35m0[39m]}[0m
+Call Stack
+  PrayerTimesHomeScreen (app/screens/pray/PrayerTimesHomeScreen.tsx:211:31) 
+
+Code: PrivacySettingsScreen.tsx
+[0m [90m 19 |[39m       [33m<[39m[33mView[39m style[33m=[39m{[styles[33m.[39mcontent[33m,[39m { backgroundColor[33m:[39m colors[33m.[39mbackground }]}[33m>[39m
+ [90m 20 |[39m         [33m<[39m[33mText[39m style[33m=[39m{[styles[33m.[39mtitle[33m,[39m { color[33m:[39m colors[33m.[39msettings }]}[33m>[39m[33mPrivacy[39m [33mSettings[39m[33m<[39m[33m/[39m[33mText[39m[33m>[39m
+[31m[1m>[22m[39m[90m 21 |[39m         [33m<[39m[33mText[39m style[33m=[39m{[styles[33m.[39mdescription[33m,[39m { color[33m:[39m colors[33m.[39mtextDim }]}[33m>[39m
+ [90m    |[39m                                                           [31m[1m^[22m[39m
+ [90m 22 |[39m           [33mWeek[39m [35m6[39m[33m-[39m[35m7[39m[33m:[39m [33mData[39m privacy[33m,[39m analytics opt[33m-[39mout
+ [90m 23 |[39m         [33m<[39m[33m/[39m[33mText[39m[33m>[39m
+ [90m 24 |[39m         [33m<[39m[33mText[39m style[33m=[39m{[styles[33m.[39mplaceholder[33m,[39m { color[33m:[39m colors[33m.[39mtextDim }]}[33m>[39m[0m
+Call Stack
+  PrivacySettingsScreen (app/screens/settings/PrivacySettingsScreen.tsx:21:59)
+  TabNavigator (app/navigators/TabNavigator.tsx:34:5)
+  AppStack (app/navigators/AppNavigator.tsx:39:5)
+  AppNavigator (app/navigators/AppNavigator.tsx:73:9)
+  App (app/app.tsx:108:17)
+ LOG  ReflectHome
+ ERROR  [ReferenceError: Property '$monthYearContainer' doesn't exist] 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 209 |[39m         {[90m/* Month and Year Header */[39m}
+ [90m 210 |[39m         [33m<[39m[33mView[39m style[33m=[39m{themed($monthYearHeader)}[33m>[39m
+[31m[1m>[22m[39m[90m 211 |[39m           [33m<[39m[33mView[39m style[33m=[39m{themed($monthYearContainer)}[33m>[39m
+ [90m     |[39m                               [31m[1m^[22m[39m
+ [90m 212 |[39m             [33m<[39m[33mTouchableOpacity[39m onPress[33m=[39m{() [33m=>[39m setShowMonthPicker([36mtrue[39m)} activeOpacity[33m=[39m{[35m0.7[39m}[33m>[39m
+ [90m 213 |[39m               [33m<[39m[33mText[39m style[33m=[39m{themed($monthText(colors))}[33m>[39m
+ [90m 214 |[39m                 {currentMonth[33m.[39msplit([32m' '[39m)[[35m0[39m]}[0m
+Call Stack
+  PrayerTimesHomeScreen (app/screens/pray/PrayerTimesHomeScreen.tsx:211:31) 
+
+Code: AudioSettingsScreen.tsx
+[0m [90m 24 |[39m         [33m<[39m[33mText[39m style[33m=[39m{[styles[33m.[39mplaceholder[33m,[39m { color[33m:[39m colors[33m.[39mtextDim }]}[33m>[39m
+ [90m 25 |[39m           🚧 [33mThis[39m screen will be implemented [36min[39m future phases[33m.[39m
+[31m[1m>[22m[39m[90m 26 |[39m         [33m<[39m[33m/[39m[33mText[39m[33m>[39m
+ [90m    |[39m         [31m[1m^[22m[39m
+ [90m 27 |[39m       [33m<[39m[33m/[39m[33mView[39m[33m>[39m
+ [90m 28 |[39m     [33m<[39m[33m/[39m[33mScreen[39m[33m>[39m
+ [90m 29 |[39m   )[0m
+Call Stack
+  AudioSettingsScreen (app/screens/settings/AudioSettingsScreen.tsx:26:9)
+  TabNavigator (app/navigators/TabNavigator.tsx:34:5)
+  AppStack (app/navigators/AppNavigator.tsx:39:5)
+  AppNavigator (app/navigators/AppNavigator.tsx:73:9)
+  App (app/app.tsx:108:17)
+ ERROR  [ReferenceError: Property '$pickerModalOverlay' doesn't exist] 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 350 |[39m         onRequestClose[33m=[39m{() [33m=>[39m setShowMonthPicker([36mfalse[39m)}
+ [90m 351 |[39m       [33m>[39m
+[31m[1m>[22m[39m[90m 352 |[39m         [33m<[39m[33mView[39m style[33m=[39m{themed($pickerModalOverlay)}[33m>[39m
+ [90m     |[39m                             [31m[1m^[22m[39m
+ [90m 353 |[39m           [33m<[39m[33mView[39m style[33m=[39m{themed($pickerModalContent(colors))}[33m>[39m
+ [90m 354 |[39m             [33m<[39m[33mView[39m style[33m=[39m{themed($pickerHeader)}[33m>[39m
+ [90m 355 |[39m               [33m<[39m[33mText[39m style[33m=[39m{themed($pickerTitle(colors))}[33m>[39m[33mSelect[39m [33mMonth[39m[33m<[39m[33m/[39m[33mText[39m[33m>[39m[0m
+Call Stack
+  PrayerTimesHomeScreen (app/screens/pray/PrayerTimesHomeScreen.tsx:352:29) 
+
+Code: AudioSettingsScreen.tsx
+[0m [90m 22 |[39m           [33mWeek[39m [35m12[39m[33m-[39m[35m15[39m[33m:[39m [33mAudio[39m player[33m,[39m reciter selection
+ [90m 23 |[39m         [33m<[39m[33m/[39m[33mText[39m[33m>[39m
+[31m[1m>[22m[39m[90m 24 |[39m         [33m<[39m[33mText[39m style[33m=[39m{[styles[33m.[39mplaceholder[33m,[39m { color[33m:[39m colors[33m.[39mtextDim }]}[33m>[39m
+ [90m    |[39m                                           [31m[1m^[22m[39m
+ [90m 25 |[39m           🚧 [33mThis[39m screen will be implemented [36min[39m future phases[33m.[39m
+ [90m 26 |[39m         [33m<[39m[33m/[39m[33mText[39m[33m>[39m
+ [90m 27 |[39m       [33m<[39m[33m/[39m[33mView[39m[33m>[39m[0m
+Call Stack
+  AudioSettingsScreen (app/screens/settings/AudioSettingsScreen.tsx:24:43)
+  TabNavigator (app/navigators/TabNavigator.tsx:34:5)
+  AppStack (app/navigators/AppNavigator.tsx:39:5)
+  AppNavigator (app/navigators/AppNavigator.tsx:73:9)
+  App (app/app.tsx:108:17)
+ LOG  PrayerTimesHome
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: LoginScreen.tsx
+[0m [90m 161 |[39m   color[33m:[39m colors[33m.[39merror[33m,[39m
+ [90m 162 |[39m   fontSize[33m:[39m [35m15[39m[33m,[39m
+[31m[1m>[22m[39m[90m 163 |[39m   textAlign[33m:[39m [32m"center"[39m[33m,[39m
+ [90m     |[39m              [31m[1m^[22m[39m
+ [90m 164 |[39m })
+ [90m 165 |[39m
+ [90m 166 |[39m [90m// Auth0 Sign-In Button (Primary action - purple/pray color)[39m[0m
+Call Stack
+  $errorText (app/screens/LoginScreen.tsx:163:14)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 80 |[39m       })
+ [90m 81 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 82 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m    |[39m                    [31m[1m^[22m[39m
+ [90m 83 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m [32m"Could not get your location. Please try again."[39m)
+ [90m 84 |[39m     } [36mfinally[39m {
+ [90m 85 |[39m       setLoadingLocation([36mfalse[39m)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:82:20)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: LoginScreen.tsx
+[0m [90m 161 |[39m   color[33m:[39m colors[33m.[39merror[33m,[39m
+ [90m 162 |[39m   fontSize[33m:[39m [35m15[39m[33m,[39m
+[31m[1m>[22m[39m[90m 163 |[39m   textAlign[33m:[39m [32m"center"[39m[33m,[39m
+ [90m     |[39m              [31m[1m^[22m[39m
+ [90m 164 |[39m })
+ [90m 165 |[39m
+ [90m 166 |[39m [90m// Auth0 Sign-In Button (Primary action - purple/pray color)[39m[0m
+Call Stack
+  $errorText (app/screens/LoginScreen.tsx:163:14)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 84 |[39m       })
+ [90m 85 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 86 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m    |[39m                    [31m[1m^[22m[39m
+ [90m 87 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m [32m"Could not get your location. Please try again."[39m)
+ [90m 88 |[39m     } [36mfinally[39m {
+ [90m 89 |[39m       setLoadingLocation([36mfalse[39m)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:86:20)
+ LOG  ReflectHome
+ ERROR  [ReferenceError: Property 'refreshPrayerTimes' doesn't exist] 
+
+Code: ThemeSettingsScreen.tsx
+[0m [90m 32 |[39m [36mconst[39m styles [33m=[39m [33mStyleSheet[39m[33m.[39mcreate({
+ [90m 33 |[39m   container[33m:[39m { flex[33m:[39m [35m1[39m }[33m,[39m
+[31m[1m>[22m[39m[90m 34 |[39m   content[33m:[39m { flex[33m:[39m [35m1[39m[33m,[39m padding[33m:[39m [35m20[39m }[33m,[39m
+ [90m    |[39m                     [31m[1m^[22m[39m
+ [90m 35 |[39m   title[33m:[39m { fontSize[33m:[39m [35m28[39m[33m,[39m fontWeight[33m:[39m [32m"700"[39m[33m,[39m marginBottom[33m:[39m [35m12[39m }[33m,[39m
+ [90m 36 |[39m   description[33m:[39m { fontSize[33m:[39m [35m15[39m[33m,[39m lineHeight[33m:[39m [35m22[39m[33m,[39m marginBottom[33m:[39m [35m16[39m }[33m,[39m
+ [90m 37 |[39m   placeholder[33m:[39m { fontSize[33m:[39m [35m13[39m[33m,[39m fontStyle[33m:[39m [32m"italic"[39m }[33m,[39m[0m
+Call Stack
+  <global> (app/screens/settings/ThemeSettingsScreen.tsx:34:21)
+  TabNavigator (app/navigators/TabNavigator.tsx:34:5)
+  AppStack (app/navigators/AppNavigator.tsx:39:5)
+  AppNavigator (app/navigators/AppNavigator.tsx:73:9)
+  App (app/app.tsx:108:17)
+ ERROR  [ReferenceError: Property 'refreshPrayerTimes' doesn't exist] 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 450 |[39m       [33m<[39m[33mTouchableOpacity[39m
+ [90m 451 |[39m         style[33m=[39m{themed($fabButton(colors))}
+[31m[1m>[22m[39m[90m 452 |[39m         onPress[33m=[39m{refreshPrayerTimes}
+ [90m     |[39m                  [31m[1m^[22m[39m
+ [90m 453 |[39m         activeOpacity[33m=[39m{[35m0.8[39m}
+ [90m 454 |[39m       [33m>[39m
+ [90m 455 |[39m         [33m<[39m[33mIcon[39m icon[33m=[39m[32m"refresh"[39m size[33m=[39m{[35m24[39m} color[33m=[39m[32m"#FFFFFF"[39m [33m/[39m[33m>[39m[0m
+Call Stack
+  PrayerTimesHomeScreen (app/screens/pray/PrayerTimesHomeScreen.tsx:452:18) 
+
+Code: ThemeSettingsScreen.tsx
+[0m [90m 31 |[39m
+ [90m 32 |[39m [36mconst[39m styles [33m=[39m [33mStyleSheet[39m[33m.[39mcreate({
+[31m[1m>[22m[39m[90m 33 |[39m   container[33m:[39m { flex[33m:[39m [35m1[39m }[33m,[39m
+ [90m    |[39m              [31m[1m^[22m[39m
+ [90m 34 |[39m   content[33m:[39m { flex[33m:[39m [35m1[39m[33m,[39m padding[33m:[39m [35m20[39m }[33m,[39m
+ [90m 35 |[39m   title[33m:[39m { fontSize[33m:[39m [35m28[39m[33m,[39m fontWeight[33m:[39m [32m"700"[39m[33m,[39m marginBottom[33m:[39m [35m12[39m }[33m,[39m
+ [90m 36 |[39m   description[33m:[39m { fontSize[33m:[39m [35m15[39m[33m,[39m lineHeight[33m:[39m [35m22[39m[33m,[39m marginBottom[33m:[39m [35m16[39m }[33m,[39m[0m
+Call Stack
+  <global> (app/screens/settings/ThemeSettingsScreen.tsx:33:14)
+  TabNavigator (app/navigators/TabNavigator.tsx:34:5)
+  AppStack (app/navigators/AppNavigator.tsx:39:5)
+  AppNavigator (app/navigators/AppNavigator.tsx:73:9)
+  App (app/app.tsx:108:17)
+ LOG  PrayerTimesHome
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: LoginScreen.tsx
+[0m [90m 86 |[39m           preset[33m=[39m[32m"default"[39m
+ [90m 87 |[39m           onPress[33m=[39m{handleAuth0SignIn}
+[31m[1m>[22m[39m[90m 88 |[39m           disabled[33m=[39m{isLoading}
+ [90m    |[39m                               [31m[1m^[22m[39m
+ [90m 89 |[39m         [33m/[39m[33m>[39m
+ [90m 90 |[39m
+ [90m 91 |[39m         {[90m/* Anonymous Sign-In (Guest) */[39m}[0m
+Call Stack
+  LoginScreen (app/screens/LoginScreen.tsx:88:31)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 104 |[39m       })
+ [90m 105 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m     |[39m                    [31m[1m^[22m[39m
+ [90m 107 |[39m       [36mconst[39m errorMsg [33m=[39m err [36minstanceof[39m [33mError[39m [33m?[39m err[33m.[39mmessage [33m:[39m [32m"Could not get your location. Please check your location settings and try again."[39m
+ [90m 108 |[39m       setError(errorMsg)
+ [90m 109 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m errorMsg)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:106:20)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: LoginScreen.tsx
+[0m [90m 86 |[39m           preset[33m=[39m[32m"default"[39m
+ [90m 87 |[39m           onPress[33m=[39m{handleAuth0SignIn}
+[31m[1m>[22m[39m[90m 88 |[39m           disabled[33m=[39m{isLoading}
+ [90m    |[39m                               [31m[1m^[22m[39m
+ [90m 89 |[39m         [33m/[39m[33m>[39m
+ [90m 90 |[39m
+ [90m 91 |[39m         {[90m/* Anonymous Sign-In (Guest) */[39m}[0m
+Call Stack
+  LoginScreen (app/screens/LoginScreen.tsx:88:31)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 104 |[39m       })
+ [90m 105 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m     |[39m                    [31m[1m^[22m[39m
+ [90m 107 |[39m       [36mconst[39m errorMsg [33m=[39m err [36minstanceof[39m [33mError[39m [33m?[39m err[33m.[39mmessage [33m:[39m [32m"Could not get your location. Please check your location settings and try again."[39m
+ [90m 108 |[39m       setError(errorMsg)
+ [90m 109 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m errorMsg)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:106:20)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: LoginScreen.tsx
+[0m [90m 86 |[39m           preset[33m=[39m[32m"default"[39m
+ [90m 87 |[39m           onPress[33m=[39m{handleAuth0SignIn}
+[31m[1m>[22m[39m[90m 88 |[39m           disabled[33m=[39m{isLoading}
+ [90m    |[39m                               [31m[1m^[22m[39m
+ [90m 89 |[39m         [33m/[39m[33m>[39m
+ [90m 90 |[39m
+ [90m 91 |[39m         {[90m/* Anonymous Sign-In (Guest) */[39m}[0m
+Call Stack
+  LoginScreen (app/screens/LoginScreen.tsx:88:31)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 104 |[39m       })
+ [90m 105 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m     |[39m                    [31m[1m^[22m[39m
+ [90m 107 |[39m       [36mconst[39m errorMsg [33m=[39m err [36minstanceof[39m [33mError[39m [33m?[39m err[33m.[39mmessage [33m:[39m [32m"Could not get your location. Please check your location settings and try again."[39m
+ [90m 108 |[39m       setError(errorMsg)
+ [90m 109 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m errorMsg)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:106:20)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: LoginScreen.tsx
+[0m [90m 86 |[39m           preset[33m=[39m[32m"default"[39m
+ [90m 87 |[39m           onPress[33m=[39m{handleAuth0SignIn}
+[31m[1m>[22m[39m[90m 88 |[39m           disabled[33m=[39m{isLoading}
+ [90m    |[39m                               [31m[1m^[22m[39m
+ [90m 89 |[39m         [33m/[39m[33m>[39m
+ [90m 90 |[39m
+ [90m 91 |[39m         {[90m/* Anonymous Sign-In (Guest) */[39m}[0m
+Call Stack
+  LoginScreen (app/screens/LoginScreen.tsx:88:31)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 104 |[39m       })
+ [90m 105 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 106 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m     |[39m                    [31m[1m^[22m[39m
+ [90m 107 |[39m       [36mconst[39m errorMsg [33m=[39m err [36minstanceof[39m [33mError[39m [33m?[39m err[33m.[39mmessage [33m:[39m [32m"Could not get your location. Please check your location settings and try again."[39m
+ [90m 108 |[39m       setError(errorMsg)
+ [90m 109 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m errorMsg)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:106:20)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: LoginScreen.tsx
+[0m [90m 86 |[39m           preset[33m=[39m[32m"default"[39m
+ [90m 87 |[39m           onPress[33m=[39m{handleAuth0SignIn}
+[31m[1m>[22m[39m[90m 88 |[39m           disabled[33m=[39m{isLoading}
+ [90m    |[39m                               [31m[1m^[22m[39m
+ [90m 89 |[39m         [33m/[39m[33m>[39m
+ [90m 90 |[39m
+ [90m 91 |[39m         {[90m/* Anonymous Sign-In (Guest) */[39m}[0m
+Call Stack
+  LoginScreen (app/screens/LoginScreen.tsx:88:31)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 105 |[39m       })
+ [90m 106 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 107 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m     |[39m                    [31m[1m^[22m[39m
+ [90m 108 |[39m       [36mconst[39m errorMsg [33m=[39m err [36minstanceof[39m [33mError[39m [33m?[39m err[33m.[39mmessage [33m:[39m [32m"Could not get your location. Please check your location settings and try again."[39m
+ [90m 109 |[39m       setError(errorMsg)
+ [90m 110 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m errorMsg)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:107:20)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: LoginScreen.tsx
+[0m [90m 81 |[39m         [33m<[39m[33mButton[39m
+ [90m 82 |[39m           testID[33m=[39m[32m"auth0-sign-in-button"[39m
+[31m[1m>[22m[39m[90m 83 |[39m           text[33m=[39m[32m"Sign In"[39m
+ [90m    |[39m                [31m[1m^[22m[39m
+ [90m 84 |[39m           style[33m=[39m{themed($auth0Button)}
+ [90m 85 |[39m           textStyle[33m=[39m{themed($auth0ButtonText)}
+ [90m 86 |[39m           preset[33m=[39m[32m"default"[39m[0m
+Call Stack
+  LoginScreen (app/screens/LoginScreen.tsx:83:16)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 109 |[39m       })
+ [90m 110 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 111 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m     |[39m                    [31m[1m^[22m[39m
+ [90m 112 |[39m       [36mconst[39m errorMsg [33m=[39m err [36minstanceof[39m [33mError[39m [33m?[39m err[33m.[39mmessage [33m:[39m [32m"Could not get your location. Please check your location settings and try again."[39m
+ [90m 113 |[39m       setError(errorMsg)
+ [90m 114 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m errorMsg)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:111:20)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: LoginScreen.tsx
+[0m [90m 43 |[39m   }
+ [90m 44 |[39m
+[31m[1m>[22m[39m[90m 45 |[39m   [90m/**[39m
+ [90m    |[39m   [31m[1m^[22m[39m
+ [90m 46 |[39m [90m   * Handle Anonymous Sign-In[39m
+ [90m 47 |[39m [90m   */[39m
+ [90m 48 |[39m   [36mconst[39m handleAnonymousSignIn [33m=[39m [36masync[39m () [33m=>[39m {[0m
+Call Stack
+  LoginScreen (app/screens/LoginScreen.tsx:45:3)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 109 |[39m       })
+ [90m 110 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 111 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m     |[39m                    [31m[1m^[22m[39m
+ [90m 112 |[39m       [36mconst[39m errorMsg [33m=[39m err [36minstanceof[39m [33mError[39m [33m?[39m err[33m.[39mmessage [33m:[39m [32m"Could not get your location. Please check your location settings and try again."[39m
+ [90m 113 |[39m       setError(errorMsg)
+ [90m 114 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m errorMsg)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:111:20)
+ ERROR  [ReferenceError: Property '$weekStripContainer' doesn't exist] 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 401 |[39m
+ [90m 402 |[39m         {[90m/* Weekly Calendar Strip */[39m}
+[31m[1m>[22m[39m[90m 403 |[39m         [33m<[39m[33mView[39m style[33m=[39m{themed($weekStripContainer)} {[33m...[39mpanResponder[33m.[39mpanHandlers}[33m>[39m
+ [90m     |[39m                             [31m[1m^[22m[39m
+ [90m 404 |[39m           [33m<[39m[33mAnimated[39m[33m.[39m[33mView[39m
+ [90m 405 |[39m             style[33m=[39m{[
+ [90m 406 |[39m               themed($weekStrip)[33m,[39m[0m
+Call Stack
+  PrayerTimesHomeScreen (app/screens/pray/PrayerTimesHomeScreen.tsx:403:29) 
+
+Code: ProfileSettingsScreen.tsx
+[0m [90m 34 |[39m   content[33m:[39m { flex[33m:[39m [35m1[39m[33m,[39m padding[33m:[39m [35m20[39m }[33m,[39m
+ [90m 35 |[39m   title[33m:[39m { fontSize[33m:[39m [35m28[39m[33m,[39m fontWeight[33m:[39m [32m"700"[39m[33m,[39m marginBottom[33m:[39m [35m12[39m }[33m,[39m
+[31m[1m>[22m[39m[90m 36 |[39m   description[33m:[39m { fontSize[33m:[39m [35m15[39m[33m,[39m lineHeight[33m:[39m [35m22[39m[33m,[39m marginBottom[33m:[39m [35m16[39m }[33m,[39m
+ [90m    |[39m                                                              [31m[1m^[22m[39m
+ [90m 37 |[39m   placeholder[33m:[39m { fontSize[33m:[39m [35m13[39m[33m,[39m fontStyle[33m:[39m [32m"italic"[39m }[33m,[39m
+ [90m 38 |[39m })
+ [90m 39 |[39m[0m
+Call Stack
+  <global> (app/screens/settings/ProfileSettingsScreen.tsx:36:62)
+  TabNavigator (app/navigators/TabNavigator.tsx:34:5)
+  AppStack (app/navigators/AppNavigator.tsx:39:5)
+  AppNavigator (app/navigators/AppNavigator.tsx:73:9)
+  App (app/app.tsx:108:17)
+ LOG  ReflectHome
+ LOG  PrayerTimesHome
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: LoginScreen.tsx
+[0m [90m 32 |[39m [90m   */[39m
+ [90m 33 |[39m   [36mconst[39m handleAuth0SignIn [33m=[39m [36masync[39m () [33m=>[39m {
+[31m[1m>[22m[39m[90m 34 |[39m     clearError()
+ [90m    |[39m                 [31m[1m^[22m[39m
+ [90m 35 |[39m     [36mconst[39m result [33m=[39m [36mawait[39m signInWithAuth0()
+ [90m 36 |[39m
+ [90m 37 |[39m     [36mif[39m (result[33m.[39msuccess) {[0m
+Call Stack
+  handleAuth0SignIn (app/screens/LoginScreen.tsx:34:17)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 109 |[39m       })
+ [90m 110 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 111 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m     |[39m                    [31m[1m^[22m[39m
+ [90m 112 |[39m       [36mconst[39m errorMsg [33m=[39m err [36minstanceof[39m [33mError[39m [33m?[39m err[33m.[39mmessage [33m:[39m [32m"Could not get your location. Please check your location settings and try again."[39m
+ [90m 113 |[39m       setError(errorMsg)
+ [90m 114 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m errorMsg)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:111:20)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: construct.js
+[0m [90m 2 |[39m [36mvar[39m setPrototypeOf [33m=[39m require([32m"./setPrototypeOf.js"[39m)[33m;[39m
+ [90m 3 |[39m [36mfunction[39m _construct(t[33m,[39m e[33m,[39m r) {
+[31m[1m>[22m[39m[90m 4 |[39m   [36mif[39m (isNativeReflectConstruct()) [36mreturn[39m [33mReflect[39m[33m.[39mconstruct[33m.[39mapply([36mnull[39m[33m,[39m arguments)[33m;[39m
+ [90m   |[39m                                                                 [31m[1m^[22m[39m
+ [90m 5 |[39m   [36mvar[39m o [33m=[39m [[36mnull[39m][33m;[39m
+ [90m 6 |[39m   o[33m.[39mpush[33m.[39mapply(o[33m,[39m e)[33m;[39m
+ [90m 7 |[39m   [36mvar[39m p [33m=[39m [36mnew[39m (t[33m.[39mbind[33m.[39mapply(t[33m,[39m o))()[33m;[39m[0m
+Call Stack
+  construct (<native>)
+  apply (<native>)
+  _construct (node_modules/@babel/runtime/helpers/construct.js:4:65)
+  Wrapper (node_modules/@babel/runtime/helpers/wrapNativeSuper.js:15:14)
+  construct (<native>)
+  _callSuper (node_modules/@babel/runtime/helpers/callSuper.js:5:108)
+  NamelessError (node_modules/@expo/metro-runtime/src/metroServerLogs.native.ts:102:20)
+  captureCurrentStack (node_modules/@expo/metro-runtime/src/metroServerLogs.native.ts:106:27)
+  HMRClient.log (node_modules/@expo/metro-runtime/src/metroServerLogs.native.ts:39:79)
+  console.level (node_modules/react-native/Libraries/Core/setUpDeveloperTools.js:41:24)
+  anonymous (http:/192.168.86.24:8081/index.bundle)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 110 |[39m       })
+ [90m 111 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 112 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m     |[39m                    [31m[1m^[22m[39m
+ [90m 113 |[39m       [36mconst[39m errorMsg [33m=[39m err [36minstanceof[39m [33mError[39m [33m?[39m err[33m.[39mmessage [33m:[39m [32m"Could not get your location. Please check your location settings and try again."[39m
+ [90m 114 |[39m       setError(errorMsg)
+ [90m 115 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m errorMsg)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:112:20)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: construct.js
+[0m [90m 2 |[39m [36mvar[39m setPrototypeOf [33m=[39m require([32m"./setPrototypeOf.js"[39m)[33m;[39m
+ [90m 3 |[39m [36mfunction[39m _construct(t[33m,[39m e[33m,[39m r) {
+[31m[1m>[22m[39m[90m 4 |[39m   [36mif[39m (isNativeReflectConstruct()) [36mreturn[39m [33mReflect[39m[33m.[39mconstruct[33m.[39mapply([36mnull[39m[33m,[39m arguments)[33m;[39m
+ [90m   |[39m                                                                 [31m[1m^[22m[39m
+ [90m 5 |[39m   [36mvar[39m o [33m=[39m [[36mnull[39m][33m;[39m
+ [90m 6 |[39m   o[33m.[39mpush[33m.[39mapply(o[33m,[39m e)[33m;[39m
+ [90m 7 |[39m   [36mvar[39m p [33m=[39m [36mnew[39m (t[33m.[39mbind[33m.[39mapply(t[33m,[39m o))()[33m;[39m[0m
+Call Stack
+  construct (<native>)
+  apply (<native>)
+  _construct (node_modules/@babel/runtime/helpers/construct.js:4:65)
+  Wrapper (node_modules/@babel/runtime/helpers/wrapNativeSuper.js:15:14)
+  construct (<native>)
+  _callSuper (node_modules/@babel/runtime/helpers/callSuper.js:5:108)
+  NamelessError (node_modules/@expo/metro-runtime/src/metroServerLogs.native.ts:102:20)
+  captureCurrentStack (node_modules/@expo/metro-runtime/src/metroServerLogs.native.ts:106:27)
+  HMRClient.log (node_modules/@expo/metro-runtime/src/metroServerLogs.native.ts:39:79)
+  console.level (node_modules/react-native/Libraries/Core/setUpDeveloperTools.js:41:24)
+  anonymous (http:/192.168.86.24:8081/index.bundle)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 110 |[39m       })
+ [90m 111 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 112 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m     |[39m                    [31m[1m^[22m[39m
+ [90m 113 |[39m       [36mconst[39m errorMsg [33m=[39m err [36minstanceof[39m [33mError[39m [33m?[39m err[33m.[39mmessage [33m:[39m [32m"Could not get your location. Please check your location settings and try again."[39m
+ [90m 114 |[39m       setError(errorMsg)
+ [90m 115 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m errorMsg)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:112:20)
+ ERROR  Geolocation error: {"code": 1, "message": "Location permission denied"} 
+
+Code: construct.js
+[0m [90m 2 |[39m [36mvar[39m setPrototypeOf [33m=[39m require([32m"./setPrototypeOf.js"[39m)[33m;[39m
+ [90m 3 |[39m [36mfunction[39m _construct(t[33m,[39m e[33m,[39m r) {
+[31m[1m>[22m[39m[90m 4 |[39m   [36mif[39m (isNativeReflectConstruct()) [36mreturn[39m [33mReflect[39m[33m.[39mconstruct[33m.[39mapply([36mnull[39m[33m,[39m arguments)[33m;[39m
+ [90m   |[39m                                                                 [31m[1m^[22m[39m
+ [90m 5 |[39m   [36mvar[39m o [33m=[39m [[36mnull[39m][33m;[39m
+ [90m 6 |[39m   o[33m.[39mpush[33m.[39mapply(o[33m,[39m e)[33m;[39m
+ [90m 7 |[39m   [36mvar[39m p [33m=[39m [36mnew[39m (t[33m.[39mbind[33m.[39mapply(t[33m,[39m o))()[33m;[39m[0m
+Call Stack
+  construct (<native>)
+  apply (<native>)
+  _construct (node_modules/@babel/runtime/helpers/construct.js:4:65)
+  Wrapper (node_modules/@babel/runtime/helpers/wrapNativeSuper.js:15:14)
+  construct (<native>)
+  _callSuper (node_modules/@babel/runtime/helpers/callSuper.js:5:108)
+  NamelessError (node_modules/@expo/metro-runtime/src/metroServerLogs.native.ts:102:20)
+  captureCurrentStack (node_modules/@expo/metro-runtime/src/metroServerLogs.native.ts:106:27)
+  HMRClient.log (node_modules/@expo/metro-runtime/src/metroServerLogs.native.ts:39:79)
+  console.level (node_modules/react-native/Libraries/Core/setUpDeveloperTools.js:41:24)
+  anonymous (http:/192.168.86.24:8081/index.bundle)
+ ERROR  Location error: {"code": 1, "message": "Location permission denied"} 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 110 |[39m       })
+ [90m 111 |[39m     } [36mcatch[39m (err) {
+[31m[1m>[22m[39m[90m 112 |[39m       console[33m.[39merror([32m"Location error:"[39m[33m,[39m err)
+ [90m     |[39m                    [31m[1m^[22m[39m
+ [90m 113 |[39m       [36mconst[39m errorMsg [33m=[39m err [36minstanceof[39m [33mError[39m [33m?[39m err[33m.[39mmessage [33m:[39m [32m"Could not get your location. Please check your location settings and try again."[39m
+ [90m 114 |[39m       setError(errorMsg)
+ [90m 115 |[39m       [33mAlert[39m[33m.[39malert([32m"Location Error"[39m[33m,[39m errorMsg)[0m
+Call Stack
+  requestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:112:20)
+ LOG  ReflectHome
+ LOG  PrayerTimesHome
+iOS ./index.tsx ░░░░░░░░░░░░░░░░  0.0% (0/1)
+iOS Bundling failed 92ms index.tsx (1 module)
+Unable to resolve "expo-location" from "app/services/location/locationService.ts"
+[0m [90m  5 |[39m [90m */[39m
+ [90m  6 |[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m [33m*[39m [36mas[39m [33mLocation[39m [36mfrom[39m [32m"expo-location"[39m
+ [90m    |[39m                            [31m[1m^[22m[39m
+ [90m  8 |[39m
+ [90m  9 |[39m [36mexport[39m [36minterface[39m [33mCoordinates[39m {
+ [90m 10 |[39m   latitude[33m:[39m number[0m
+
+Import stack:
+
+ app/services/location/locationService.ts
+ | import "expo-location"
+
+ app/screens/pray/QiblaCompassScreen.tsx
+ | import "@/services/location/locationService"
+
+ app/navigators/stacks/PrayStack.tsx
+ | import "@/screens/pray/QiblaCompassScreen"
+
+ app/navigators/TabNavigator.tsx
+ | import "./stacks/PrayStack"
+
+ app/navigators/AppNavigator.tsx
+ | import "./TabNavigator"
+
+ app/app.tsx
+ | import "./navigators/AppNavigator"
+
+ index.tsx
+ | import "@/app"
+
+ 
+ | import "./index"
+
+iOS ./index.tsx ░░░░░░░░░░░░░░░░  0.0% (0/1)
+iOS Bundling failed 142ms index.tsx (1 module)
+Unable to resolve "expo-location" from "app/services/location/locationService.ts"
+[0m [90m  5 |[39m [90m */[39m
+ [90m  6 |[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m [33m*[39m [36mas[39m [33mLocation[39m [36mfrom[39m [32m"expo-location"[39m
+ [90m    |[39m                            [31m[1m^[22m[39m
+ [90m  8 |[39m
+ [90m  9 |[39m [36mexport[39m [36minterface[39m [33mCoordinates[39m {
+ [90m 10 |[39m   latitude[33m:[39m number[0m
+
+Import stack:
+
+ app/services/location/locationService.ts
+ | import "expo-location"
+
+ app/screens/pray/QiblaCompassScreen.tsx
+ | import "@/services/location/locationService"
+
+ app/navigators/stacks/PrayStack.tsx
+ | import "@/screens/pray/QiblaCompassScreen"
+
+ app/navigators/TabNavigator.tsx
+ | import "./stacks/PrayStack"
+
+ app/navigators/AppNavigator.tsx
+ | import "./TabNavigator"
+
+ app/app.tsx
+ | import "./navigators/AppNavigator"
+
+ index.tsx
+ | import "@/app"
+
+ 
+ | import "./index"
+
+iOS ./index.tsx ░░░░░░░░░░░░░░░░  0.0% (0/1)
+iOS Bundling failed 124ms index.tsx (1 module)
+Unable to resolve "expo-location" from "app/services/location/locationService.ts"
+[0m [90m  5 |[39m [90m */[39m
+ [90m  6 |[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m [33m*[39m [36mas[39m [33mLocation[39m [36mfrom[39m [32m"expo-location"[39m
+ [90m    |[39m                            [31m[1m^[22m[39m
+ [90m  8 |[39m
+ [90m  9 |[39m [36mexport[39m [36minterface[39m [33mCoordinates[39m {
+ [90m 10 |[39m   latitude[33m:[39m number[0m
+
+Import stack:
+
+ app/services/location/locationService.ts
+ | import "expo-location"
+
+ app/screens/pray/QiblaCompassScreen.tsx
+ | import "@/services/location/locationService"
+
+ app/navigators/stacks/PrayStack.tsx
+ | import "@/screens/pray/QiblaCompassScreen"
+
+ app/navigators/TabNavigator.tsx
+ | import "./stacks/PrayStack"
+
+ app/navigators/AppNavigator.tsx
+ | import "./TabNavigator"
+
+ app/app.tsx
+ | import "./navigators/AppNavigator"
+
+ index.tsx
+ | import "@/app"
+
+ 
+ | import "./index"
+
+iOS Bundling failed 104ms index.tsx (1 module)
+Unable to resolve "expo-location" from "app/services/location/locationService.ts"
+[0m [90m  5 |[39m [90m */[39m
+ [90m  6 |[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m [33m*[39m [36mas[39m [33mLocation[39m [36mfrom[39m [32m"expo-location"[39m
+ [90m    |[39m                            [31m[1m^[22m[39m
+ [90m  8 |[39m
+ [90m  9 |[39m [36mexport[39m [36minterface[39m [33mCoordinates[39m {
+ [90m 10 |[39m   latitude[33m:[39m number[0m
+
+Import stack:
+
+ app/services/location/locationService.ts
+ | import "expo-location"
+
+ app/screens/pray/QiblaCompassScreen.tsx
+ | import "@/services/location/locationService"
+
+ app/navigators/stacks/PrayStack.tsx
+ | import "@/screens/pray/QiblaCompassScreen"
+
+ app/navigators/TabNavigator.tsx
+ | import "./stacks/PrayStack"
+
+ app/navigators/AppNavigator.tsx
+ | import "./TabNavigator"
+
+ app/app.tsx
+ | import "./navigators/AppNavigator"
+
+ index.tsx
+ | import "@/app"
+
+ 
+ | import "./index"
+
+iOS ./index.tsx ░░░░░░░░░░░░░░░░  0.0% (0/1)
+iOS Bundling failed 151ms index.tsx (1 module)
+Unable to resolve "expo-location" from "app/services/location/locationService.ts"
+[0m [90m  5 |[39m [90m */[39m
+ [90m  6 |[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m [33m*[39m [36mas[39m [33mLocation[39m [36mfrom[39m [32m"expo-location"[39m
+ [90m    |[39m                            [31m[1m^[22m[39m
+ [90m  8 |[39m
+ [90m  9 |[39m [36mexport[39m [36minterface[39m [33mCoordinates[39m {
+ [90m 10 |[39m   latitude[33m:[39m number[0m
+
+Import stack:
+
+ app/services/location/locationService.ts
+ | import "expo-location"
+
+ app/screens/pray/QiblaCompassScreen.tsx
+ | import "@/services/location/locationService"
+
+ app/navigators/stacks/PrayStack.tsx
+ | import "@/screens/pray/QiblaCompassScreen"
+
+ app/navigators/TabNavigator.tsx
+ | import "./stacks/PrayStack"
+
+ app/navigators/AppNavigator.tsx
+ | import "./TabNavigator"
+
+ app/app.tsx
+ | import "./navigators/AppNavigator"
+
+ index.tsx
+ | import "@/app"
+
+ 
+ | import "./index"
+
+iOS ./index.tsx ░░░░░░░░░░░░░░░░  0.0% (0/1)
+iOS Bundling failed 50ms index.tsx (1 module)
+Unable to resolve "expo-location" from "app/services/location/locationService.ts"
+[0m [90m  5 |[39m [90m */[39m
+ [90m  6 |[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m [33m*[39m [36mas[39m [33mLocation[39m [36mfrom[39m [32m"expo-location"[39m
+ [90m    |[39m                            [31m[1m^[22m[39m
+ [90m  8 |[39m
+ [90m  9 |[39m [36mexport[39m [36minterface[39m [33mCoordinates[39m {
+ [90m 10 |[39m   latitude[33m:[39m number[0m
+
+Import stack:
+
+ app/services/location/locationService.ts
+ | import "expo-location"
+
+ app/screens/pray/QiblaCompassScreen.tsx
+ | import "@/services/location/locationService"
+
+ app/navigators/stacks/PrayStack.tsx
+ | import "@/screens/pray/QiblaCompassScreen"
+
+ app/navigators/TabNavigator.tsx
+ | import "./stacks/PrayStack"
+
+ app/navigators/AppNavigator.tsx
+ | import "./TabNavigator"
+
+ app/app.tsx
+ | import "./navigators/AppNavigator"
+
+ index.tsx
+ | import "@/app"
+
+ 
+ | import "./index"
+
+iOS ./index.tsx ░░░░░░░░░░░░░░░░  0.0% (0/1)
+iOS Bundled 1261ms index.tsx (1 module)
+ LOG  ReflectHome
+ LOG  PrayerTimesHome
+ ERROR  [Error: Cannot find native module 'ExpoLocation'] 
+
+Code: locationService.ts
+[0m [90m  5 |[39m [90m */[39m
+ [90m  6 |[39m
+[31m[1m>[22m[39m[90m  7 |[39m [36mimport[39m [33m*[39m [36mas[39m [33mLocation[39m [36mfrom[39m [32m"expo-location"[39m
+ [90m    |[39m [31m[1m^[22m[39m
+ [90m  8 |[39m
+ [90m  9 |[39m [36mexport[39m [36minterface[39m [33mCoordinates[39m {
+ [90m 10 |[39m   latitude[33m:[39m number[0m
+Call Stack
+  <global> (app/services/location/locationService.ts:7)
+  checkAndRequestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:80:26)
+  PrayerTimesHomeScreen (app/screens/pray/PrayerTimesHomeScreen.tsx:79:32)
+  useEffect$argument_0 (app/screens/pray/PrayerTimesHomeScreen.tsx:76:28) 
+
+Code: PrayStack.tsx
+[0m [90m 30 |[39m
+ [90m 31 |[39m   [36mreturn[39m (
+[31m[1m>[22m[39m[90m 32 |[39m     [33m<[39m[33mStack[39m[33m.[39m[33mNavigator[39m
+ [90m    |[39m     [31m[1m^[22m[39m
+ [90m 33 |[39m       screenOptions[33m=[39m{{
+ [90m 34 |[39m         headerShown[33m:[39m [36mtrue[39m[33m,[39m
+ [90m 35 |[39m         headerTintColor[33m:[39m colors[33m.[39mpray[33m,[39m[0m
+Call Stack
+  PrayStackNavigator (app/navigators/stacks/PrayStack.tsx:32:5)
+  TabNavigator (app/navigators/TabNavigator.tsx:34:5)
+  AppStack (app/navigators/AppNavigator.tsx:39:5)
+  AppNavigator (app/navigators/AppNavigator.tsx:73:9)
+  App (app/app.tsx:108:17)
+ ERROR  [Error: Uncaught (in promise, id: 0) TypeError: Cannot read property 'checkLocationPermission' of undefined] 
+
+Code: PrayerTimesHomeScreen.tsx
+[0m [90m 78 |[39m
+ [90m 79 |[39m   [36mconst[39m checkAndRequestLocation [33m=[39m [36masync[39m () [33m=>[39m {
+[31m[1m>[22m[39m[90m 80 |[39m     [36mconst[39m status [33m=[39m [36mawait[39m checkLocationPermission()
+ [90m    |[39m                          [31m[1m^[22m[39m
+ [90m 81 |[39m     setPermissionStatus(status)
+ [90m 82 |[39m
+ [90m 83 |[39m     [36mif[39m (status [33m===[39m [32m"granted"[39m) {[0m
+Call Stack
+  checkAndRequestLocation (app/screens/pray/PrayerTimesHomeScreen.tsx:80:26)
+  PrayerTimesHomeScreen (app/screens/pray/PrayerTimesHomeScreen.tsx:79:32)
+  useEffect$argument_0 (app/screens/pray/PrayerTimesHomeScreen.tsx:76:28)
+iOS ./index.tsx ░░░░░░░░░░░░░░░░  0.0% (0/1)
+iOS Bundled 1783ms index.tsx (1 module)

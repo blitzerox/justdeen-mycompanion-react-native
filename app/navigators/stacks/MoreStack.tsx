@@ -1,8 +1,9 @@
 /**
- * Settings Tab Stack Navigator
+ * More Tab Stack Navigator
  *
  * Screens:
- * - SettingsHome: Main settings screen (P0)
+ * - MoreHome: Main more screen with feature list (P0)
+ * - SettingsHome: App settings (P0)
  * - ProfileSettings: User profile and account (P1)
  * - ThemeSettings: Dark mode, OLED mode (P0)
  * - LanguageSettings: App language and translation preferences (P1)
@@ -17,6 +18,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { useAppTheme } from "@/theme/context"
 
 // Screens
+import { MoreHomeScreen } from "@/screens/more/MoreHomeScreen"
 import { SettingsHomeScreen } from "@/screens/settings/SettingsHomeScreen"
 import { ProfileSettingsScreen } from "@/screens/settings/ProfileSettingsScreen"
 import { ThemeSettingsScreen } from "@/screens/settings/ThemeSettingsScreen"
@@ -27,11 +29,11 @@ import { PrivacySettingsScreen } from "@/screens/settings/PrivacySettingsScreen"
 import { AboutScreen } from "@/screens/settings/AboutScreen"
 import { SubscriptionScreen } from "@/screens/settings/SubscriptionScreen"
 
-import type { SettingsStackParamList } from "../navigationTypes"
+import type { MoreStackParamList } from "../navigationTypes"
 
-const Stack = createNativeStackNavigator<SettingsStackParamList>()
+const Stack = createNativeStackNavigator<MoreStackParamList>()
 
-export const SettingsStackNavigator = () => {
+export const MoreStackNavigator = () => {
   const {
     theme: { colors },
   } = useAppTheme()
@@ -40,7 +42,7 @@ export const SettingsStackNavigator = () => {
     <Stack.Navigator
       screenOptions={{
         headerShown: true,
-        headerTintColor: colors.settings,
+        headerTintColor: colors.more,
         headerStyle: {
           backgroundColor: colors.background,
         },
@@ -54,11 +56,17 @@ export const SettingsStackNavigator = () => {
       }}
     >
       <Stack.Screen
+        name="MoreHome"
+        component={MoreHomeScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
         name="SettingsHome"
         component={SettingsHomeScreen}
         options={{
           title: "Settings",
-          headerLargeTitle: true,
         }}
       />
       <Stack.Screen

@@ -6,9 +6,15 @@
 
 /**
  * Tab-specific colors - Each main tab has its unique color
- * Pray: Purple, Read: Blue, Reflect: Orange, AI: Indigo, Settings: Green
+ * Home: Green, Pray: Purple, Read: Blue, AI: Cyan, More: Orange
  */
 const tabColors = {
+  // 🏠 Home Tab (Green) - formerly Reflect
+  home: {
+    primary: "#34C759",    // SF Green
+    light: "#5EE272",
+    dark: "#28AC3C",
+  },
   // 🕌 Pray Tab (Purple)
   pray: {
     primary: "#5856D6",    // SF Purple
@@ -21,23 +27,17 @@ const tabColors = {
     light: "#4DA6FF",
     dark: "#0062CC",
   },
-  // 💭 Reflect Tab (Orange)
-  reflect: {
+  // 🤖 AI Tab (Cyan)
+  ai: {
+    primary: "#32ADE6",    // SF Cyan
+    light: "#64C7F0",
+    dark: "#1E8BBD",
+  },
+  // ⋯ More Tab (Orange)
+  more: {
     primary: "#FF9500",    // SF Orange
     light: "#FFAD33",
     dark: "#CC7700",
-  },
-  // 🤖 AI Tab (Indigo)
-  ai: {
-    primary: "#6366F1",    // Indigo (modern AI color)
-    light: "#8B8DF4",
-    dark: "#4F52C1",
-  },
-  // ⚙️ Settings Tab (Green)
-  settings: {
-    primary: "#34C759",    // SF Green
-    light: "#5EE272",
-    dark: "#28AC3C",
   },
 } as const
 
@@ -180,21 +180,29 @@ export const colors = {
   /**
    * Tab-specific colors (WWDC 5-tab design)
    */
+  home: tabColors.home.primary,
+  homeLight: tabColors.home.light,
+  homeDark: tabColors.home.dark,
   pray: tabColors.pray.primary,
   prayLight: tabColors.pray.light,
   prayDark: tabColors.pray.dark,
   read: tabColors.read.primary,
   readLight: tabColors.read.light,
   readDark: tabColors.read.dark,
-  reflect: tabColors.reflect.primary,
-  reflectLight: tabColors.reflect.light,
-  reflectDark: tabColors.reflect.dark,
   ai: tabColors.ai.primary,
   aiLight: tabColors.ai.light,
   aiDark: tabColors.ai.dark,
-  settings: tabColors.settings.primary,
-  settingsLight: tabColors.settings.light,
-  settingsDark: tabColors.settings.dark,
+  more: tabColors.more.primary,
+  moreLight: tabColors.more.light,
+  moreDark: tabColors.more.dark,
+
+  // Legacy color names for backward compatibility
+  reflect: tabColors.home.primary,      // Reflect is now Home (green)
+  reflectLight: tabColors.home.light,
+  reflectDark: tabColors.home.dark,
+  settings: tabColors.more.primary,      // Settings is now More (orange)
+  settingsLight: tabColors.more.light,
+  settingsDark: tabColors.more.dark,
 
   /**
    * Islamic-specific colors
@@ -214,7 +222,7 @@ export const colors = {
    * Legacy compatibility - map to new color system
    * TODO: Gradually migrate components to use tab-specific colors
    */
-  tint: tabColors.settings.primary,      // Default tint (Settings green)
+  tint: tabColors.home.primary,          // Default tint (Home green)
   tintInactive: palette.textTertiary,    // Inactive state
   border: palette.separator,              // Border color
   textDim: palette.textSecondary,         // Dimmed text
