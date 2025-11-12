@@ -7,10 +7,12 @@
 # the app on a physical iPhone device for testing.
 #
 # Usage:
-#   ./test-on-iphone.sh [device-name-or-id]
+#   ./test-on-iphone.sh [options] [device-name-or-id]
 #
 # Examples:
-#   ./test-on-iphone.sh                    # Auto-detect connected device
+#   ./test-on-iphone.sh                    # Auto-detect device, prompt for clean
+#   ./test-on-iphone.sh --no-prompt        # Skip clean prompt, use existing build
+#   ./test-on-iphone.sh --clean            # Clean everything automatically
 #   ./test-on-iphone.sh "Husain's iPhone"  # Use specific device name
 #   ./test-on-iphone.sh 00008140-001C...   # Use device UDID
 ###############################################################################
@@ -30,6 +32,11 @@ WORKSPACE="ios/JustDeenMyCompanion.xcworkspace"
 SCHEME="JustDeenMyCompanion"
 BUNDLE_ID="com.husainshah.justdeen"
 BUILD_CONFIG="Debug"
+
+# Clean options (set by flags or prompt)
+CLEAN_XCODE=false
+CLEAN_METRO=false
+PROMPT_CLEAN=true
 
 ###############################################################################
 # Helper Functions
@@ -60,6 +67,138 @@ print_header() {
 }
 
 ###############################################################################
+# Clean Build/Cache
+###############################################################################
+
+prompt_clean_build() {
+    if [ "$PROMPT_CLEAN" = false ]; then
+        return
+    fi
+    
+    echo ""
+    echo -e "${YELLOW}╔════════════════════════════════════════════╗${NC}"
+    echo -e "${YELLOW}║  Clean Build Options                       ║${NC}"
+    echo -e "${YELLOW}╚════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo "  ${BLUE}1)${NC} No clean ${GREEN}(faster, use existing build)${NC}"
+    echo "  ${BLUE}2)${NC} Clean Xcode build only"
+    echo "  ${BLUE}3)${NC} Clean Metro cache only"
+    echo "  ${BLUE}4)${NC} Clean both Xcode + Metro ${YELLOW}(recommended for issues)${NC}"
+    echo ""
+    read -p "Select option [1-4] (default: 1): " clean_choice
+    clean_choice=${clean_choice:-1}
+    
+    case $clean_choice in
+        1)
+            print_success "Using existing build"
+            CLEAN_XCODE=false
+            CLEAN_METRO=false
+            ;;
+        2)
+            print_warning "Will clean Xcode build"
+            CLEAN_XCODE=true
+            CLEAN_METRO=false
+            ;;
+        3)
+            print_warning "Will clean Metro cache"
+            CLEAN_XCODE=false
+            CLEAN_METRO=true
+            ;;
+        4)
+            print_warning "Will clean both Xcode + Metro"
+            CLEAN_XCODE=true
+            CLEAN_METRO=true
+            ;;
+        *)
+            print_error "Invalid option. Using default (no clean)"
+            CLEAN_XCODE=false
+            CLEAN_METRO=false
+            ;;
+    esac
+    echo ""
+}
+
+clean_xcode_build() {
+    print_step "Cleaning Xcode build artifacts..."
+    
+    cd "$PROJECT_ROOT"
+    
+    # Clean workspace
+    print_step "  Running xcodebuild clean..."
+    xcodebuild clean \
+        -workspace "$WORKSPACE" \
+        -scheme "$SCHEME" \
+        -configuration "$BUILD_CONFIG" \
+        > /dev/null 2>&1
+    
+    # Remove DerivedData for this project
+    print_step "  Removing DerivedData..."
+    rm -rf ~/Library/Developer/Xcode/DerivedData/JustDeenMyCompanion-*
+    
+    # Clean build folder
+    if [ -d "ios/build" ]; then
+        print_step "  Removing ios/build folder..."
+        rm -rf ios/build
+    fi
+    
+    print_success "Xcode build cleaned"
+}
+
+clean_metro_cache() {
+    print_step "Cleaning Metro bundler cache..."
+    
+    cd "$PROJECT_ROOT"
+    
+    # Stop Metro if running
+    if lsof -i :8081 > /dev/null 2>&1; then
+        print_warning "  Stopping existing Metro bundler..."
+        stop_metro
+        sleep 1
+    fi
+    
+    # Clean Metro cache using expo
+    print_step "  Clearing Metro cache..."
+    npx expo start --clear > /dev/null 2>&1 &
+    local pid=$!
+    sleep 3
+    kill $pid 2>/dev/null || true
+    
+    # Clean watchman if available
+    if command -v watchman > /dev/null 2>&1; then
+        print_step "  Clearing watchman watches..."
+        watchman watch-del-all > /dev/null 2>&1 || true
+    fi
+    
+    # Clean temp directories
+    if [ -d ".expo" ]; then
+        print_step "  Cleaning .expo directory..."
+        rm -rf .expo
+    fi
+    
+    # Clean node_modules cache (optional)
+    if [ -d "node_modules/.cache" ]; then
+        print_step "  Cleaning node_modules cache..."
+        rm -rf node_modules/.cache
+    fi
+    
+    print_success "Metro cache cleaned"
+}
+
+perform_clean() {
+    if [ "$CLEAN_XCODE" = true ] || [ "$CLEAN_METRO" = true ]; then
+        print_header "Cleaning Build Artifacts"
+    fi
+    
+    if [ "$CLEAN_XCODE" = true ]; then
+        clean_xcode_build
+    fi
+    
+    if [ "$CLEAN_METRO" = true ]; then
+        clean_metro_cache
+    fi
+}
+
+###############################################################################
 # Device Detection
 ###############################################################################
 
@@ -75,7 +214,6 @@ detect_device() {
     fi
 
     # Extract device information
-    # Format: Name, Hostname, Identifier, State, Model
     local device_count=$(echo "$devices" | grep -c "iPhone" || true)
 
     if [ "$device_count" -eq 0 ]; then
@@ -85,8 +223,7 @@ detect_device() {
 
     print_success "Found $device_count iPhone device(s)"
 
-    # Parse device UDID using regex pattern (format: 8-4-4-4-12 hex digits)
-    # Example line: Husain's iPhone   Husains-iPhone.coredevice.local   6DAECA40-FB8A-5C63-9A94-E63F3E8DA6DC   connected   iPhone 16 Plus (iPhone17,4)
+    # Parse device UDID using regex pattern
     DEVICE_ID=$(echo "$devices" | grep "iPhone" | grep "connected" | head -1 | grep -o '[A-F0-9]\{8\}-[A-F0-9]\{4\}-[A-F0-9]\{4\}-[A-F0-9]\{4\}-[A-F0-9]\{12\}')
 
     if [ -z "$DEVICE_ID" ]; then
@@ -97,7 +234,7 @@ detect_device() {
         exit 1
     fi
 
-    # Get device name for display (extract text before the first tab/multiple spaces)
+    # Get device name for display
     local device_name=$(echo "$devices" | grep "iPhone" | grep "connected" | head -1 | sed 's/  .*$//')
 
     print_success "Using device: $device_name ($DEVICE_ID)"
@@ -111,9 +248,6 @@ build_app() {
     print_step "Building iOS app..."
 
     cd "$PROJECT_ROOT"
-
-    # Clean previous builds (optional, can be commented out for faster builds)
-    # xcodebuild clean -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration "$BUILD_CONFIG" > /dev/null 2>&1
 
     # Build the app
     xcodebuild \
@@ -249,6 +383,12 @@ stop_metro() {
             print_success "Metro bundler stopped"
         fi
     fi
+    
+    # Also kill any process on port 8081
+    local port_pid=$(lsof -ti:8081)
+    if [ -n "$port_pid" ]; then
+        kill $port_pid 2>/dev/null || true
+    fi
 }
 
 ###############################################################################
@@ -258,15 +398,22 @@ stop_metro() {
 main() {
     print_header "JustDeen MyCompanion - iPhone Testing"
 
+    # Prompt for clean options (unless disabled)
+    prompt_clean_build
+    
+    # Perform cleaning if requested
+    perform_clean
+
     # Handle device parameter
-    if [ -n "$1" ]; then
-        DEVICE_ID="$1"
+    if [ -n "$DEVICE_PARAM" ]; then
+        DEVICE_ID="$DEVICE_PARAM"
         print_step "Using specified device: $DEVICE_ID"
     else
         detect_device
     fi
 
     # Execute build and deployment steps
+    print_header "Building & Deploying"
     build_app
     find_built_app
     install_app
@@ -275,10 +422,11 @@ main() {
 
     print_header "Testing Complete!"
 
-    echo -e "${GREEN}App is now running on your iPhone!${NC}"
+    echo -e "${GREEN}✓ App is now running on your iPhone!${NC}"
     echo ""
-    echo "Metro bundler is running in the background."
-    echo "Check your iPhone to test the app."
+    echo "📱 Device: $DEVICE_ID"
+    echo "📦 Bundle ID: $BUNDLE_ID"
+    echo "🚀 Metro: Running on http://localhost:8081"
     echo ""
     echo "Logs:"
     echo "  Metro bundler: $PROJECT_ROOT/metro.log"
@@ -286,31 +434,96 @@ main() {
     echo "To stop Metro bundler:"
     echo "  $0 --stop-metro"
     echo ""
+    echo "To clean build next time:"
+    echo "  $0 --clean"
+    echo ""
 }
 
 ###############################################################################
-# Command Line Options
+# Parse Command Line Arguments
 ###############################################################################
 
-case "${1:-}" in
-    --stop-metro)
-        stop_metro
-        exit 0
-        ;;
-    --help|-h)
-        echo "Usage: $0 [device-name-or-id]"
-        echo ""
-        echo "Options:"
-        echo "  --stop-metro    Stop the Metro bundler"
-        echo "  --help, -h      Show this help message"
-        echo ""
-        echo "Examples:"
-        echo "  $0                          # Auto-detect device"
-        echo "  $0 \"Husain's iPhone\"        # Use specific device"
-        echo "  $0 00008140-001C2CC8...    # Use device UDID"
-        exit 0
-        ;;
-    *)
-        main "$@"
-        ;;
-esac
+parse_args() {
+    DEVICE_PARAM=""
+    
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --clean)
+                CLEAN_XCODE=true
+                CLEAN_METRO=true
+                PROMPT_CLEAN=false
+                shift
+                ;;
+            --clean-xcode)
+                CLEAN_XCODE=true
+                PROMPT_CLEAN=false
+                shift
+                ;;
+            --clean-metro)
+                CLEAN_METRO=true
+                PROMPT_CLEAN=false
+                shift
+                ;;
+            --no-prompt)
+                PROMPT_CLEAN=false
+                shift
+                ;;
+            --stop-metro)
+                stop_metro
+                exit 0
+                ;;
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+            *)
+                DEVICE_PARAM="$1"
+                shift
+                ;;
+        esac
+    done
+}
+
+###############################################################################
+# Help Message
+###############################################################################
+
+show_help() {
+    echo "JustDeen MyCompanion - iPhone Testing Script"
+    echo ""
+    echo "Usage: $0 [options] [device-name-or-id]"
+    echo ""
+    echo "Options:"
+    echo "  --clean           Clean both Xcode + Metro before building"
+    echo "  --clean-xcode     Clean only Xcode build artifacts"
+    echo "  --clean-metro     Clean only Metro cache"
+    echo "  --no-prompt       Skip clean prompt, use existing build"
+    echo "  --stop-metro      Stop the Metro bundler and exit"
+    echo "  --help, -h        Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  $0                          # Auto-detect device, prompt for clean"
+    echo "  $0 --clean                  # Clean everything, auto-detect device"
+    echo "  $0 --no-prompt              # Skip prompt, use existing build"
+    echo "  $0 --clean-xcode            # Clean Xcode only"
+    echo "  $0 \"Husain's iPhone\"        # Use specific device name"
+    echo "  $0 00008140-001C2CC8...    # Use device UDID"
+    echo "  $0 --stop-metro             # Stop Metro bundler"
+    echo ""
+    echo "Clean Options (when prompted):"
+    echo "  1) No clean (fastest, recommended for quick iterations)"
+    echo "  2) Clean Xcode only (fixes build-related issues)"
+    echo "  3) Clean Metro only (fixes JavaScript bundle issues)"
+    echo "  4) Clean both (recommended when troubleshooting)"
+    echo ""
+}
+
+###############################################################################
+# Entry Point
+###############################################################################
+
+# Parse command line arguments
+parse_args "$@"
+
+# Run main function
+main

@@ -18,6 +18,7 @@ import { QiblaCompassScreen } from "@/screens/pray/QiblaCompassScreen"
 import { PrayerTimingSettingsScreen } from "@/screens/pray/PrayerTimingSettingsScreen"
 import { NotificationSettingsScreen } from "@/screens/pray/NotificationSettingsScreen"
 import { IslamicCalendarScreen } from "@/screens/pray/IslamicCalendarScreen"
+import { TasbihCounterScreen } from "@/screens/pray/TasbihCounterScreen"
 
 import type { PrayStackParamList } from "../navigationTypes"
 
@@ -78,6 +79,13 @@ export const PrayStackNavigator = () => {
         component={IslamicCalendarScreen}
         options={{
           title: "Islamic Calendar",
+        }}
+      />
+      <Stack.Screen
+        name="TasbihCounter"
+        component={TasbihCounterScreen}
+        options={{
+          headerShown: false,
         }}
       />
     </Stack.Navigator>

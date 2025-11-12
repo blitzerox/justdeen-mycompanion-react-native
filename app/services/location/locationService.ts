@@ -4,7 +4,8 @@
  * Used for prayer times calculation and Qibla direction
  */
 
-import * as Location from "expo-location"
+import Geolocation from "react-native-geolocation-service"
+import { Platform, PermissionsAndroid, Linking } from "react-native"
 
 export interface Coordinates {
   latitude: number
@@ -19,10 +20,17 @@ export type LocationPermissionStatus = "granted" | "denied" | "undetermined"
  */
 export const checkLocationPermission = async (): Promise<LocationPermissionStatus> => {
   try {
-    const { status } = await Location.getForegroundPermissionsAsync()
-    if (status === "granted") return "granted"
-    if (status === "denied") return "denied"
-    return "undetermined"
+    if (Platform.OS === "ios") {
+      const auth = await Geolocation.requestAuthorization("whenInUse")
+      if (auth === "granted" || auth === "restricted") return "granted"
+      if (auth === "denied") return "denied"
+      return "undetermined"
+    } else {
+      const granted = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+      )
+      return granted ? "granted" : "denied"
+    }
   } catch (err) {
     console.error("Check location permission error:", err)
     return "undetermined"
@@ -34,8 +42,15 @@ export const checkLocationPermission = async (): Promise<LocationPermissionStatu
  */
 export const requestLocationPermission = async (): Promise<boolean> => {
   try {
-    const { status } = await Location.requestForegroundPermissionsAsync()
-    return status === "granted"
+    if (Platform.OS === "ios") {
+      const auth = await Geolocation.requestAuthorization("whenInUse")
+      return auth === "granted" || auth === "restricted"
+    } else {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+      )
+      return granted === PermissionsAndroid.RESULTS.GRANTED
+    }
   } catch (err) {
     console.error("Location permission error:", err)
     return false
@@ -46,19 +61,26 @@ export const requestLocationPermission = async (): Promise<boolean> => {
  * Get current location
  */
 export const getCurrentLocation = async (): Promise<Coordinates> => {
-  try {
-    const location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.High,
-    })
-    return {
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-      accuracy: location.coords.accuracy,
-    }
-  } catch (error) {
-    console.error("Geolocation error:", error)
-    throw error
-  }
+  return new Promise((resolve, reject) => {
+    Geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        })
+      },
+      (error) => {
+        console.error("Geolocation error:", error)
+        reject(error)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 10000,
+      }
+    )
+  })
 }
 
 /**
@@ -67,23 +89,27 @@ export const getCurrentLocation = async (): Promise<Coordinates> => {
 export const watchLocation = async (
   onLocationUpdate: (coords: Coordinates) => void,
   onError?: (error: any) => void
-): Promise<Location.LocationSubscription> => {
+): Promise<number> => {
   try {
-    const subscription = await Location.watchPositionAsync(
-      {
-        accuracy: Location.Accuracy.High,
-        distanceInterval: 10, // Update every 10 meters
-        timeInterval: 5000, // Update every 5 seconds
-      },
-      (location) => {
+    const watchId = Geolocation.watchPosition(
+      (position) => {
         onLocationUpdate({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          accuracy: location.coords.accuracy,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
         })
+      },
+      (error) => {
+        console.error("Watch location error:", error)
+        if (onError) onError(error)
+      },
+      {
+        enableHighAccuracy: true,
+        distanceFilter: 10, // Update every 10 meters
+        interval: 5000, // Update every 5 seconds
       }
     )
-    return subscription
+    return watchId
   } catch (error) {
     console.error("Watch location error:", error)
     if (onError) onError(error)
@@ -94,8 +120,8 @@ export const watchLocation = async (
 /**
  * Clear location watch
  */
-export const clearLocationWatch = (subscription: Location.LocationSubscription) => {
-  subscription.remove()
+export const clearLocationWatch = (watchId: number) => {
+  Geolocation.clearWatch(watchId)
 }
 
 /**

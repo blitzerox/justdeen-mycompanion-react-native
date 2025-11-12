@@ -31,6 +31,7 @@ export type PrayStackParamList = {
   PrayerTimingSettings: undefined
   NotificationSettings: undefined
   IslamicCalendar: undefined
+  TasbihCounter: undefined
 }
 
 /**
@@ -126,6 +127,7 @@ export type SettingsStackParamList = {
  */
 export type MoreStackParamList = {
   MoreHome: undefined
+  Achievements: undefined
   SettingsHome: undefined
   ProfileSettings: undefined
   ThemeSettings: undefined

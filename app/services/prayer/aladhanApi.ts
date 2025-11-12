@@ -21,6 +21,9 @@ export interface PrayerTime {
   name: string
   time: string // HH:MM format
   timestamp: number
+  isTrackable?: boolean // Whether this prayer can be tracked (Fajr, Dhuhr, Asr, Maghrib, Isha)
+  endTime?: string // End time for the prayer window
+  duration?: string // Duration text (e.g., "2h 55m")
 }
 
 export interface PrayerTimesResponse {
@@ -222,33 +225,105 @@ export class AlAdhanApi {
     const { timings, date } = response.data
     const dateTimestamp = parseInt(date.timestamp, 10) * 1000
 
-    return [
+    // Calculate Tahajjud (last third of night - between Isha and Fajr)
+    const ishaTime = this.parseTimeToTimestamp(timings.Isha, dateTimestamp)
+    const fajrTime = this.parseTimeToTimestamp(timings.Fajr, dateTimestamp)
+    const lastThird = ishaTime + (fajrTime - ishaTime) * (2 / 3)
+    const tahajjudTime = new Date(lastThird)
+
+    const prayers: PrayerTime[] = [
+      {
+        name: "Tahajjud",
+        time: `${String(tahajjudTime.getHours()).padStart(2, "0")}:${String(tahajjudTime.getMinutes()).padStart(2, "0")}`,
+        timestamp: lastThird,
+        isTrackable: false,
+        endTime: timings.Fajr.split(" ")[0],
+        duration: this.calculateDuration(lastThird, fajrTime),
+      },
+      {
+        name: "Imsak",
+        time: timings.Imsak.split(" ")[0],
+        timestamp: this.parseTimeToTimestamp(timings.Imsak, dateTimestamp),
+        isTrackable: false,
+      },
       {
         name: "Fajr",
-        time: timings.Fajr.split(" ")[0], // Remove timezone
+        time: timings.Fajr.split(" ")[0],
         timestamp: this.parseTimeToTimestamp(timings.Fajr, dateTimestamp),
+        isTrackable: true,
+        endTime: timings.Sunrise.split(" ")[0],
+        duration: this.calculateDuration(
+          this.parseTimeToTimestamp(timings.Fajr, dateTimestamp),
+          this.parseTimeToTimestamp(timings.Sunrise, dateTimestamp)
+        ),
+      },
+      {
+        name: "Sunrise",
+        time: timings.Sunrise.split(" ")[0],
+        timestamp: this.parseTimeToTimestamp(timings.Sunrise, dateTimestamp),
+        isTrackable: false,
       },
       {
         name: "Dhuhr",
         time: timings.Dhuhr.split(" ")[0],
         timestamp: this.parseTimeToTimestamp(timings.Dhuhr, dateTimestamp),
+        isTrackable: true,
+        endTime: timings.Asr.split(" ")[0],
+        duration: this.calculateDuration(
+          this.parseTimeToTimestamp(timings.Dhuhr, dateTimestamp),
+          this.parseTimeToTimestamp(timings.Asr, dateTimestamp)
+        ),
       },
       {
         name: "Asr",
         time: timings.Asr.split(" ")[0],
         timestamp: this.parseTimeToTimestamp(timings.Asr, dateTimestamp),
+        isTrackable: true,
+        endTime: timings.Maghrib.split(" ")[0],
+        duration: this.calculateDuration(
+          this.parseTimeToTimestamp(timings.Asr, dateTimestamp),
+          this.parseTimeToTimestamp(timings.Maghrib, dateTimestamp)
+        ),
       },
       {
         name: "Maghrib",
         time: timings.Maghrib.split(" ")[0],
         timestamp: this.parseTimeToTimestamp(timings.Maghrib, dateTimestamp),
+        isTrackable: true,
+        endTime: timings.Isha.split(" ")[0],
+        duration: this.calculateDuration(
+          this.parseTimeToTimestamp(timings.Maghrib, dateTimestamp),
+          this.parseTimeToTimestamp(timings.Isha, dateTimestamp)
+        ),
       },
       {
         name: "Isha",
         time: timings.Isha.split(" ")[0],
         timestamp: this.parseTimeToTimestamp(timings.Isha, dateTimestamp),
+        isTrackable: true,
+        endTime: timings.Midnight.split(" ")[0],
+        duration: this.calculateDuration(
+          this.parseTimeToTimestamp(timings.Isha, dateTimestamp),
+          this.parseTimeToTimestamp(timings.Midnight, dateTimestamp)
+        ),
       },
     ]
+
+    return prayers
+  }
+
+  /**
+   * Helper: Calculate duration between two timestamps
+   */
+  private calculateDuration(startTime: number, endTime: number): string {
+    const durationMs = endTime - startTime
+    const hours = Math.floor(durationMs / (1000 * 60 * 60))
+    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60))
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`
+    }
+    return `${minutes}m`
   }
 
   /**

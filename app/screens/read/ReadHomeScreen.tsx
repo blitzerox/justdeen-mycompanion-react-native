@@ -16,10 +16,12 @@ import {
   ImageBackground,
   Image,
 } from "react-native"
+import type { ViewStyle } from "react-native"
 import { Screen, Icon } from "@/components"
-import { useAppTheme } from "@/theme/context"
+import { QuranProgressCard } from "@/components/stats/QuranProgressCard"
 import { FontAwesome6 } from "@expo/vector-icons"
 import type { ReadStackScreenProps } from "@/navigators"
+import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 
 const { width } = Dimensions.get("window")
@@ -44,7 +46,8 @@ interface LibraryCard {
 }
 
 export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ navigation }) => {
-  const { themed, theme: { colors } } = useAppTheme()
+  const { themed, theme } = useAppTheme()
+  const colors = theme.colors
   const [isNowReadingGridView, setIsNowReadingGridView] = React.useState(false)
 
   const libraryCards: LibraryCard[] = [
@@ -95,25 +98,25 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
   ]
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={themed($container(colors))}>
+  <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={themed($container)}>
       {/* Custom Header */}
       <View style={themed($header)}>
         <View style={themed($headerLeft)}>
-          <View style={themed($avatar(colors))}>
+          <View style={themed($avatar)}>
             <FontAwesome6 name="book-quran" size={20} color={colors.read} solid />
           </View>
-          <Text style={themed($greeting(colors))}>Read</Text>
+          <Text style={themed($greeting)}>Read</Text>
         </View>
         <View style={themed($headerRight)}>
           <TouchableOpacity
-            style={themed($iconButton(colors))}
+            style={themed($iconButton)}
             onPress={() => navigation.navigate("BookmarksList")}
             activeOpacity={0.7}
           >
             <FontAwesome6 name="bookmark" size={20} color={colors.read} solid />
           </TouchableOpacity>
           <TouchableOpacity
-            style={themed($iconButton(colors))}
+            style={themed($iconButton)}
             onPress={() => navigation.navigate("ReadingHistory")}
             activeOpacity={0.7}
           >
@@ -127,9 +130,12 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
+        {/* Quran Progress Card */}
+        <QuranProgressCard onContinueReading={() => navigation.navigate("QuranHome")} />
+
         {/* Library Section */}
-        <View style={themed($section)}>
-          <Text style={themed($sectionTitle(colors))}>Library</Text>
+  <View style={themed($section)}>
+          <Text style={themed($sectionTitle)}>Library</Text>
 
           <ScrollView
             horizontal
@@ -139,7 +145,7 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
             {libraryCards.map((card) => (
               <TouchableOpacity
                 key={card.id}
-                onPress={() => navigation.navigate(card.route)}
+                onPress={() => navigation.navigate(card.route as any)}
                 activeOpacity={0.8}
                 style={themed($libraryCardContainer)}
               >
@@ -151,16 +157,16 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
                   resizeMode="cover"
                 >
                   {/* Decorative corner ornaments */}
-                  <View style={themed($cardOrnament("top-left"))} />
-                  <View style={themed($cardOrnament("top-right"))} />
-                  <View style={themed($cardOrnament("bottom-left"))} />
-                  <View style={themed($cardOrnament("bottom-right"))} />
+                  <View style={$cardOrnament("top-left")} />
+                  <View style={$cardOrnament("top-right")} />
+                  <View style={$cardOrnament("bottom-left")} />
+                  <View style={$cardOrnament("bottom-right")} />
                 </ImageBackground>
 
                 {/* Title below image */}
                 <View style={themed($cardTitleContainer)}>
-                  <Text style={themed($cardTitle(colors))}>{card.title}</Text>
-                  <Text style={themed($cardSubtitle(colors))}>{card.subtitle}</Text>
+                  <Text style={themed($cardTitle)}>{card.title}</Text>
+                  <Text style={themed($cardSubtitle)}>{card.subtitle}</Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -170,14 +176,14 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
         {/* Now Reading Section */}
         <View style={themed($section)}>
           <View style={themed($sectionHeader)}>
-            <Text style={themed($sectionTitle(colors))}>Now Reading</Text>
+            <Text style={themed($sectionTitle)}>Now Reading</Text>
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => setIsNowReadingGridView(!isNowReadingGridView)}
             >
-              <View style={themed($listButton(colors))}>
+              <View style={themed($listButton)}>
                 <Icon icon={isNowReadingGridView ? "view" : "menu"} size={16} color={colors.read} />
-                <Text style={themed($listButtonText(colors))}>
+                <Text style={themed($listButtonText)}>
                   {isNowReadingGridView ? "List" : "Grid"}
                 </Text>
               </View>
@@ -192,58 +198,58 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
             >
               {/* Quran Card */}
               <TouchableOpacity
-                style={themed($nowReadingGridCard(colors))}
+                style={themed($nowReadingGridCard)}
                 onPress={() => navigation.navigate("QuranHome")}
                 activeOpacity={0.7}
               >
-                <View style={themed($nowReadingIconContainer(colors.read))}>
-                  <Icon icon="book" size={32} color="#FFFFFF" />
+                <View style={$nowReadingIconContainer(colors.read)}>
+                  <Icon icon="view" size={32} color="#FFFFFF" />
                 </View>
                 <View style={themed($nowReadingGridInfo)}>
-                  <Text style={themed($nowReadingTitle(colors))}>Quran</Text>
-                  <Text style={themed($nowReadingSubtitle(colors))}>Start reading</Text>
+                  <Text style={themed($nowReadingTitle)}>Quran</Text>
+                  <Text style={themed($nowReadingSubtitle)}>Start reading</Text>
                 </View>
               </TouchableOpacity>
 
               {/* Tafsir Card */}
               <TouchableOpacity
-                style={themed($nowReadingGridCard(colors))}
+                style={themed($nowReadingGridCard)}
                 activeOpacity={0.7}
               >
-                <View style={themed($nowReadingIconContainer("#F4A261"))}>
+                <View style={$nowReadingIconContainer("#F4A261") }>
                   <Icon icon="ladybug" size={32} color="#FFFFFF" />
                 </View>
                 <View style={themed($nowReadingGridInfo)}>
-                  <Text style={themed($nowReadingTitle(colors))}>Tafsir</Text>
-                  <Text style={themed($nowReadingSubtitle(colors))}>Coming soon</Text>
+                  <Text style={themed($nowReadingTitle)}>Tafsir</Text>
+                  <Text style={themed($nowReadingSubtitle)}>Coming soon</Text>
                 </View>
               </TouchableOpacity>
 
               {/* Hadith Card */}
               <TouchableOpacity
-                style={themed($nowReadingGridCard(colors))}
+                style={themed($nowReadingGridCard)}
                 activeOpacity={0.7}
               >
-                <View style={themed($nowReadingIconContainer("#2A9D8F"))}>
+                <View style={$nowReadingIconContainer("#2A9D8F") }>
                   <Icon icon="community" size={32} color="#FFFFFF" />
                 </View>
                 <View style={themed($nowReadingGridInfo)}>
-                  <Text style={themed($nowReadingTitle(colors))}>Hadith</Text>
-                  <Text style={themed($nowReadingSubtitle(colors))}>Coming soon</Text>
+                  <Text style={themed($nowReadingTitle)}>Hadith</Text>
+                  <Text style={themed($nowReadingSubtitle)}>Coming soon</Text>
                 </View>
               </TouchableOpacity>
 
               {/* Daily Dua Card */}
               <TouchableOpacity
-                style={themed($nowReadingGridCard(colors))}
+                style={themed($nowReadingGridCard)}
                 activeOpacity={0.7}
               >
-                <View style={themed($nowReadingIconContainer(colors.reflect))}>
+                <View style={$nowReadingIconContainer(colors.reflect)}>
                   <Icon icon="heart" size={32} color="#FFFFFF" />
                 </View>
                 <View style={themed($nowReadingGridInfo)}>
-                  <Text style={themed($nowReadingTitle(colors))}>Daily Dua</Text>
-                  <Text style={themed($nowReadingSubtitle(colors))}>Coming soon</Text>
+                  <Text style={themed($nowReadingTitle)}>Daily Dua</Text>
+                  <Text style={themed($nowReadingSubtitle)}>Coming soon</Text>
                 </View>
               </TouchableOpacity>
             </ScrollView>
@@ -251,61 +257,61 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
             <View style={themed($nowReadingCards)}>
             {/* Quran Progress Card */}
             <TouchableOpacity
-              style={themed($nowReadingCard(colors))}
+              style={themed($nowReadingCard)}
               onPress={() => navigation.navigate("QuranHome")}
               activeOpacity={0.7}
             >
-              <View style={themed($nowReadingIconContainer(colors.read))}>
-                <Icon icon="book" size={32} color="#FFFFFF" />
+              <View style={$nowReadingIconContainer(colors.read)}>
+                <Icon icon="view" size={32} color="#FFFFFF" />
               </View>
               <View style={themed($nowReadingInfo)}>
-                <Text style={themed($nowReadingTitle(colors))}>Quran</Text>
-                <Text style={themed($nowReadingSubtitle(colors))}>Start reading</Text>
+                <Text style={themed($nowReadingTitle)}>Quran</Text>
+                <Text style={themed($nowReadingSubtitle)}>Start reading</Text>
               </View>
               <Icon icon="caretRight" size={20} color={colors.textDim} />
             </TouchableOpacity>
 
             {/* Tafsir Progress Card */}
             <TouchableOpacity
-              style={themed($nowReadingCard(colors))}
+              style={themed($nowReadingCard)}
               activeOpacity={0.7}
             >
-              <View style={themed($nowReadingIconContainer("#F4A261"))}>
+              <View style={$nowReadingIconContainer("#F4A261") }>
                 <Icon icon="ladybug" size={32} color="#FFFFFF" />
               </View>
               <View style={themed($nowReadingInfo)}>
-                <Text style={themed($nowReadingTitle(colors))}>Tafsir</Text>
-                <Text style={themed($nowReadingSubtitle(colors))}>Coming soon</Text>
+                <Text style={themed($nowReadingTitle)}>Tafsir</Text>
+                <Text style={themed($nowReadingSubtitle)}>Coming soon</Text>
               </View>
               <Icon icon="caretRight" size={20} color={colors.textDim} />
             </TouchableOpacity>
 
             {/* Hadith Progress Card */}
             <TouchableOpacity
-              style={themed($nowReadingCard(colors))}
+              style={themed($nowReadingCard)}
               activeOpacity={0.7}
             >
-              <View style={themed($nowReadingIconContainer("#2A9D8F"))}>
+              <View style={$nowReadingIconContainer("#2A9D8F") }>
                 <Icon icon="community" size={32} color="#FFFFFF" />
               </View>
               <View style={themed($nowReadingInfo)}>
-                <Text style={themed($nowReadingTitle(colors))}>Hadith</Text>
-                <Text style={themed($nowReadingSubtitle(colors))}>Coming soon</Text>
+                <Text style={themed($nowReadingTitle)}>Hadith</Text>
+                <Text style={themed($nowReadingSubtitle)}>Coming soon</Text>
               </View>
               <Icon icon="caretRight" size={20} color={colors.textDim} />
             </TouchableOpacity>
 
             {/* Daily Dua Progress Card */}
             <TouchableOpacity
-              style={themed($nowReadingCard(colors))}
+              style={themed($nowReadingCard)}
               activeOpacity={0.7}
             >
-              <View style={themed($nowReadingIconContainer(colors.reflect))}>
+              <View style={$nowReadingIconContainer(colors.reflect)}>
                 <Icon icon="heart" size={32} color="#FFFFFF" />
               </View>
               <View style={themed($nowReadingInfo)}>
-                <Text style={themed($nowReadingTitle(colors))}>Daily Dua</Text>
-                <Text style={themed($nowReadingSubtitle(colors))}>Coming soon</Text>
+                <Text style={themed($nowReadingTitle)}>Daily Dua</Text>
+                <Text style={themed($nowReadingSubtitle)}>Coming soon</Text>
               </View>
               <Icon icon="caretRight" size={20} color={colors.textDim} />
             </TouchableOpacity>
@@ -315,31 +321,31 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
 
         {/* Community Section */}
         <View style={themed($section)}>
-          <Text style={themed($sectionTitle(colors))}>Community</Text>
+          <Text style={themed($sectionTitle)}>Community</Text>
 
           <View style={themed($communityCards)}>
             {/* Create/Join Group Card */}
             <TouchableOpacity
-              style={themed($communityCard(colors))}
+              style={themed($communityCard)}
               onPress={() => navigation.navigate("ReadingGroups")}
               activeOpacity={0.7}
             >
-              <View style={themed($communityIconContainer(colors.read))}>
-                <Icon icon="add" size={28} color={colors.read} />
+              <View style={$communityIconContainer(colors.read)}>
+                <Icon icon="more" size={28} color={colors.read} />
               </View>
-              <Text style={themed($communityCardText(colors))}>Create or Join Group</Text>
+              <Text style={themed($communityCardText)}>Create or Join Group</Text>
             </TouchableOpacity>
 
             {/* Reading Groups Card */}
             <TouchableOpacity
-              style={themed($communityCard(colors))}
+              style={themed($communityCard)}
               onPress={() => navigation.navigate("ReadingGroups")}
               activeOpacity={0.7}
             >
-              <View style={themed($communityIconContainer("#6C5CE7"))}>
+              <View style={$communityIconContainer("#6C5CE7")}>
                 <Icon icon="community" size={28} color="#6C5CE7" />
               </View>
-              <Text style={themed($communityCardText(colors))}>My Reading Groups</Text>
+              <Text style={themed($communityCardText)}>My Reading Groups</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -352,37 +358,37 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
 }
 
 // Styles
-const $container: ThemedStyle<any> = (colors) => ({
+const $container: ThemedStyle<any> = (theme) => ({
   flex: 1,
-  backgroundColor: colors.background,
+  backgroundColor: theme.colors.background,
 })
 
-const $scrollView: ThemedStyle<any> = {
+const $scrollView: ThemedStyle<any> = () => ({
   flex: 1,
-}
+})
 
-const $section: ThemedStyle<any> = {
+const $section: ThemedStyle<any> = () => ({
   paddingTop: 24,
   paddingBottom: 8,
-}
+})
 
-const $sectionHeader: ThemedStyle<any> = {
+const $sectionHeader: ThemedStyle<any> = () => ({
   flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "center",
   paddingHorizontal: 16,
   marginBottom: 16,
-}
+})
 
-const $sectionTitle: ThemedStyle<any> = (colors) => ({
+const $sectionTitle: ThemedStyle<any> = (theme) => ({
   fontSize: 22,
   fontWeight: "700",
-  color: colors.text,
+  color: theme.colors.text,
   paddingHorizontal: 16,
   marginBottom: 16,
 })
 
-const $listButton: ThemedStyle<any> = (colors) => ({
+const $listButton: ThemedStyle<any> = (theme) => ({
   flexDirection: "row",
   alignItems: "center",
   gap: 4,
@@ -390,42 +396,42 @@ const $listButton: ThemedStyle<any> = (colors) => ({
   paddingVertical: 6,
   borderRadius: 8,
   borderWidth: 1,
-  borderColor: colors.read,
+  borderColor: theme.colors.read,
 })
 
-const $listButtonText: ThemedStyle<any> = (colors) => ({
+const $listButtonText: ThemedStyle<any> = (theme) => ({
   fontSize: 14,
   fontWeight: "600",
-  color: colors.read,
+  color: theme.colors.read,
 })
 
 // Library Cards
-const $libraryScrollContent: ThemedStyle<any> = {
+const $libraryScrollContent: ThemedStyle<any> = () => ({
   paddingHorizontal: 16,
   gap: 16,
-}
+})
 
-const $libraryCardContainer: ThemedStyle<any> = {
+const $libraryCardContainer: ThemedStyle<any> = () => ({
   width: CARD_WIDTH * 1.4,
-}
+})
 
-const $libraryCard: ThemedStyle<any> = {
+const $libraryCard: ThemedStyle<any> = () => ({
   width: CARD_WIDTH * 1.4,
   height: CARD_WIDTH * 2,
   borderRadius: 20,
   overflow: "hidden",
-}
+})
 
-const $libraryCardImage: ThemedStyle<any> = {
+const $libraryCardImage: ThemedStyle<any> = () => ({
   borderRadius: 20,
-}
+})
 
-const $cardTitleContainer: ThemedStyle<any> = {
+const $cardTitleContainer: ThemedStyle<any> = () => ({
   marginTop: 12,
   alignItems: "flex-start",
-}
+})
 
-const $cardOrnament: ThemedStyle<any> = (position: string) => {
+const $cardOrnament = (position: string): ViewStyle => {
   const base = {
     position: "absolute" as const,
     width: 40,
@@ -475,34 +481,34 @@ const $cardOrnament: ThemedStyle<any> = (position: string) => {
   }
 }
 
-const $cardTitle: ThemedStyle<any> = (colors) => ({
+const $cardTitle: ThemedStyle<any> = (theme) => ({
   fontSize: 17,
   fontWeight: "600",
-  color: colors.text,
+  color: theme.colors.text,
   marginBottom: 2,
 })
 
-const $cardSubtitle: ThemedStyle<any> = (colors) => ({
+const $cardSubtitle: ThemedStyle<any> = (theme) => ({
   fontSize: 13,
-  color: colors.textDim,
+  color: theme.colors.textDim,
 })
 
 // Now Reading Cards - List View
-const $nowReadingCards: ThemedStyle<any> = {
+const $nowReadingCards: ThemedStyle<any> = () => ({
   paddingHorizontal: 16,
   gap: 12,
-}
+})
 
-const $nowReadingCard: ThemedStyle<any> = (colors) => ({
+const $nowReadingCard: ThemedStyle<any> = (theme) => ({
   flexDirection: "row",
   alignItems: "center",
-  backgroundColor: colors.palette.surface,
+  backgroundColor: theme.colors.palette.surface,
   padding: 16,
   borderRadius: 16,
   gap: 12,
 })
 
-const $nowReadingIconContainer: ThemedStyle<any> = (color: string) => ({
+const $nowReadingIconContainer = (color: string): ViewStyle => ({
   width: 64,
   height: 64,
   borderRadius: 32,
@@ -511,51 +517,51 @@ const $nowReadingIconContainer: ThemedStyle<any> = (color: string) => ({
   justifyContent: "center",
 })
 
-const $nowReadingInfo: ThemedStyle<any> = {
+const $nowReadingInfo: ThemedStyle<any> = () => ({
   flex: 1,
-}
+})
 
-const $nowReadingTitle: ThemedStyle<any> = (colors) => ({
+const $nowReadingTitle: ThemedStyle<any> = (theme) => ({
   fontSize: 17,
   fontWeight: "600",
-  color: colors.text,
+  color: theme.colors.text,
   marginBottom: 4,
 })
 
-const $nowReadingSubtitle: ThemedStyle<any> = (colors) => ({
+const $nowReadingSubtitle: ThemedStyle<any> = (theme) => ({
   fontSize: 14,
-  color: colors.textDim,
+  color: theme.colors.textDim,
 })
 
 // Now Reading Cards - Grid View (Horizontal)
-const $nowReadingGridContent: ThemedStyle<any> = {
+const $nowReadingGridContent: ThemedStyle<any> = () => ({
   paddingHorizontal: 16,
   gap: 12,
-}
+})
 
-const $nowReadingGridCard: ThemedStyle<any> = (colors) => ({
+const $nowReadingGridCard: ThemedStyle<any> = (theme) => ({
   width: 180,
-  backgroundColor: colors.palette.surface,
+  backgroundColor: theme.colors.palette.surface,
   padding: 16,
   borderRadius: 16,
   gap: 12,
   alignItems: "center",
 })
 
-const $nowReadingGridInfo: ThemedStyle<any> = {
+const $nowReadingGridInfo: ThemedStyle<any> = () => ({
   alignItems: "center",
-}
+})
 
 // Community Cards
-const $communityCards: ThemedStyle<any> = {
+const $communityCards: ThemedStyle<any> = () => ({
   flexDirection: "row",
   paddingHorizontal: 16,
   gap: 12,
-}
+})
 
-const $communityCard: ThemedStyle<any> = (colors) => ({
+const $communityCard: ThemedStyle<any> = (theme) => ({
   flex: 1,
-  backgroundColor: colors.palette.surface,
+  backgroundColor: theme.colors.palette.surface,
   padding: 20,
   borderRadius: 16,
   alignItems: "center",
@@ -563,7 +569,7 @@ const $communityCard: ThemedStyle<any> = (colors) => ({
   minHeight: 140,
 })
 
-const $communityIconContainer: ThemedStyle<any> = (color: string) => ({
+const $communityIconContainer = (color: string): ViewStyle => ({
   width: 56,
   height: 56,
   borderRadius: 28,
@@ -573,59 +579,59 @@ const $communityIconContainer: ThemedStyle<any> = (color: string) => ({
   marginBottom: 12,
 })
 
-const $communityCardText: ThemedStyle<any> = (colors) => ({
+const $communityCardText: ThemedStyle<any> = (theme) => ({
   fontSize: 14,
   fontWeight: "600",
-  color: colors.text,
+  color: theme.colors.text,
   textAlign: "center",
 })
 
 // Header Styles
-const $header: ThemedStyle<any> = {
+const $header: ThemedStyle<any> = () => ({
   flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "center",
   paddingHorizontal: 16,
   paddingTop: 8,
   paddingBottom: 16,
-}
+})
 
-const $headerLeft: ThemedStyle<any> = {
+const $headerLeft: ThemedStyle<any> = () => ({
   flexDirection: "row",
   alignItems: "center",
   gap: 12,
-}
+})
 
-const $avatar: ThemedStyle<any> = (colors) => ({
+const $avatar: ThemedStyle<any> = (theme) => ({
   width: 48,
   height: 48,
   borderRadius: 24,
-  backgroundColor: colors.read + "20",
+  backgroundColor: theme.colors.read + "20",
   alignItems: "center",
   justifyContent: "center",
 })
 
-const $greeting: ThemedStyle<any> = (colors) => ({
+const $greeting: ThemedStyle<any> = (theme) => ({
   fontSize: 24,
   fontWeight: "700",
-  color: colors.text,
+  color: theme.colors.text,
   lineHeight: 24,
 })
 
-const $headerRight: ThemedStyle<any> = {
+const $headerRight: ThemedStyle<any> = () => ({
   flexDirection: "row",
   gap: 12,
-}
+})
 
-const $iconButton: ThemedStyle<any> = (colors) => ({
+const $iconButton: ThemedStyle<any> = (theme) => ({
   width: 40,
   height: 40,
   borderRadius: 20,
-  backgroundColor: colors.palette.surface,
+  backgroundColor: theme.colors.palette.surface,
   alignItems: "center",
   justifyContent: "center",
 })
 
-const $footer: ThemedStyle<any> = {
+const $footer: ThemedStyle<any> = () => ({
   height: 32,
-}
+})

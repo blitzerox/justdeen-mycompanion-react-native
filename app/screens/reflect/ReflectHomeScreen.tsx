@@ -20,6 +20,7 @@ import {
   TextInput,
 } from "react-native"
 import { Screen, Icon } from "@/components"
+import { HomeStatsWidget } from "@/components/stats"
 import { useAppTheme } from "@/theme/context"
 import { useAuth } from "@/context/AuthContext"
 import { FontAwesome6 } from "@expo/vector-icons"
@@ -190,30 +191,12 @@ export const ReflectHomeScreen: React.FC<ReflectStackScreenProps<"ReflectHome">>
         style={themed($scrollView)}
         showsVerticalScrollIndicator={false}
       >
-        {/* Daily Stats Grid */}
-        <View style={themed($statsGrid)}>
-          {dailyStats.map((stat, index) => (
-            <TouchableOpacity
-              key={index}
-              style={themed($statCard(colors))}
-              activeOpacity={0.7}
-            >
-              <View style={themed($statIconContainer(stat.iconBg))}>
-                <FontAwesome6 name={stat.icon as any} size={20} color="#FFFFFF" solid />
-              </View>
-              {stat.change && (
-                <View style={themed($statChange(stat.isPositive))}>
-                  <Text style={themed($statChangeText(stat.isPositive, colors))}>
-                    {stat.change}
-                  </Text>
-                </View>
-              )}
-              <Text style={themed($statValue(colors))}>{stat.value}</Text>
-              <Text style={themed($statLabel(colors))}>{stat.label}</Text>
-              <Text style={themed($statSublabel(colors))}>{stat.sublabel}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {/* Stats Widget */}
+        <HomeStatsWidget
+          onPrayerPress={() => navigation.navigate("PrayTab")}
+          onQuranPress={() => navigation.navigate("ReadTab")}
+          onTasbihPress={() => navigation.navigate("PrayTab", { screen: "TasbihCounter" })}
+        />
 
         {/* Activity Tracker Section */}
         <View style={themed($section)}>

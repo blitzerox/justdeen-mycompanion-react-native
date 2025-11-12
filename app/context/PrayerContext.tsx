@@ -1,11 +1,15 @@
 /**
  * Prayer Context
  * Manages prayer times, location, and prayer-related state
+ * Integrated with user statistics and gamification
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import { Alert } from "react-native"
 import { aladhanApi, PrayerTime } from "../services/prayer/aladhanApi"
 import * as storage from "../utils/storage"
+import { PrayerTrackingStatus, PrayerTrackingRecord } from "../types/prayer"
+import { handlePrayerStatusChange, getPointsMessage } from "../utils/prayerStatsIntegration"
 
 interface Location {
   latitude: number
@@ -22,6 +26,12 @@ interface PrayerContextValue {
   // Location
   location: Location | null
   setLocation: (location: Location) => void
+
+  // Prayer tracking
+  prayerTracking: PrayerTrackingRecord
+  getPrayerStatus: (prayerName: string, date: Date) => PrayerTrackingStatus
+  setPrayerStatus: (prayerName: string, date: Date, status: PrayerTrackingStatus) => void
+  cyclePrayerStatus: (prayerName: string, date: Date) => PrayerTrackingStatus
 
   // Actions
   refreshPrayerTimes: () => Promise<void>
@@ -40,10 +50,12 @@ export const PrayerProvider: React.FC<PrayerProviderProps> = ({ children }) => {
   const [location, setLocationState] = useState<Location | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [prayerTracking, setPrayerTracking] = useState<PrayerTrackingRecord>({})
 
   // Load cached data on mount
   useEffect(() => {
     loadCachedData()
+    loadPrayerTracking()
   }, [])
 
   // Fetch prayer times when location changes
@@ -140,12 +152,122 @@ export const PrayerProvider: React.FC<PrayerProviderProps> = ({ children }) => {
     return pastPrayers[pastPrayers.length - 1] || null
   }
 
+  /**
+   * Load prayer tracking from storage
+   */
+  const loadPrayerTracking = async () => {
+    try {
+      const cachedTracking = storage.loadString("prayer.tracking")
+      if (cachedTracking) {
+        setPrayerTracking(JSON.parse(cachedTracking))
+      }
+    } catch (err) {
+      console.error("Failed to load prayer tracking:", err)
+    }
+  }
+
+  /**
+   * Save prayer tracking to storage
+   */
+  const savePrayerTracking = (tracking: PrayerTrackingRecord) => {
+    try {
+      storage.saveString("prayer.tracking", JSON.stringify(tracking))
+    } catch (err) {
+      console.error("Failed to save prayer tracking:", err)
+    }
+  }
+
+  /**
+   * Generate tracking key from prayer name and date
+   */
+  const getTrackingKey = (prayerName: string, date: Date): string => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, "0")
+    const day = String(date.getDate()).padStart(2, "0")
+    return `${year}-${month}-${day}:${prayerName}`
+  }
+
+  /**
+   * Get prayer status for a specific date
+   */
+  const getPrayerStatus = (prayerName: string, date: Date): PrayerTrackingStatus => {
+    const key = getTrackingKey(prayerName, date)
+    return prayerTracking[key] || PrayerTrackingStatus.NONE
+  }
+
+  /**
+   * Set prayer status for a specific date
+   */
+  const setPrayerStatus = (prayerName: string, date: Date, status: PrayerTrackingStatus) => {
+    const key = getTrackingKey(prayerName, date)
+    const newTracking = { ...prayerTracking }
+
+    if (status === PrayerTrackingStatus.NONE) {
+      delete newTracking[key]
+    } else {
+      newTracking[key] = status
+    }
+
+    setPrayerTracking(newTracking)
+    savePrayerTracking(newTracking)
+  }
+
+  /**
+   * Cycle through prayer statuses: NONE -> DONE -> LATE -> MISSED -> NONE
+   * Integrated with stats/gamification system
+   */
+  const cyclePrayerStatus = (prayerName: string, date: Date): PrayerTrackingStatus => {
+    const currentStatus = getPrayerStatus(prayerName, date)
+    let newStatus: PrayerTrackingStatus
+
+    switch (currentStatus) {
+      case PrayerTrackingStatus.NONE:
+        newStatus = PrayerTrackingStatus.DONE
+        break
+      case PrayerTrackingStatus.DONE:
+        newStatus = PrayerTrackingStatus.LATE
+        break
+      case PrayerTrackingStatus.LATE:
+        newStatus = PrayerTrackingStatus.MISSED
+        break
+      case PrayerTrackingStatus.MISSED:
+        newStatus = PrayerTrackingStatus.NONE
+        break
+      default:
+        newStatus = PrayerTrackingStatus.NONE
+    }
+
+    // Update prayer status
+    setPrayerStatus(prayerName, date, newStatus)
+
+    // Handle stats integration and award points
+    handlePrayerStatusChange(prayerName, date, newStatus, currentStatus)
+      .then((points) => {
+        if (points > 0) {
+          const message = getPointsMessage(prayerName, newStatus, points)
+          if (message) {
+            // Show success alert with points
+            Alert.alert("Prayer Marked! 🎉", message, [{ text: "OK" }])
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to update prayer stats:", error)
+      })
+
+    return newStatus
+  }
+
   const value: PrayerContextValue = {
     prayerTimes,
     loading,
     error,
     location,
     setLocation,
+    prayerTracking,
+    getPrayerStatus,
+    setPrayerStatus,
+    cyclePrayerStatus,
     refreshPrayerTimes,
     getNextPrayer,
     getCurrentPrayer,

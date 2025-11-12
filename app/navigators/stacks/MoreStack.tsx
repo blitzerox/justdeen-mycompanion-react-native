@@ -19,6 +19,7 @@ import { useAppTheme } from "@/theme/context"
 
 // Screens
 import { MoreHomeScreen } from "@/screens/more/MoreHomeScreen"
+import { AchievementsScreen } from "@/screens/more/AchievementsScreen"
 import { SettingsHomeScreen } from "@/screens/settings/SettingsHomeScreen"
 import { ProfileSettingsScreen } from "@/screens/settings/ProfileSettingsScreen"
 import { ThemeSettingsScreen } from "@/screens/settings/ThemeSettingsScreen"
@@ -60,6 +61,13 @@ export const MoreStackNavigator = () => {
         component={MoreHomeScreen}
         options={{
           headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="Achievements"
+        component={AchievementsScreen}
+        options={{
+          title: "Achievements",
         }}
       />
       <Stack.Screen

@@ -35,6 +35,8 @@ import type { PrayStackScreenProps } from "@/navigators"
 import type { ThemedStyle } from "@/theme/types"
 import { getCurrentLocation, requestLocationPermission, checkLocationPermission, LocationPermissionStatus } from "@/services/location/locationService"
 import { aladhanApi, PrayerTime } from "@/services/prayer/aladhanApi"
+import { PrayerTrackingStatus } from "@/types/prayer"
+import { PrayerStatsCard } from "@/components/stats/PrayerStatsCard"
 
 const { width } = Dimensions.get("window")
 
@@ -52,7 +54,7 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
 }) => {
   const { themed, theme: { colors } } = useAppTheme()
   const { user, isAuthenticated } = useAuth()
-  const { location, setLocation, getNextPrayer } = usePrayer()
+  const { location, setLocation, getNextPrayer, getPrayerStatus, cyclePrayerStatus } = usePrayer()
 
   const [loadingLocation, setLoadingLocation] = useState(false)
   const [permissionStatus, setPermissionStatus] = useState<LocationPermissionStatus>("undetermined")
@@ -365,24 +367,30 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
 
   const getPrayerIcon = (prayerName: string): any => {
     const icons: Record<string, any> = {
-      Fajr: "community",
-      Dhuhr: "heart",
-      Asr: "star",
-      Maghrib: "circle",
-      Isha: "check",
+      Tahajjud: "moon",
+      Imsak: "bell",
+      Fajr: "sun",
+      Sunrise: "sun",
+      Dhuhr: "sun",
+      Asr: "sun",
+      Maghrib: "moon",
+      Isha: "moon",
     }
     return icons[prayerName] || "heart"
   }
 
   const getPrayerColor = (prayerName: string, index: number): string => {
-    const colorPalette = [
-      "#FF6B6B", // Red/Pink
-      "#4ECDC4", // Teal
-      "#FFD93D", // Yellow
-      "#6C5CE7", // Purple
-      "#A8E6CF", // Mint Green
-    ]
-    return colorPalette[index % colorPalette.length]
+    const colors: Record<string, string> = {
+      Tahajjud: "#64C7F0",  // Light Blue/Cyan
+      Imsak: "#A78BFA",     // Purple
+      Fajr: "#5856D6",      // SF Purple
+      Sunrise: "#FFD60A",   // SF Yellow
+      Dhuhr: "#34C759",     // SF Green
+      Asr: "#FF9500",       // SF Orange
+      Maghrib: "#FF6B6B",   // Red/Pink
+      Isha: "#007AFF",      // SF Blue
+    }
+    return colors[prayerName] || "#4ECDC4"
   }
 
   const getTimeProgress = (time: string): number => {
@@ -409,6 +417,13 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
           <Text style={themed($greeting(colors))}>Pray</Text>
         </View>
         <View style={themed($headerRight)}>
+          <TouchableOpacity
+            style={themed($iconButton(colors))}
+            onPress={() => navigation.navigate("TasbihCounter")}
+            activeOpacity={0.7}
+          >
+            <FontAwesome6 name="hand" size={20} color={colors.pray} solid />
+          </TouchableOpacity>
           <TouchableOpacity
             style={themed($iconButton(colors))}
             onPress={() => navigation.navigate("QiblaCompass")}
@@ -525,6 +540,9 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
           </View>
         )}
 
+        {/* Prayer Stats Card */}
+        {!isLoading && location && <PrayerStatsCard />}
+
         {/* Loading State */}
         {isLoading && (
           <View style={themed($loadingContainer)}>
@@ -553,52 +571,76 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
               const isNext = nextPrayer?.name === prayer.name
               const prayerColor = getPrayerColor(prayer.name, index)
               const timeProgress = getTimeProgress(prayer.time)
+              const trackingStatus = getPrayerStatus(prayer.name, selectedDate)
+
+              const handleDotPress = () => {
+                if (prayer.isTrackable) {
+                  cyclePrayerStatus(prayer.name, selectedDate)
+                }
+              }
+
+              // Get icon color based on tracking status
+              // Use background color for contrast against the filled circle
+              const getStatusColor = () => {
+                switch (trackingStatus) {
+                  case PrayerTrackingStatus.DONE:
+                    return "#34C759" // Green
+                  case PrayerTrackingStatus.LATE:
+                    return "#FFD60A" // Yellow
+                  case PrayerTrackingStatus.MISSED:
+                    return "#FF3B30" // Red
+                  default:
+                    return colors.background // Use background color for contrast
+                }
+              }
 
               return (
                 <View key={prayer.name} style={themed($timelineRow)}>
-                  {/* Time Column */}
-                  <View style={themed($timeColumn)}>
-                    <Text style={themed($timeText(colors, isPast))}>
-                      {prayer.time.split(":")[0].padStart(2, "0")}:{prayer.time.split(":")[1]}
-                    </Text>
-                  </View>
-
                   {/* Timeline Line */}
                   <View style={themed($timelineLine)}>
-                    <View style={themed($timelineDot(prayerColor, isNext))} />
+                    <TouchableOpacity
+                      style={themed($timelineDot(colors, trackingStatus, isNext, prayer.isTrackable))}
+                      onPress={handleDotPress}
+                      disabled={!prayer.isTrackable}
+                      activeOpacity={0.7}
+                    >
+                      {prayer.isTrackable && trackingStatus === PrayerTrackingStatus.DONE ? (
+                        <FontAwesome6 name="check" size={18} color={getStatusColor()} solid />
+                      ) : prayer.isTrackable && trackingStatus === PrayerTrackingStatus.LATE ? (
+                        <FontAwesome6 name="clock" size={18} color={getStatusColor()} solid />
+                      ) : prayer.isTrackable && trackingStatus === PrayerTrackingStatus.MISSED ? (
+                        <FontAwesome6 name="xmark" size={18} color={getStatusColor()} solid />
+                      ) : null}
+                    </TouchableOpacity>
                     {index < prayerTimes.length - 1 && (
                       <View style={themed($timelineConnector(colors))} />
                     )}
                   </View>
 
                   {/* Prayer Card */}
-                  <TouchableOpacity
-                    style={themed($prayerCard(colors, prayerColor, isPast, isNext))}
-                    activeOpacity={0.7}
-                  >
-                    <View style={themed($cardHeader)}>
-                      <View style={themed($cardLeft)}>
-                        <View style={themed($prayerIconContainer(prayerColor))}>
-                          <Icon icon={getPrayerIcon(prayer.name)} size={20} color="#FFFFFF" />
-                        </View>
-                        <View>
-                          <Text style={themed($prayerCardName(colors, isPast))}>
-                            {prayer.name}
-                          </Text>
-                          <Text style={themed($prayerCardTime(colors, isPast))}>
-                            {formatTimeRange(prayer.time, 15)}
-                          </Text>
-                        </View>
-                      </View>
-                      <TouchableOpacity style={themed($checkButton(colors, isNext))}>
-                        <Icon
-                          icon="check"
-                          size={16}
-                          color={isNext ? colors.pray : colors.border}
-                        />
-                      </TouchableOpacity>
+                  <View style={themed($prayerCard(colors, prayerColor, isPast, isNext))}>
+                    <View style={themed($prayerIconContainer(prayerColor))}>
+                      <Icon icon={getPrayerIcon(prayer.name)} size={28} color={prayerColor} />
                     </View>
-                  </TouchableOpacity>
+                    <View style={themed($prayerInfoContainer)}>
+                      <Text style={themed($prayerStartTime(colors, isPast))}>
+                        {formatTime(prayer.time)}
+                      </Text>
+                      <View style={themed($prayerNameRow)}>
+                        <Text style={themed($prayerCardName(colors, isPast))}>
+                          {prayer.name}
+                        </Text>
+                        {prayer.isTrackable && (
+                          <FontAwesome6 name="circle-check" size={10} color={colors.textDim} solid style={{ marginLeft: 6 }} />
+                        )}
+                      </View>
+                      {prayer.endTime && (
+                        <Text style={themed($prayerCardTimeRange(colors, isPast))}>
+                          {formatTime(prayer.time)} - {formatTime(prayer.endTime)} {prayer.duration && `(${prayer.duration})`}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
                 </View>
               )
             })}
@@ -954,7 +996,8 @@ const $timeline: ThemedStyle<ViewStyle> = {
 
 const $timelineRow: ThemedStyle<ViewStyle> = {
   flexDirection: "row",
-  marginBottom: 12,
+  marginBottom: 0,
+  minHeight: 90,
 }
 
 const $timeColumn: ThemedStyle<ViewStyle> = {
@@ -974,77 +1017,149 @@ const $timelineLine: ThemedStyle<ViewStyle> = {
   width: 40,
   alignItems: "center",
   position: "relative",
+  justifyContent: "center",
 }
 
-const $timelineDot: ThemedStyle<ViewStyle> = (color: string, isNext: boolean) => ({
-  width: isNext ? 20 : 16,
-  height: isNext ? 20 : 16,
-  borderRadius: isNext ? 10 : 8,
-  backgroundColor: color,
-  zIndex: 1,
-  marginTop: 12,
-  borderWidth: isNext ? 3 : 0,
-  borderColor: "#FFFFFF",
-})
+const $timelineDot: ThemedStyle<ViewStyle> = (
+  colors,
+  trackingStatus: PrayerTrackingStatus,
+  isNext: boolean,
+  isTrackable?: boolean
+) => {
+  // Determine if this is a tracked prayer (has a status)
+  const hasTracking = trackingStatus !== PrayerTrackingStatus.NONE
+
+  // Non-trackable prayers: filled circle with theme color
+  if (isTrackable === false) {
+    return {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.text,
+      zIndex: 2,
+      borderWidth: 0,
+      alignItems: "center",
+      justifyContent: "center",
+    }
+  }
+
+  // Trackable prayers with tracking: filled circle with theme color (will have colored icon)
+  if (hasTracking) {
+    return {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.text,
+      zIndex: 2,
+      borderWidth: 0,
+      alignItems: "center",
+      justifyContent: "center",
+    }
+  }
+
+  // Trackable prayers without tracking: hollow circle (border only) with theme color
+  return {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "transparent",
+    zIndex: 2,
+    borderWidth: 3,
+    borderColor: colors.text,
+    alignItems: "center",
+    justifyContent: "center",
+  }
+}
+
+const $innerDot: ThemedStyle<ViewStyle> = {
+  width: 12,
+  height: 12,
+  borderRadius: 6,
+  backgroundColor: "#FFFFFF",
+}
 
 const $timelineConnector: ThemedStyle<ViewStyle> = (colors) => ({
   position: "absolute",
-  top: 28,
+  top: 0,
+  bottom: 0,
   left: "50%",
-  marginLeft: -1,
-  width: 2,
-  height: 60,
+  marginLeft: -1.5,
+  width: 3,
   backgroundColor: colors.border,
+  zIndex: 1,
 })
 
 const $prayerCard: ThemedStyle<ViewStyle> = (colors, prayerColor: string, isPast: boolean, isNext: boolean) => ({
   flex: 1,
   backgroundColor: colors.palette.surface,
-  borderRadius: 16,
+  borderRadius: 12,
   padding: 16,
   marginLeft: 8,
-  borderLeftWidth: 4,
-  borderLeftColor: prayerColor,
-  opacity: isPast ? 0.6 : 1,
-  shadowColor: isNext ? prayerColor : "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: isNext ? 0.2 : 0.05,
-  shadowRadius: 4,
-  elevation: isNext ? 3 : 1,
+  marginVertical: 6,
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 16,
+  opacity: isPast ? 0.7 : 1,
 })
 
-const $cardHeader: ThemedStyle<ViewStyle> = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-}
-
-const $cardLeft: ThemedStyle<ViewStyle> = {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: 12,
-  flex: 1,
-}
-
 const $prayerIconContainer: ThemedStyle<ViewStyle> = (color: string) => ({
-  width: 44,
-  height: 44,
-  borderRadius: 22,
-  backgroundColor: color,
+  width: 56,
+  height: 56,
+  borderRadius: 12,
+  backgroundColor: color + "20",
   alignItems: "center",
   justifyContent: "center",
 })
 
+const $prayerInfoContainer: ThemedStyle<ViewStyle> = {
+  flex: 1,
+  gap: 2,
+}
+
+const $prayerStartTime: ThemedStyle<TextStyle> = (colors, isPast: boolean) => ({
+  fontSize: 13,
+  fontWeight: "600",
+  color: colors.textDim,
+  lineHeight: 18,
+})
+
+const $prayerStatus: ThemedStyle<TextStyle> = (colors, isPast: boolean) => ({
+  fontSize: 11,
+  fontWeight: "500",
+  color: colors.textDim,
+  textTransform: "uppercase",
+  letterSpacing: 0.5,
+})
+
+const $prayerNameRow: ThemedStyle<ViewStyle> = {
+  flexDirection: "row",
+  alignItems: "center",
+}
+
 const $prayerCardName: ThemedStyle<TextStyle> = (colors, isPast: boolean) => ({
-  fontSize: 16,
+  fontSize: 17,
   fontWeight: "600",
   color: colors.text,
-  marginBottom: 2,
 })
 
 const $prayerCardTime: ThemedStyle<TextStyle> = (colors, isPast: boolean) => ({
-  fontSize: 13,
+  fontSize: 12,
   color: colors.textDim,
+  lineHeight: 16,
+})
+
+const $prayerCardTimeRange: ThemedStyle<TextStyle> = (colors, isPast: boolean) => ({
+  fontSize: 12,
+  color: colors.textDim,
+  lineHeight: 16,
+  marginTop: 2,
+})
+
+const $prayerCardDuration: ThemedStyle<TextStyle> = (colors, isPast: boolean) => ({
+  fontSize: 11,
+  color: colors.textDim,
+  lineHeight: 14,
+  marginTop: 2,
 })
 
 const $checkButton: ThemedStyle<ViewStyle> = (colors, isChecked: boolean) => ({

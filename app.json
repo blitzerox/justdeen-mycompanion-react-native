@@ -50,6 +50,14 @@
     "expo-localization",
     "expo-font",
     [
+      "expo-location",
+      {
+        "locationAlwaysAndWhenInUsePermission": "We need your location to show accurate prayer times and send prayer time notifications.",
+        "locationAlwaysPermission": "We need your location to show accurate prayer times and send prayer time notifications.",
+        "locationWhenInUsePermission": "We need your location to show accurate prayer times for your area."
+      }
+    ],
+    [
       "expo-splash-screen",
       {
         "image": "./assets/images/app-icon-android-adaptive-foreground.png",
