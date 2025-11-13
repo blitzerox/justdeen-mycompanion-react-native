@@ -5,6 +5,7 @@
  */
 
 export * from "./AppNavigator"
+export * from "./DrawerNavigator"
 export * from "./TabNavigator"
 export * from "./navigationTypes"
 export * from "./navigationUtilities"

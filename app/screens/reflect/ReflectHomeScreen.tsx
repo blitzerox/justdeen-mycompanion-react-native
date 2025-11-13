@@ -20,11 +20,14 @@ import {
   TextInput,
 } from "react-native"
 import { Screen, Icon } from "@/components"
-import { HomeStatsWidget } from "@/components/stats"
+import { HomeStatsWidget, LevelCard } from "@/components/stats"
 import { useAppTheme } from "@/theme/context"
 import { useAuth } from "@/context/AuthContext"
 import { FontAwesome6 } from "@expo/vector-icons"
+import { useNavigation } from "@react-navigation/native"
+import { DrawerNavigationProp } from "@react-navigation/drawer"
 import type { ReflectStackScreenProps } from "@/navigators"
+import type { DrawerParamList } from "@/navigators/navigationTypes"
 import type { ThemedStyle } from "@/theme/types"
 
 const { width } = Dimensions.get("window")
@@ -51,6 +54,7 @@ interface SpiritualMetric {
 export const ReflectHomeScreen: React.FC<ReflectStackScreenProps<"ReflectHome">> = ({ navigation }) => {
   const { themed, theme: { colors } } = useAppTheme()
   const { user, isAuthenticated } = useAuth()
+  const drawerNavigation = useNavigation<DrawerNavigationProp<DrawerParamList>>()
 
   // Mock data - replace with actual user stats from backend
   const [activityType, setActivityType] = useState<"Prayers" | "Quran" | "Dhikr">("Prayers")
@@ -153,9 +157,13 @@ export const ReflectHomeScreen: React.FC<ReflectStackScreenProps<"ReflectHome">>
       {/* Fixed Greeting Header */}
       <View style={themed($header)}>
         <View style={themed($headerLeft)}>
-          <View style={themed($avatar(colors))}>
-            <FontAwesome6 name="user" size={20} color={colors.home} />
-          </View>
+          <TouchableOpacity
+            style={themed($hamburger(colors))}
+            onPress={() => drawerNavigation.openDrawer()}
+            activeOpacity={0.7}
+          >
+            <FontAwesome6 name="bars" size={24} color={colors.home} />
+          </TouchableOpacity>
           <View>
             <Text style={themed($greeting(colors))}>
               {isAuthenticated && user?.displayName
@@ -191,12 +199,18 @@ export const ReflectHomeScreen: React.FC<ReflectStackScreenProps<"ReflectHome">>
         style={themed($scrollView)}
         showsVerticalScrollIndicator={false}
       >
-        {/* Stats Widget */}
-        <HomeStatsWidget
-          onPrayerPress={() => navigation.navigate("PrayTab")}
-          onQuranPress={() => navigation.navigate("ReadTab")}
-          onTasbihPress={() => navigation.navigate("PrayTab", { screen: "TasbihCounter" })}
-        />
+        {/* Level Card */}
+        <LevelCard />
+
+        {/* Today Section */}
+        <View style={themed($section)}>
+          <Text style={themed($sectionTitle(colors))}>Today</Text>
+          <HomeStatsWidget
+            onPrayerPress={() => navigation.navigate("PrayTab")}
+            onQuranPress={() => navigation.navigate("ReadTab")}
+            onTasbihPress={() => navigation.navigate("PrayTab", { screen: "TasbihCounter" })}
+          />
+        </View>
 
         {/* Activity Tracker Section */}
         <View style={themed($section)}>
@@ -370,28 +384,6 @@ export const ReflectHomeScreen: React.FC<ReflectStackScreenProps<"ReflectHome">>
           </View>
         </View>
 
-        {/* Overall Spiritual Score */}
-        <View style={themed($section)}>
-          <View style={themed($scoreCard(colors))}>
-            <View style={themed($scoreLeft)}>
-              <View style={themed($scoreIconContainer(colors))}>
-                <FontAwesome6 name="chart-simple" size={24} color={colors.home} />
-              </View>
-              <View>
-                <Text style={themed($scoreTitle(colors))}>Overall Spiritual Score</Text>
-                <Text style={themed($scoreSubtitle(colors))}>Based on your Islamic practices</Text>
-              </View>
-            </View>
-            <View style={themed($scoreRight)}>
-              <Text style={themed($scoreValue(colors))}>{overallScore}</Text>
-              <View style={themed($scoreChange(true))}>
-                <FontAwesome6 name="arrow-up" size={10} color="#4CAF50" />
-                <Text style={themed($scoreChangeText(colors))}>+{scoreChange}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
         {/* Bottom Spacer */}
         <View style={themed($bottomSpacer)} />
       </ScrollView>
@@ -533,6 +525,15 @@ const $headerLeft: ThemedStyle<any> = {
   alignItems: "center",
   gap: 12,
 }
+
+const $hamburger: ThemedStyle<any> = (colors) => ({
+  width: 48,
+  height: 48,
+  borderRadius: 24,
+  backgroundColor: colors.home + "20",
+  alignItems: "center",
+  justifyContent: "center",
+})
 
 const $avatar: ThemedStyle<any> = (colors) => ({
   width: 48,
@@ -1003,9 +1004,17 @@ const $scoreCard: ThemedStyle<any> = (colors) => ({
   backgroundColor: colors.palette.surface,
   borderRadius: 16,
   padding: 20,
+  marginHorizontal: 20,
+  marginTop: 12,
+  marginBottom: 6,
   flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "center",
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  elevation: 3,
 })
 
 const $scoreLeft: ThemedStyle<any> = {

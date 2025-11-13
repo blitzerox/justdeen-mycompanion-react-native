@@ -31,12 +31,14 @@ import { useAppTheme } from "@/theme/context"
 import { useAuth } from "@/context/AuthContext"
 import { usePrayer } from "@/context/PrayerContext"
 import { FontAwesome6 } from "@expo/vector-icons"
+import { useNavigation } from "@react-navigation/native"
+import { DrawerNavigationProp } from "@react-navigation/drawer"
 import type { PrayStackScreenProps } from "@/navigators"
+import type { DrawerParamList } from "@/navigators/navigationTypes"
 import type { ThemedStyle } from "@/theme/types"
 import { getCurrentLocation, requestLocationPermission, checkLocationPermission, LocationPermissionStatus } from "@/services/location/locationService"
 import { aladhanApi, PrayerTime } from "@/services/prayer/aladhanApi"
 import { PrayerTrackingStatus } from "@/types/prayer"
-import { PrayerStatsCard } from "@/components/stats/PrayerStatsCard"
 
 const { width } = Dimensions.get("window")
 
@@ -55,6 +57,7 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
   const { themed, theme: { colors } } = useAppTheme()
   const { user, isAuthenticated } = useAuth()
   const { location, setLocation, getNextPrayer, getPrayerStatus, cyclePrayerStatus } = usePrayer()
+  const drawerNavigation = useNavigation<DrawerNavigationProp<DrawerParamList>>()
 
   const [loadingLocation, setLoadingLocation] = useState(false)
   const [permissionStatus, setPermissionStatus] = useState<LocationPermissionStatus>("undetermined")
@@ -411,9 +414,13 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
       {/* Custom Header */}
       <View style={themed($header)}>
         <View style={themed($headerLeft)}>
-          <View style={themed($avatar(colors))}>
-            <FontAwesome6 name="person-praying" size={20} color={colors.pray} solid />
-          </View>
+          <TouchableOpacity
+            style={themed($hamburger(colors))}
+            onPress={() => drawerNavigation.openDrawer()}
+            activeOpacity={0.7}
+          >
+            <FontAwesome6 name="bars" size={24} color={colors.pray} />
+          </TouchableOpacity>
           <Text style={themed($greeting(colors))}>Pray</Text>
         </View>
         <View style={themed($headerRight)}>
@@ -539,9 +546,6 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
             </TouchableOpacity>
           </View>
         )}
-
-        {/* Prayer Stats Card */}
-        {!isLoading && location && <PrayerStatsCard />}
 
         {/* Loading State */}
         {isLoading && (
@@ -769,6 +773,15 @@ const $headerLeft: ThemedStyle<ViewStyle> = {
   alignItems: "center",
   gap: 12,
 }
+
+const $hamburger: ThemedStyle<ViewStyle> = (colors) => ({
+  width: 48,
+  height: 48,
+  borderRadius: 24,
+  backgroundColor: colors.pray + "20",
+  alignItems: "center",
+  justifyContent: "center",
+})
 
 const $avatar: ThemedStyle<ViewStyle> = (colors) => ({
   width: 48,

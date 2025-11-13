@@ -18,9 +18,11 @@ import {
 } from "react-native"
 import type { ViewStyle } from "react-native"
 import { Screen, Icon } from "@/components"
-import { QuranProgressCard } from "@/components/stats/QuranProgressCard"
 import { FontAwesome6 } from "@expo/vector-icons"
+import { useNavigation } from "@react-navigation/native"
+import { DrawerNavigationProp } from "@react-navigation/drawer"
 import type { ReadStackScreenProps } from "@/navigators"
+import type { DrawerParamList } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 
@@ -48,6 +50,7 @@ interface LibraryCard {
 export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ navigation }) => {
   const { themed, theme } = useAppTheme()
   const colors = theme.colors
+  const drawerNavigation = useNavigation<DrawerNavigationProp<DrawerParamList>>()
   const [isNowReadingGridView, setIsNowReadingGridView] = React.useState(false)
 
   const libraryCards: LibraryCard[] = [
@@ -102,9 +105,13 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
       {/* Custom Header */}
       <View style={themed($header)}>
         <View style={themed($headerLeft)}>
-          <View style={themed($avatar)}>
-            <FontAwesome6 name="book-quran" size={20} color={colors.read} solid />
-          </View>
+          <TouchableOpacity
+            style={themed($hamburger)}
+            onPress={() => drawerNavigation.openDrawer()}
+            activeOpacity={0.7}
+          >
+            <FontAwesome6 name="bars" size={24} color={colors.read} />
+          </TouchableOpacity>
           <Text style={themed($greeting)}>Read</Text>
         </View>
         <View style={themed($headerRight)}>
@@ -130,9 +137,6 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
-        {/* Quran Progress Card */}
-        <QuranProgressCard onContinueReading={() => navigation.navigate("QuranHome")} />
-
         {/* Library Section */}
   <View style={themed($section)}>
           <Text style={themed($sectionTitle)}>Library</Text>
@@ -602,7 +606,7 @@ const $headerLeft: ThemedStyle<any> = () => ({
   gap: 12,
 })
 
-const $avatar: ThemedStyle<any> = (theme) => ({
+const $hamburger: ThemedStyle<any> = (theme) => ({
   width: 48,
   height: 48,
   borderRadius: 24,

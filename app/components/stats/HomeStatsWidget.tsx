@@ -1,7 +1,7 @@
 /**
  * Home Stats Widget
- * Comprehensive statistics widget for the home screen
- * Shows prayer, Quran, tasbih stats, level, and streak
+ * Apple-style activity rings showing daily progress
+ * Shows prayer, Quran, and dhikr progress with concentric rings
  */
 
 import React from "react"
@@ -15,20 +15,18 @@ import { useUserStats } from "@/hooks/useUserStats"
 import { usePrayerTracking } from "@/hooks/usePrayerTracking"
 import { useQuranTracking } from "@/hooks/useQuranTracking"
 import { useTasbihCounter } from "@/hooks/useTasbihCounter"
-import { getLevelProgress, getPointsForNextLevel } from "@/utils/pointsCalculator"
+import Svg, { Circle } from "react-native-svg"
 
 interface HomeStatsWidgetProps {
   onPrayerPress?: () => void
   onQuranPress?: () => void
   onTasbihPress?: () => void
-  onLevelPress?: () => void
 }
 
 export const HomeStatsWidget: React.FC<HomeStatsWidgetProps> = ({
   onPrayerPress,
   onQuranPress,
   onTasbihPress,
-  onLevelPress,
 }) => {
   const { themed, theme: { colors } } = useAppTheme()
   const { stats, refreshStats } = useUserStats()
@@ -43,113 +41,151 @@ export const HomeStatsWidget: React.FC<HomeStatsWidgetProps> = ({
     }, [refreshStats])
   )
 
-  const levelProgress = getLevelProgress(stats.totalPoints)
-  const pointsForNextLevel = getPointsForNextLevel(stats.totalPoints)
+  // Goals (can be made dynamic later)
+  const prayerGoal = 5
+  const quranGoal = 2 // pages
+  const dhikrGoal = 100 // count
 
-  // Calculate max streak across all activities
-  const maxStreak = Math.max(
-    stats.prayersStreakDays,
-    quranStats.streakDays,
-    0 // Can add more streaks here
-  )
+  // Current values (using available data)
+  const prayerCurrent = todayPrayerCount
+  const quranCurrent = 0 // TODO: Add today's pages tracking
+  const dhikrCurrent = 0 // TODO: Add today's dhikr tracking
+
+  // Calculate progress percentages
+  const prayerProgress = Math.min((prayerCurrent / prayerGoal) * 100, 100)
+  const quranProgress = Math.min((quranCurrent / quranGoal) * 100, 100)
+  const dhikrProgress = Math.min((dhikrCurrent / dhikrGoal) * 100, 100)
+
+  // Ring dimensions for 3 concentric rings
+  const size = 120
+  const strokeWidth = 8
+  const gap = 4
+
+  // Outer ring (Prayers - largest)
+  const outerRadius = (size - strokeWidth) / 2
+  const outerCircumference = outerRadius * 2 * Math.PI
+  const outerDashoffset = outerCircumference - (prayerProgress / 100) * outerCircumference
+
+  // Middle ring (Quran)
+  const middleRadius = outerRadius - strokeWidth - gap
+  const middleCircumference = middleRadius * 2 * Math.PI
+  const middleDashoffset = middleCircumference - (quranProgress / 100) * middleCircumference
+
+  // Inner ring (Dhikr - smallest)
+  const innerRadius = middleRadius - strokeWidth - gap
+  const innerCircumference = innerRadius * 2 * Math.PI
+  const innerDashoffset = innerCircumference - (dhikrProgress / 100) * innerCircumference
 
   return (
     <View style={themed($container(colors))}>
-      {/* Title */}
-      <View style={themed($headerRow)}>
-        <FontAwesome6 name="chart-line" size={20} color={colors.home} solid />
-        <Text style={themed($title(colors))}>Your Progress</Text>
-      </View>
+      <View style={themed($content)}>
+        {/* Left side - Activity Rings */}
+        <View style={themed($ringsContainer)}>
+          <Svg width={size} height={size}>
+            {/* Outer Ring - Prayers (Red/Pink) */}
+            <Circle
+              stroke={colors.border}
+              fill="none"
+              cx={size / 2}
+              cy={size / 2}
+              r={outerRadius}
+              strokeWidth={strokeWidth}
+              opacity={0.3}
+            />
+            <Circle
+              stroke={colors.pray}
+              fill="none"
+              cx={size / 2}
+              cy={size / 2}
+              r={outerRadius}
+              strokeWidth={strokeWidth}
+              strokeDasharray={outerCircumference}
+              strokeDashoffset={outerDashoffset}
+              strokeLinecap="round"
+              rotation="-90"
+              origin={`${size / 2}, ${size / 2}`}
+            />
 
-      {/* Daily Stats Grid */}
-      <View style={themed($statsGrid)}>
-        {/* Prayers */}
-        <TouchableOpacity
-          style={themed($statCard(colors))}
-          onPress={onPrayerPress}
-          activeOpacity={0.7}
-        >
-          <View style={themed($statIconContainer(colors.pray))}>
-            <FontAwesome6 name="person-praying" size={20} color={colors.pray} solid />
-          </View>
-          <Text style={themed($statValue(colors))}>{todayPrayerCount}/5</Text>
-          <Text style={themed($statLabel(colors))}>Prayers</Text>
-          <Text style={themed($statSublabel(colors))}>Today</Text>
-        </TouchableOpacity>
+            {/* Middle Ring - Quran (Green) */}
+            <Circle
+              stroke={colors.border}
+              fill="none"
+              cx={size / 2}
+              cy={size / 2}
+              r={middleRadius}
+              strokeWidth={strokeWidth}
+              opacity={0.3}
+            />
+            <Circle
+              stroke={colors.read}
+              fill="none"
+              cx={size / 2}
+              cy={size / 2}
+              r={middleRadius}
+              strokeWidth={strokeWidth}
+              strokeDasharray={middleCircumference}
+              strokeDashoffset={middleDashoffset}
+              strokeLinecap="round"
+              rotation="-90"
+              origin={`${size / 2}, ${size / 2}`}
+            />
 
-        {/* Quran */}
-        <TouchableOpacity
-          style={themed($statCard(colors))}
-          onPress={onQuranPress}
-          activeOpacity={0.7}
-        >
-          <View style={themed($statIconContainer(colors.read))}>
-            <FontAwesome6 name="book-quran" size={20} color={colors.read} solid />
-          </View>
-          <Text style={themed($statValue(colors))}>{quranStats.totalPagesRead}</Text>
-          <Text style={themed($statLabel(colors))}>Quran</Text>
-          <Text style={themed($statSublabel(colors))}>Pages read</Text>
-        </TouchableOpacity>
-
-        {/* Tasbih */}
-        <TouchableOpacity
-          style={themed($statCard(colors))}
-          onPress={onTasbihPress}
-          activeOpacity={0.7}
-        >
-          <View style={themed($statIconContainer("#9C27B0"))}>
-            <FontAwesome6 name="hand" size={20} color="#9C27B0" solid />
-          </View>
-          <Text style={themed($statValue(colors))}>{tasbihStats.totalCount}</Text>
-          <Text style={themed($statLabel(colors))}>Dhikr</Text>
-          <Text style={themed($statSublabel(colors))}>Total count</Text>
-        </TouchableOpacity>
-
-        {/* Streak */}
-        <View style={themed($statCard(colors))}>
-          <View style={themed($statIconContainer("#FF6B35"))}>
-            <FontAwesome6 name="fire" size={20} color="#FF6B35" solid />
-          </View>
-          <Text style={themed($statValue(colors))}>{maxStreak}</Text>
-          <Text style={themed($statLabel(colors))}>Streak</Text>
-          <Text style={themed($statSublabel(colors))}>Days</Text>
+            {/* Inner Ring - Dhikr (Purple) */}
+            <Circle
+              stroke={colors.border}
+              fill="none"
+              cx={size / 2}
+              cy={size / 2}
+              r={innerRadius}
+              strokeWidth={strokeWidth}
+              opacity={0.3}
+            />
+            <Circle
+              stroke="#9C27B0"
+              fill="none"
+              cx={size / 2}
+              cy={size / 2}
+              r={innerRadius}
+              strokeWidth={strokeWidth}
+              strokeDasharray={innerCircumference}
+              strokeDashoffset={innerDashoffset}
+              strokeLinecap="round"
+              rotation="-90"
+              origin={`${size / 2}, ${size / 2}`}
+            />
+          </Svg>
         </View>
-      </View>
 
-      {/* Level & Progress Bar */}
-      <TouchableOpacity
-        style={themed($levelContainer(colors))}
-        onPress={onLevelPress}
-        activeOpacity={0.7}
-      >
-        <View style={themed($levelHeader)}>
-          <View style={themed($levelIconContainer)}>
-            <FontAwesome6 name="trophy" size={18} color="#FFD700" solid />
-          </View>
-          <Text style={themed($levelText(colors))}>Level {stats.level}</Text>
-          <View style={themed($spacer)} />
-          <View style={themed($pointsBadge(colors))}>
-            <FontAwesome6 name="star" size={12} color="#FFD700" solid />
-            <Text style={themed($pointsText(colors))}>{stats.totalPoints}</Text>
-          </View>
-        </View>
-
-        {/* Progress Bar */}
-        {pointsForNextLevel !== null && (
-          <View style={themed($progressContainer)}>
-            <View style={themed($progressBarBackground(colors))}>
-              <View style={themed($progressBarFill(colors, levelProgress))} />
+        {/* Right side - Progress Text */}
+        <View style={themed($statsText)}>
+          <TouchableOpacity onPress={onPrayerPress} activeOpacity={0.7}>
+            <View style={themed($statRow)}>
+              <View style={themed($colorDot(colors.pray))} />
+              <Text style={themed($statLabel(colors))}>
+                Prayers {prayerCurrent}/{prayerGoal}
+              </Text>
             </View>
-            <Text style={themed($progressText(colors))}>
-              {pointsForNextLevel} points to Level {stats.level + 1}
-            </Text>
-          </View>
-        )}
+          </TouchableOpacity>
 
-        {pointsForNextLevel === null && (
-          <Text style={themed($maxLevelText(colors))}>Maximum Level Reached! 🎉</Text>
-        )}
-      </TouchableOpacity>
+          <TouchableOpacity onPress={onQuranPress} activeOpacity={0.7}>
+            <View style={themed($statRow)}>
+              <View style={themed($colorDot(colors.read))} />
+              <Text style={themed($statLabel(colors))}>
+                Quran {quranCurrent}/{quranGoal}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={onTasbihPress} activeOpacity={0.7}>
+            <View style={themed($statRow)}>
+              <View style={themed($colorDot("#9C27B0"))} />
+              <Text style={themed($statLabel(colors))}>
+                Dhikr {dhikrCurrent}/{dhikrGoal}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   )
 }
@@ -158,9 +194,7 @@ export const HomeStatsWidget: React.FC<HomeStatsWidgetProps> = ({
 const $container: ThemedStyle<ViewStyle> = (colors) => ({
   backgroundColor: colors.palette.surface,
   borderRadius: 16,
-  padding: 16,
-  marginHorizontal: 20,
-  marginVertical: 12,
+  padding: 20,
   shadowColor: "#000",
   shadowOffset: { width: 0, height: 2 },
   shadowOpacity: 0.1,
@@ -168,139 +202,37 @@ const $container: ThemedStyle<ViewStyle> = (colors) => ({
   elevation: 3,
 })
 
-const $headerRow: ThemedStyle<ViewStyle> = {
+const $content: ThemedStyle<ViewStyle> = {
   flexDirection: "row",
   alignItems: "center",
-  marginBottom: 16,
-  gap: 8,
+  gap: 20,
 }
 
-const $title: ThemedStyle<TextStyle> = (colors) => ({
-  fontSize: 18,
-  fontWeight: "700",
-  color: colors.text,
-})
-
-const $statsGrid: ThemedStyle<ViewStyle> = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  marginBottom: 16,
-  gap: 8,
-}
-
-const $statCard: ThemedStyle<ViewStyle> = (colors) => ({
-  flex: 1,
-  alignItems: "center",
-  padding: 12,
-  backgroundColor: colors.background + "60",
-  borderRadius: 12,
-  minWidth: 70,
-})
-
-const $statIconContainer: ThemedStyle<ViewStyle> = (bgColor: string) => ({
-  width: 40,
-  height: 40,
-  borderRadius: 20,
-  backgroundColor: bgColor + "20",
+const $ringsContainer: ThemedStyle<ViewStyle> = {
   alignItems: "center",
   justifyContent: "center",
-  marginBottom: 8,
-})
+}
 
-const $statValue: ThemedStyle<TextStyle> = (colors) => ({
-  fontSize: 20,
-  fontWeight: "700",
-  color: colors.text,
-  marginBottom: 2,
+const $statsText: ThemedStyle<ViewStyle> = {
+  flex: 1,
+  gap: 8,
+}
+
+const $statRow: ThemedStyle<ViewStyle> = {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 8,
+}
+
+const $colorDot: ThemedStyle<ViewStyle> = (color: string) => ({
+  width: 8,
+  height: 8,
+  borderRadius: 4,
+  backgroundColor: color,
 })
 
 const $statLabel: ThemedStyle<TextStyle> = (colors) => ({
-  fontSize: 11,
-  fontWeight: "600",
+  fontSize: 15,
+  fontWeight: "500",
   color: colors.text,
-  marginBottom: 2,
-})
-
-const $statSublabel: ThemedStyle<TextStyle> = (colors) => ({
-  fontSize: 9,
-  color: colors.textDim,
-})
-
-const $levelContainer: ThemedStyle<ViewStyle> = (colors) => ({
-  backgroundColor: colors.background + "60",
-  borderRadius: 12,
-  padding: 16,
-})
-
-const $levelHeader: ThemedStyle<ViewStyle> = {
-  flexDirection: "row",
-  alignItems: "center",
-  marginBottom: 12,
-}
-
-const $levelIconContainer: ThemedStyle<ViewStyle> = {
-  width: 32,
-  height: 32,
-  borderRadius: 16,
-  backgroundColor: "#FFD70020",
-  alignItems: "center",
-  justifyContent: "center",
-  marginRight: 8,
-}
-
-const $levelText: ThemedStyle<TextStyle> = (colors) => ({
-  fontSize: 16,
-  fontWeight: "700",
-  color: colors.text,
-})
-
-const $spacer: ThemedStyle<ViewStyle> = {
-  flex: 1,
-}
-
-const $pointsBadge: ThemedStyle<ViewStyle> = (colors) => ({
-  flexDirection: "row",
-  alignItems: "center",
-  backgroundColor: colors.background,
-  borderRadius: 12,
-  paddingHorizontal: 10,
-  paddingVertical: 6,
-  gap: 6,
-})
-
-const $pointsText: ThemedStyle<TextStyle> = (colors) => ({
-  fontSize: 13,
-  fontWeight: "700",
-  color: colors.text,
-})
-
-const $progressContainer: ThemedStyle<ViewStyle> = {
-  gap: 6,
-}
-
-const $progressBarBackground: ThemedStyle<ViewStyle> = (colors) => ({
-  height: 8,
-  backgroundColor: colors.border,
-  borderRadius: 4,
-  overflow: "hidden",
-})
-
-const $progressBarFill: ThemedStyle<ViewStyle> = (colors, progress: number) => ({
-  height: "100%",
-  width: `${progress}%`,
-  backgroundColor: colors.home,
-  borderRadius: 4,
-})
-
-const $progressText: ThemedStyle<TextStyle> = (colors) => ({
-  fontSize: 11,
-  color: colors.textDim,
-  textAlign: "center",
-})
-
-const $maxLevelText: ThemedStyle<TextStyle> = (colors) => ({
-  fontSize: 13,
-  fontWeight: "600",
-  color: colors.home,
-  textAlign: "center",
 })

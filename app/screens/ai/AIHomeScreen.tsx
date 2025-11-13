@@ -20,8 +20,11 @@ import { Screen, Icon } from "@/components"
 import { useAppTheme } from "@/theme/context"
 import { useAuth } from "@/context/AuthContext"
 import { FontAwesome6 } from "@expo/vector-icons"
+import { useNavigation } from "@react-navigation/native"
+import { DrawerNavigationProp } from "@react-navigation/drawer"
 import type { AIStackScreenProps } from "@/navigators"
 import type { ThemedStyle } from "@/theme/types"
+import type { DrawerParamList } from "@/navigators/navigationTypes"
 import { getChatHistory } from "@/services/ai/cloudflareRagApi"
 
 interface QuickAction {
@@ -107,6 +110,7 @@ const SUGGESTED_TOPICS: SuggestedTopic[] = [
 export const AIHomeScreen: React.FC<AIStackScreenProps<"AIHome">> = ({ navigation }) => {
   const { themed, theme: { colors } } = useAppTheme()
   const { user, isAuthenticated } = useAuth()
+  const drawerNavigation = useNavigation<DrawerNavigationProp<DrawerParamList>>()
 
   const [recentChats, setRecentChats] = useState<ChatHistoryItem[]>([])
   const [isLoadingChats, setIsLoadingChats] = useState(false)
@@ -216,9 +220,13 @@ export const AIHomeScreen: React.FC<AIStackScreenProps<"AIHome">> = ({ navigatio
       {/* Custom Header */}
       <View style={themed($header)}>
         <View style={themed($headerLeft)}>
-          <View style={themed($avatar(colors))}>
-            <FontAwesome6 name="robot" size={20} color={colors.ai} solid />
-          </View>
+          <TouchableOpacity
+            style={themed($hamburger(colors))}
+            onPress={() => drawerNavigation.openDrawer()}
+            activeOpacity={0.7}
+          >
+            <FontAwesome6 name="bars" size={24} color={colors.ai} />
+          </TouchableOpacity>
           <Text style={themed($greeting(colors))}>AI</Text>
         </View>
         <View style={themed($headerRight)}>
@@ -692,7 +700,7 @@ const $headerLeft: ThemedStyle<any> = {
   gap: 12,
 }
 
-const $avatar: ThemedStyle<any> = (colors) => ({
+const $hamburger: ThemedStyle<any> = (colors) => ({
   width: 48,
   height: 48,
   borderRadius: 24,

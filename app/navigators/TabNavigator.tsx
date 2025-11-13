@@ -6,7 +6,7 @@
  * - 🕌 Pray (Purple): Prayer times, Qibla, Adhan settings
  * - 📖 Read (Blue): Quran reading, translations, bookmarks
  * - 🤖 AI (Cyan): AI chatbot, Islamic Q&A
- * - ⋯ More (Orange): Additional features, settings, about
+ * - 👥 Community (Orange): Social feed, achievements, settings
  */
 import React from "react"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
@@ -98,10 +98,10 @@ export const TabNavigator = () => {
         name="MoreTab"
         component={MoreStackNavigator}
         options={{
-          tabBarLabel: "More",
+          tabBarLabel: "Community",
           tabBarActiveTintColor: colors.more,
-          tabBarIcon: ({ focused, color, size }) => (
-            <FontAwesome6 name="ellipsis" color={color} size={size} solid={focused} />
+          tabBarIcon: ({ focused, color, size}) => (
+            <FontAwesome6 name="users" color={color} size={size} solid={focused} />
           ),
         }}
       />

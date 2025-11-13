@@ -1,8 +1,9 @@
 /**
- * More Tab Stack Navigator
+ * Community Tab Stack Navigator
  *
  * Screens:
- * - MoreHome: Main more screen with feature list (P0)
+ * - MoreHome: Community home screen with social feed (P0)
+ * - Achievements: User achievements and badges (P0)
  * - SettingsHome: App settings (P0)
  * - ProfileSettings: User profile and account (P1)
  * - ThemeSettings: Dark mode, OLED mode (P0)
@@ -18,7 +19,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { useAppTheme } from "@/theme/context"
 
 // Screens
-import { MoreHomeScreen } from "@/screens/more/MoreHomeScreen"
+import { CommunityHomeScreen } from "@/screens/community/CommunityHomeScreen"
 import { AchievementsScreen } from "@/screens/more/AchievementsScreen"
 import { SettingsHomeScreen } from "@/screens/settings/SettingsHomeScreen"
 import { ProfileSettingsScreen } from "@/screens/settings/ProfileSettingsScreen"
@@ -58,7 +59,7 @@ export const MoreStackNavigator = () => {
     >
       <Stack.Screen
         name="MoreHome"
-        component={MoreHomeScreen}
+        component={CommunityHomeScreen}
         options={{
           headerShown: false,
         }}

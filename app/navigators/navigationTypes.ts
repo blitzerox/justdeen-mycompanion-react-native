@@ -1,5 +1,6 @@
 import { ComponentProps } from "react"
 import { BottomTabScreenProps } from "@react-navigation/bottom-tabs"
+import { DrawerScreenProps as RNDrawerScreenProps } from "@react-navigation/drawer"
 import {
   CompositeScreenProps,
   NavigationContainer,
@@ -122,11 +123,11 @@ export type SettingsStackParamList = {
 }
 
 /**
- * More Tab Stack (Orange)
- * Screens: Feature list, settings, profile, theme, language, privacy, about
+ * Community Tab Stack (Orange)
+ * Screens: Community feed, achievements, settings, profile, theme, language, privacy, about
  */
 export type MoreStackParamList = {
-  MoreHome: undefined
+  MoreHome: undefined // Community Home Screen
   Achievements: undefined
   SettingsHome: undefined
   ProfileSettings: undefined
@@ -145,15 +146,27 @@ export type MoreStackParamList = {
 
 /**
  * Main Tab Navigator (Bottom tabs)
- * 5 tabs: Home (Green), Pray (Purple), Read (Blue), AI (Cyan), More (Orange)
+ * 5 tabs: Home (Green), Pray (Purple), Read (Blue), AI (Cyan), Community (Orange)
  */
 export type TabParamList = {
   ReflectTab: NavigatorScreenParams<ReflectStackParamList>  // Home tab
   PrayTab: NavigatorScreenParams<PrayStackParamList>
   ReadTab: NavigatorScreenParams<ReadStackParamList>
   AITab: NavigatorScreenParams<AIStackParamList>
-  MoreTab: NavigatorScreenParams<MoreStackParamList>
+  MoreTab: NavigatorScreenParams<MoreStackParamList>  // Community tab
   SettingsTab?: NavigatorScreenParams<SettingsStackParamList>  // Legacy, kept for compatibility
+}
+
+// =============================================================================
+// DRAWER NAVIGATOR
+// =============================================================================
+
+/**
+ * Drawer Navigator
+ * Wraps the Tab Navigator to provide drawer menu functionality
+ */
+export type DrawerParamList = {
+  MainTabs: NavigatorScreenParams<TabParamList> | undefined
 }
 
 // =============================================================================
@@ -162,12 +175,12 @@ export type TabParamList = {
 
 /**
  * Root App Stack Navigator
- * Handles auth flow and main app
+ * Handles auth flow and main app with drawer
  */
 export type AppStackParamList = {
   Welcome: undefined
   Login: undefined
-  MainTabs: NavigatorScreenParams<TabParamList> | undefined
+  Drawer: NavigatorScreenParams<DrawerParamList> | undefined
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
@@ -184,9 +197,14 @@ export type AppStackScreenProps<T extends keyof AppStackParamList> = NativeStack
   T
 >
 
+export type DrawerScreenProps<T extends keyof DrawerParamList> = CompositeScreenProps<
+  RNDrawerScreenProps<DrawerParamList, T>,
+  AppStackScreenProps<keyof AppStackParamList>
+>
+
 export type TabScreenProps<T extends keyof TabParamList> = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, T>,
-  AppStackScreenProps<keyof AppStackParamList>
+  DrawerScreenProps<"MainTabs">
 >
 
 export type PrayStackScreenProps<T extends keyof PrayStackParamList> = CompositeScreenProps<

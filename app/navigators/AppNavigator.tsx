@@ -14,7 +14,7 @@ import { LoginScreen } from "@/screens/LoginScreen" // @demo remove-current-line
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { useAppTheme } from "@/theme/context"
 
-import { TabNavigator } from "./TabNavigator"
+import { DrawerNavigator } from "./DrawerNavigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 import type { AppStackParamList, NavigationProps } from "./navigationTypes"
 
@@ -44,11 +44,11 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName={isAuthenticated ? "MainTabs" : "Login"}
+      initialRouteName={isAuthenticated ? "Drawer" : "Login"}
     >
       {isAuthenticated ? (
         <>
-          <Stack.Screen name="MainTabs" component={TabNavigator} />
+          <Stack.Screen name="Drawer" component={DrawerNavigator} />
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
         </>
       ) : (

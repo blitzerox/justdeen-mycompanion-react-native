@@ -3,67 +3,137 @@
 ###############################################################################
 # JustDeen MyCompanion - iPhone Testing Script
 ###############################################################################
-# This script automates the process of building, installing, and launching
-# the app on a physical iPhone device for testing.
-#
-# Usage:
-#   ./test-on-iphone.sh [options] [device-name-or-id]
-#
-# Examples:
-#   ./test-on-iphone.sh                    # Auto-detect device, prompt for clean
-#   ./test-on-iphone.sh --no-prompt        # Skip clean prompt, use existing build
-#   ./test-on-iphone.sh --clean            # Clean everything automatically
-#   ./test-on-iphone.sh "Husain's iPhone"  # Use specific device name
-#   ./test-on-iphone.sh 00008140-001C...   # Use device UDID
-###############################################################################
 
-set -e  # Exit on error
+set -e
 
-# Colors for output
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
 
 # Project configuration
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-WORKSPACE="ios/JustDeenMyCompanion.xcworkspace"
-SCHEME="JustDeenMyCompanion"
 BUNDLE_ID="com.husainshah.justdeen"
 BUILD_CONFIG="Debug"
 
-# Clean options (set by flags or prompt)
+# Clean options
 CLEAN_XCODE=false
 CLEAN_METRO=false
 PROMPT_CLEAN=true
+
+###############################################################################
+# Find Project Root
+###############################################################################
+
+find_project_root() {
+    local current_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    
+    for i in {0..5}; do
+        if [ -f "$current_dir/package.json" ] && [ -d "$current_dir/ios" ]; then
+            echo "$current_dir"
+            return 0
+        fi
+        current_dir="$(dirname "$current_dir")"
+    done
+    
+    echo "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+}
+
+PROJECT_ROOT=$(find_project_root)
 
 ###############################################################################
 # Helper Functions
 ###############################################################################
 
 print_step() {
-    echo -e "${BLUE}==>${NC} $1"
+    printf "${BLUE}==>${NC} %s\n" "$1"
 }
 
 print_success() {
-    echo -e "${GREEN}✓${NC} $1"
+    printf "${GREEN}✓${NC} %s\n" "$1"
 }
 
 print_error() {
-    echo -e "${RED}✗${NC} $1"
+    printf "${RED}✗${NC} %s\n" "$1"
 }
 
 print_warning() {
-    echo -e "${YELLOW}⚠${NC} $1"
+    printf "${YELLOW}⚠${NC}  %s\n" "$1"
 }
 
 print_header() {
-    echo ""
-    echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
-    echo -e "${BLUE}  $1${NC}"
-    echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
-    echo ""
+    printf "\n${BLUE}═══════════════════════════════════════════════════════════${NC}\n"
+    printf "${BOLD}  %s${NC}\n" "$1"
+    printf "${BLUE}═══════════════════════════════════════════════════════════${NC}\n\n"
+}
+
+print_progress() {
+    printf "${CYAN}  ➤${NC} %s\n" "$1"
+}
+
+###############################################################################
+# Detect iOS Workspace/Project
+###############################################################################
+
+detect_ios_workspace() {
+    cd "$PROJECT_ROOT/ios"
+
+    # Prioritize JustDeen.xcworkspace (the main workspace)
+    if [ -d "JustDeen.xcworkspace" ]; then
+        WORKSPACE="JustDeen.xcworkspace"
+        SCHEME="JustDeen"
+        BUILD_TYPE="workspace"
+        return 0
+    fi
+
+    # Fallback to any workspace
+    local workspace=$(find . -maxdepth 1 -name "*.xcworkspace" -type d | head -1)
+
+    if [ -n "$workspace" ]; then
+        WORKSPACE="${workspace#./}"
+        SCHEME="${WORKSPACE%.xcworkspace}"
+        BUILD_TYPE="workspace"
+        return 0
+    fi
+
+    # Last resort: use project file
+    local project=$(find . -maxdepth 1 -name "*.xcodeproj" -type d | head -1)
+
+    if [ -n "$project" ]; then
+        WORKSPACE="${project#./}"
+        SCHEME="${WORKSPACE%.xcodeproj}"
+        BUILD_TYPE="project"
+        return 0
+    fi
+
+    return 1
+}
+
+###############################################################################
+# Verify Project Structure
+###############################################################################
+
+verify_project() {
+    if [ ! -d "$PROJECT_ROOT/ios" ]; then
+        print_error "Could not find ios/ directory"
+        printf "\n${YELLOW}Please ensure you're in a React Native project.${NC}\n\n"
+        exit 1
+    fi
+    
+    print_success "Project root: $PROJECT_ROOT"
+    
+    if ! detect_ios_workspace; then
+        print_error "No iOS workspace or project found"
+        printf "\n${YELLOW}You may need to run:${NC}\n"
+        printf "  ${CYAN}npx expo prebuild${NC}\n\n"
+        exit 1
+    fi
+    
+    print_success "Found workspace: $WORKSPACE"
+    print_success "Scheme: $SCHEME\n"
 }
 
 ###############################################################################
@@ -75,73 +145,88 @@ prompt_clean_build() {
         return
     fi
     
-    echo ""
-    echo -e "${YELLOW}╔════════════════════════════════════════════╗${NC}"
-    echo -e "${YELLOW}║  Clean Build Options                       ║${NC}"
-    echo -e "${YELLOW}╚════════════════════════════════════════════╝${NC}"
-    echo ""
-    echo "  ${BLUE}1)${NC} No clean ${GREEN}(faster, use existing build)${NC}"
-    echo "  ${BLUE}2)${NC} Clean Xcode build only"
-    echo "  ${BLUE}3)${NC} Clean Metro cache only"
-    echo "  ${BLUE}4)${NC} Clean both Xcode + Metro ${YELLOW}(recommended for issues)${NC}"
-    echo ""
+    printf "\n${YELLOW}╔════════════════════════════════════════════╗${NC}\n"
+    printf "${YELLOW}║${NC}  ${BOLD}Clean Build Options${NC}                       ${YELLOW}║${NC}\n"
+    printf "${YELLOW}╚════════════════════════════════════════════╝${NC}\n\n"
+    printf "  ${BLUE}1)${NC} No clean ${GREEN}(faster, use existing build)${NC}\n"
+    printf "  ${BLUE}2)${NC} Clean Xcode build only\n"
+    printf "  ${BLUE}3)${NC} Clean Metro cache only\n"
+    printf "  ${BLUE}4)${NC} Clean both Xcode + Metro ${YELLOW}(recommended for issues)${NC}\n\n"
+    
     read -p "Select option [1-4] (default: 1): " clean_choice
     clean_choice=${clean_choice:-1}
     
     case $clean_choice in
         1)
+            printf "\n"
             print_success "Using existing build"
-            CLEAN_XCODE=false
-            CLEAN_METRO=false
             ;;
         2)
+            printf "\n"
             print_warning "Will clean Xcode build"
             CLEAN_XCODE=true
-            CLEAN_METRO=false
             ;;
         3)
+            printf "\n"
             print_warning "Will clean Metro cache"
-            CLEAN_XCODE=false
             CLEAN_METRO=true
             ;;
         4)
+            printf "\n"
             print_warning "Will clean both Xcode + Metro"
             CLEAN_XCODE=true
             CLEAN_METRO=true
             ;;
         *)
+            printf "\n"
             print_error "Invalid option. Using default (no clean)"
-            CLEAN_XCODE=false
-            CLEAN_METRO=false
             ;;
     esac
-    echo ""
+    printf "\n"
 }
 
 clean_xcode_build() {
     print_step "Cleaning Xcode build artifacts..."
-    
+
     cd "$PROJECT_ROOT"
-    
-    # Clean workspace
-    print_step "  Running xcodebuild clean..."
-    xcodebuild clean \
-        -workspace "$WORKSPACE" \
-        -scheme "$SCHEME" \
-        -configuration "$BUILD_CONFIG" \
-        > /dev/null 2>&1
-    
-    # Remove DerivedData for this project
-    print_step "  Removing DerivedData..."
-    rm -rf ~/Library/Developer/Xcode/DerivedData/JustDeenMyCompanion-*
-    
-    # Clean build folder
+
+    print_progress "Running xcodebuild clean..."
+    if [ "$BUILD_TYPE" = "workspace" ]; then
+        xcodebuild clean \
+            -workspace "ios/$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration "$BUILD_CONFIG" \
+            > /dev/null 2>&1
+    else
+        xcodebuild clean \
+            -project "ios/$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration "$BUILD_CONFIG" \
+            > /dev/null 2>&1
+    fi
+
+    print_progress "Removing DerivedData..."
+    rm -rf ~/Library/Developer/Xcode/DerivedData/${SCHEME}-* 2>/dev/null || true
+
     if [ -d "ios/build" ]; then
-        print_step "  Removing ios/build folder..."
+        print_progress "Removing ios/build folder..."
         rm -rf ios/build
     fi
-    
-    print_success "Xcode build cleaned"
+
+    print_success "Xcode build cleaned\n"
+
+    # After cleaning, regenerate CocoaPods to fix missing generated files
+    print_step "Regenerating CocoaPods dependencies..."
+    cd "$PROJECT_ROOT/ios"
+
+    print_progress "Running pod install (this may take a minute)..."
+    if pod install 2>&1 | grep -E "Installing|Using|Generating|Pod installation|^$" | tail -5; then
+        print_success "Pods regenerated successfully\n"
+    else
+        print_warning "Pod install had some issues, but continuing...\n"
+    fi
+
+    cd "$PROJECT_ROOT"
 }
 
 clean_metro_cache() {
@@ -149,39 +234,34 @@ clean_metro_cache() {
     
     cd "$PROJECT_ROOT"
     
-    # Stop Metro if running
     if lsof -i :8081 > /dev/null 2>&1; then
-        print_warning "  Stopping existing Metro bundler..."
+        print_progress "Stopping existing Metro bundler..."
         stop_metro
         sleep 1
     fi
     
-    # Clean Metro cache using expo
-    print_step "  Clearing Metro cache..."
+    print_progress "Clearing Metro cache..."
     npx expo start --clear > /dev/null 2>&1 &
     local pid=$!
     sleep 3
     kill $pid 2>/dev/null || true
     
-    # Clean watchman if available
     if command -v watchman > /dev/null 2>&1; then
-        print_step "  Clearing watchman watches..."
+        print_progress "Clearing watchman watches..."
         watchman watch-del-all > /dev/null 2>&1 || true
     fi
     
-    # Clean temp directories
     if [ -d ".expo" ]; then
-        print_step "  Cleaning .expo directory..."
+        print_progress "Cleaning .expo directory..."
         rm -rf .expo
     fi
     
-    # Clean node_modules cache (optional)
     if [ -d "node_modules/.cache" ]; then
-        print_step "  Cleaning node_modules cache..."
+        print_progress "Cleaning node_modules cache..."
         rm -rf node_modules/.cache
     fi
     
-    print_success "Metro cache cleaned"
+    print_success "Metro cache cleaned\n"
 }
 
 perform_clean() {
@@ -205,39 +285,85 @@ perform_clean() {
 detect_device() {
     print_step "Detecting connected iPhone devices..."
 
-    # Get list of connected devices
-    local devices=$(xcrun devicectl list devices 2>&1)
+    # Get device list
+    local devices=$(xcrun xctrace list devices 2>&1)
 
     if [ $? -ne 0 ]; then
-        print_error "Failed to list devices. Is your iPhone connected and trusted?"
+        print_error "Failed to list devices"
         exit 1
     fi
 
-    # Extract device information
-    local device_count=$(echo "$devices" | grep -c "iPhone" || true)
+    # Parse physical devices (exclude Simulators and Mac)
+    # Format: "Device Name (iOS Version) (UDID)"
+    declare -a device_names=()
+    declare -a device_udids=()
+    
+    while IFS= read -r line; do
+        # Extract device name (everything before the first opening parenthesis)
+        local name=$(echo "$line" | sed 's/ (.*//' | xargs)
+        
+        # Extract UDID (24-character hex with dashes: XXXXXXXX-XXXXXXXXXXXXXXXX)
+        local udid=$(echo "$line" | grep -o '[0-9A-Fa-f]\{8\}-[0-9A-Fa-f]\{16\}')
+        
+        if [ -n "$name" ] && [ -n "$udid" ]; then
+            device_names+=("$name")
+            device_udids+=("$udid")
+        fi
+    done < <(echo "$devices" | grep -E "iPhone|iPad|iPod" | grep -v "Simulator" | grep -v "Mac")
+
+    local device_count=${#device_names[@]}
 
     if [ "$device_count" -eq 0 ]; then
-        print_error "No iPhone devices found. Please connect your iPhone and trust this computer."
+        print_error "No physical iOS devices found."
+        printf "\n${YELLOW}Please:${NC}\n"
+        printf "  1. Connect your iPhone via USB\n"
+        printf "  2. Unlock your iPhone\n"
+        printf "  3. Trust this computer if prompted\n\n"
         exit 1
     fi
 
-    print_success "Found $device_count iPhone device(s)"
+    print_success "Found $device_count physical device(s)\n"
 
-    # Parse device UDID using regex pattern
-    DEVICE_ID=$(echo "$devices" | grep "iPhone" | grep "connected" | head -1 | grep -o '[A-F0-9]\{8\}-[A-F0-9]\{4\}-[A-F0-9]\{4\}-[A-F0-9]\{4\}-[A-F0-9]\{12\}')
-
-    if [ -z "$DEVICE_ID" ]; then
-        print_error "Could not extract device UDID. Please check device connection."
-        echo ""
-        echo "Available devices:"
-        echo "$devices"
-        exit 1
+    # If only one device, auto-select it
+    if [ "$device_count" -eq 1 ]; then
+        DEVICE_NAME="${device_names[0]}"
+        DEVICE_UDID="${device_udids[0]}"
+        print_success "Auto-selected: $DEVICE_NAME"
+    else
+        # Multiple devices - let user choose
+        printf "${YELLOW}╔════════════════════════════════════════════╗${NC}\n"
+        printf "${YELLOW}║${NC}  ${BOLD}Select Device${NC}                              ${YELLOW}║${NC}\n"
+        printf "${YELLOW}╚════════════════════════════════════════════╝${NC}\n\n"
+        
+        for i in "${!device_names[@]}"; do
+            local idx=$((i + 1))
+            printf "  ${BLUE}%d)${NC} %s\n" "$idx" "${device_names[$i]}"
+        done
+        
+        printf "\n"
+        read -p "Select device [1-$device_count] (default: 1): " device_choice
+        device_choice=${device_choice:-1}
+        
+        # Validate choice
+        if ! [[ "$device_choice" =~ ^[0-9]+$ ]] || [ "$device_choice" -lt 1 ] || [ "$device_choice" -gt "$device_count" ]; then
+            printf "\n"
+            print_error "Invalid choice. Using first device."
+            device_choice=1
+        fi
+        
+        local selected_idx=$((device_choice - 1))
+        DEVICE_NAME="${device_names[$selected_idx]}"
+        DEVICE_UDID="${device_udids[$selected_idx]}"
+        
+        printf "\n"
+        print_success "Selected: $DEVICE_NAME"
     fi
 
-    # Get device name for display
-    local device_name=$(echo "$devices" | grep "iPhone" | grep "connected" | head -1 | sed 's/  .*$//')
+    # Get devicectl ID for installation/launching
+    local devicectl_devices=$(xcrun devicectl list devices 2>&1)
+    DEVICECTL_ID=$(echo "$devicectl_devices" | grep "$DEVICE_NAME" | grep "connected" | grep -o '[A-F0-9]\{8\}-[A-F0-9]\{4\}-[A-F0-9]\{4\}-[A-F0-9]\{4\}-[A-F0-9]\{12\}')
 
-    print_success "Using device: $device_name ($DEVICE_ID)"
+    printf "${CYAN}           UDID: ${NC}%s\n\n" "$DEVICE_UDID"
 }
 
 ###############################################################################
@@ -246,27 +372,38 @@ detect_device() {
 
 build_app() {
     print_step "Building iOS app..."
+    printf "${CYAN}  This may take a few minutes...${NC}\n\n"
 
     cd "$PROJECT_ROOT"
 
-    # Build the app
-    xcodebuild \
-        -workspace "$WORKSPACE" \
-        -scheme "$SCHEME" \
-        -configuration "$BUILD_CONFIG" \
-        -destination "id=$DEVICE_ID" \
-        build \
-        CODE_SIGN_IDENTITY="" \
-        CODE_SIGNING_REQUIRED=NO \
-        CODE_SIGNING_ALLOWED=NO \
-        | grep -E "error:|warning:|BUILD|note:" || true
+    if [ "$BUILD_TYPE" = "workspace" ]; then
+        xcodebuild \
+            -workspace "ios/$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration "$BUILD_CONFIG" \
+            -destination "platform=iOS,name=$DEVICE_NAME" \
+            -allowProvisioningUpdates \
+            build \
+            2>&1 | grep -E "error:|warning:|BUILD|Succeeded" || true
+    else
+        xcodebuild \
+            -project "ios/$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration "$BUILD_CONFIG" \
+            -destination "platform=iOS,name=$DEVICE_NAME" \
+            -allowProvisioningUpdates \
+            build \
+            2>&1 | grep -E "error:|warning:|BUILD|Succeeded" || true
+    fi
 
     if [ ${PIPESTATUS[0]} -ne 0 ]; then
+        printf "\n"
         print_error "Build failed. Check the errors above."
         exit 1
     fi
 
-    print_success "Build completed successfully"
+    printf "\n"
+    print_success "Build completed successfully\n"
 }
 
 ###############################################################################
@@ -276,9 +413,8 @@ build_app() {
 find_built_app() {
     print_step "Locating built app..."
 
-    # Find the .app bundle in DerivedData
-    APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/JustDeenMyCompanion-* \
-        -name "$SCHEME.app" \
+    APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/${SCHEME}-* \
+        -name "${SCHEME}.app" \
         -path "*/$BUILD_CONFIG-iphoneos/*" \
         -type d \
         2>/dev/null | head -1)
@@ -288,7 +424,7 @@ find_built_app() {
         exit 1
     fi
 
-    print_success "Found app at: $APP_PATH"
+    print_success "Found app bundle\n"
 }
 
 ###############################################################################
@@ -297,18 +433,26 @@ find_built_app() {
 
 install_app() {
     print_step "Installing app on device..."
+    printf "${CYAN}  Transferring to iPhone...${NC}\n\n"
+
+    if [ -z "$DEVICECTL_ID" ]; then
+        print_error "Could not find devicectl ID"
+        exit 1
+    fi
 
     xcrun devicectl device install app \
-        --device "$DEVICE_ID" \
+        --device "$DEVICECTL_ID" \
         "$APP_PATH" \
-        2>&1 | grep -E "App installed|bundleID|error" || true
+        2>&1 | grep -E "App installed|bundleID|error|Installing" || true
 
     if [ ${PIPESTATUS[0]} -ne 0 ]; then
+        printf "\n"
         print_error "Installation failed"
         exit 1
     fi
 
-    print_success "App installed successfully"
+    printf "\n"
+    print_success "App installed successfully\n"
 }
 
 ###############################################################################
@@ -320,24 +464,22 @@ start_metro() {
 
     cd "$PROJECT_ROOT"
 
-    # Check if Metro is already running
     if lsof -i :8081 > /dev/null 2>&1; then
-        print_warning "Metro bundler already running on port 8081"
+        print_warning "Metro bundler already running on port 8081\n"
         return 0
     fi
 
-    # Start Metro in background
     npx expo start --dev-client > metro.log 2>&1 &
     METRO_PID=$!
 
-    # Wait for Metro to start
-    print_step "Waiting for Metro to start..."
+    print_progress "Waiting for Metro to start..."
     local timeout=30
     local elapsed=0
 
     while [ $elapsed -lt $timeout ]; do
         if lsof -i :8081 > /dev/null 2>&1; then
             print_success "Metro bundler started (PID: $METRO_PID)"
+            printf "${CYAN}           Logs: ${NC}%s/metro.log\n\n" "$PROJECT_ROOT"
             echo "$METRO_PID" > .metro.pid
             return 0
         fi
@@ -345,6 +487,7 @@ start_metro() {
         elapsed=$((elapsed + 1))
     done
 
+    printf "\n"
     print_error "Metro bundler failed to start within $timeout seconds"
     exit 1
 }
@@ -355,18 +498,26 @@ start_metro() {
 
 launch_app() {
     print_step "Launching app on device..."
+    printf "${CYAN}  Opening JustDeen MyCompanion...${NC}\n\n"
+
+    if [ -z "$DEVICECTL_ID" ]; then
+        print_error "Could not find devicectl ID"
+        exit 1
+    fi
 
     xcrun devicectl device process launch \
-        --device "$DEVICE_ID" \
+        --device "$DEVICECTL_ID" \
         "$BUNDLE_ID" \
-        2>&1 | grep -E "Launched|error" || true
+        2>&1 | grep -E "Launched|error|Process" || true
 
     if [ ${PIPESTATUS[0]} -ne 0 ]; then
+        printf "\n"
         print_error "Failed to launch app"
         exit 1
     fi
 
-    print_success "App launched successfully"
+    printf "\n"
+    print_success "App launched successfully\n"
 }
 
 ###############################################################################
@@ -377,15 +528,12 @@ stop_metro() {
     if [ -f "$PROJECT_ROOT/.metro.pid" ]; then
         local pid=$(cat "$PROJECT_ROOT/.metro.pid")
         if ps -p $pid > /dev/null 2>&1; then
-            print_step "Stopping Metro bundler (PID: $pid)..."
             kill $pid 2>/dev/null || true
             rm "$PROJECT_ROOT/.metro.pid"
-            print_success "Metro bundler stopped"
         fi
     fi
     
-    # Also kill any process on port 8081
-    local port_pid=$(lsof -ti:8081)
+    local port_pid=$(lsof -ti:8081 2>/dev/null)
     if [ -n "$port_pid" ]; then
         kill $port_pid 2>/dev/null || true
     fi
@@ -398,21 +546,23 @@ stop_metro() {
 main() {
     print_header "JustDeen MyCompanion - iPhone Testing"
 
-    # Prompt for clean options (unless disabled)
+    verify_project
     prompt_clean_build
-    
-    # Perform cleaning if requested
     perform_clean
 
-    # Handle device parameter
     if [ -n "$DEVICE_PARAM" ]; then
-        DEVICE_ID="$DEVICE_PARAM"
-        print_step "Using specified device: $DEVICE_ID"
+        DEVICE_NAME="$DEVICE_PARAM"
+        print_step "Using specified device: $DEVICE_NAME"
+        # Still need to get UDID for specified device
+        local devices=$(xcrun xctrace list devices 2>&1)
+        DEVICE_UDID=$(echo "$devices" | grep "$DEVICE_NAME" | grep -o '[0-9A-Fa-f]\{8\}-[0-9A-Fa-f]\{16\}' | head -1)
+        local devicectl_devices=$(xcrun devicectl list devices 2>&1)
+        DEVICECTL_ID=$(echo "$devicectl_devices" | grep "$DEVICE_NAME" | grep "connected" | grep -o '[A-F0-9]\{8\}-[A-F0-9]\{4\}-[A-F0-9]\{4\}-[A-F0-9]\{4\}-[A-F0-9]\{12\}')
+        printf "\n"
     else
         detect_device
     fi
 
-    # Execute build and deployment steps
     print_header "Building & Deploying"
     build_app
     find_built_app
@@ -422,25 +572,17 @@ main() {
 
     print_header "Testing Complete!"
 
-    echo -e "${GREEN}✓ App is now running on your iPhone!${NC}"
-    echo ""
-    echo "📱 Device: $DEVICE_ID"
-    echo "📦 Bundle ID: $BUNDLE_ID"
-    echo "🚀 Metro: Running on http://localhost:8081"
-    echo ""
-    echo "Logs:"
-    echo "  Metro bundler: $PROJECT_ROOT/metro.log"
-    echo ""
-    echo "To stop Metro bundler:"
-    echo "  $0 --stop-metro"
-    echo ""
-    echo "To clean build next time:"
-    echo "  $0 --clean"
-    echo ""
+    printf "${GREEN}✓ App is now running on your iPhone!${NC}\n\n"
+    printf "📱 ${BOLD}Device:${NC}     %s\n" "$DEVICE_NAME"
+    printf "📦 ${BOLD}Bundle ID:${NC}  %s\n" "$BUNDLE_ID"
+    printf "🚀 ${BOLD}Metro:${NC}      http://localhost:8081\n"
+    printf "📄 ${BOLD}Logs:${NC}       %s/metro.log\n\n" "$PROJECT_ROOT"
+    printf "${CYAN}To stop Metro:${NC} %s --stop-metro\n" "$0"
+    printf "${CYAN}To clean:${NC}      %s --clean\n\n" "$0"
 }
 
 ###############################################################################
-# Parse Command Line Arguments
+# Parse Arguments
 ###############################################################################
 
 parse_args() {
@@ -469,11 +611,27 @@ parse_args() {
                 shift
                 ;;
             --stop-metro)
+                PROJECT_ROOT=$(find_project_root)
+                cd "$PROJECT_ROOT"
                 stop_metro
+                print_success "Metro bundler stopped"
                 exit 0
                 ;;
             --help|-h)
-                show_help
+                printf "JustDeen MyCompanion - iPhone Testing Script\n\n"
+                printf "Usage: %s [options] [device-name]\n\n" "$0"
+                printf "Options:\n"
+                printf "  --clean           Clean both Xcode + Metro\n"
+                printf "  --clean-xcode     Clean only Xcode build\n"
+                printf "  --clean-metro     Clean only Metro cache\n"
+                printf "  --no-prompt       Skip prompt, use existing build\n"
+                printf "  --stop-metro      Stop Metro bundler\n"
+                printf "  --help, -h        Show this help\n\n"
+                printf "Examples:\n"
+                printf "  %s                       # Interactive prompt\n" "$0"
+                printf "  %s --no-prompt           # Fast build\n" "$0"
+                printf "  %s --clean               # Clean everything\n" "$0"
+                printf "  %s \"Husain's iPhone\"     # Specific device\n\n" "$0"
                 exit 0
                 ;;
             *)
@@ -485,45 +643,8 @@ parse_args() {
 }
 
 ###############################################################################
-# Help Message
-###############################################################################
-
-show_help() {
-    echo "JustDeen MyCompanion - iPhone Testing Script"
-    echo ""
-    echo "Usage: $0 [options] [device-name-or-id]"
-    echo ""
-    echo "Options:"
-    echo "  --clean           Clean both Xcode + Metro before building"
-    echo "  --clean-xcode     Clean only Xcode build artifacts"
-    echo "  --clean-metro     Clean only Metro cache"
-    echo "  --no-prompt       Skip clean prompt, use existing build"
-    echo "  --stop-metro      Stop the Metro bundler and exit"
-    echo "  --help, -h        Show this help message"
-    echo ""
-    echo "Examples:"
-    echo "  $0                          # Auto-detect device, prompt for clean"
-    echo "  $0 --clean                  # Clean everything, auto-detect device"
-    echo "  $0 --no-prompt              # Skip prompt, use existing build"
-    echo "  $0 --clean-xcode            # Clean Xcode only"
-    echo "  $0 \"Husain's iPhone\"        # Use specific device name"
-    echo "  $0 00008140-001C2CC8...    # Use device UDID"
-    echo "  $0 --stop-metro             # Stop Metro bundler"
-    echo ""
-    echo "Clean Options (when prompted):"
-    echo "  1) No clean (fastest, recommended for quick iterations)"
-    echo "  2) Clean Xcode only (fixes build-related issues)"
-    echo "  3) Clean Metro only (fixes JavaScript bundle issues)"
-    echo "  4) Clean both (recommended when troubleshooting)"
-    echo ""
-}
-
-###############################################################################
 # Entry Point
 ###############################################################################
 
-# Parse command line arguments
 parse_args "$@"
-
-# Run main function
 main
