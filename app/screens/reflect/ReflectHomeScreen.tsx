@@ -20,7 +20,7 @@ import {
   TextInput,
 } from "react-native"
 import { Screen, Icon } from "@/components"
-import { HomeStatsWidget, LevelCard } from "@/components/stats"
+import { HomeStatsWidget, LevelCard, ActivityOverviewCard } from "@/components/stats"
 import { useAppTheme } from "@/theme/context"
 import { useAuth } from "@/context/AuthContext"
 import { FontAwesome6 } from "@expo/vector-icons"
@@ -29,6 +29,11 @@ import { DrawerNavigationProp } from "@react-navigation/drawer"
 import type { ReflectStackScreenProps } from "@/navigators"
 import type { DrawerParamList } from "@/navigators/navigationTypes"
 import type { ThemedStyle } from "@/theme/types"
+import { usePrayerTracking } from "@/hooks/usePrayerTracking"
+import { useQuranTracking } from "@/hooks/useQuranTracking"
+import { useTasbihCounter } from "@/hooks/useTasbihCounter"
+import * as storage from "@/utils/storage"
+import { STORAGE_KEYS } from "@/constants/storageKeys"
 
 const { width } = Dimensions.get("window")
 
@@ -55,6 +60,39 @@ export const ReflectHomeScreen: React.FC<ReflectStackScreenProps<"ReflectHome">>
   const { themed, theme: { colors } } = useAppTheme()
   const { user, isAuthenticated } = useAuth()
   const drawerNavigation = useNavigation<DrawerNavigationProp<DrawerParamList>>()
+
+  // Hooks for activity data
+  const { todayPrayerCount, getPrayerStreak } = usePrayerTracking()
+  const { quranStats } = useQuranTracking()
+  const { tasbihStats } = useTasbihCounter()
+
+  // Helper to get today's date
+  const getTodayDateString = () => {
+    const today = new Date()
+    return today.toISOString().split("T")[0]
+  }
+
+  // Calculate today's values
+  const getTodayQuranPages = () => {
+    try {
+      const history = storage.load(STORAGE_KEYS.QURAN_HISTORY) || []
+      const todayDate = getTodayDateString()
+      return history.filter((session: any) => session.timestamp?.split("T")[0] === todayDate).length
+    } catch {
+      return 0
+    }
+  }
+
+  const getTodayDhikrCount = () => {
+    try {
+      const history = storage.load(STORAGE_KEYS.TASBIH_HISTORY) || []
+      const todayDate = getTodayDateString()
+      const todaySessions = history.filter((session: any) => session.timestamp?.split("T")[0] === todayDate)
+      return todaySessions.reduce((sum: number, session: any) => sum + (session.count || 0), 0)
+    } catch {
+      return 0
+    }
+  }
 
   // Mock data - replace with actual user stats from backend
   const [activityType, setActivityType] = useState<"Prayers" | "Quran" | "Dhikr">("Prayers")
@@ -210,6 +248,43 @@ export const ReflectHomeScreen: React.FC<ReflectStackScreenProps<"ReflectHome">>
             onQuranPress={() => navigation.navigate("ReadTab")}
             onTasbihPress={() => navigation.navigate("PrayTab", { screen: "TasbihCounter" })}
           />
+        </View>
+
+        {/* Activity Overview Cards */}
+        <View style={themed($section)}>
+          <Text style={themed($sectionTitle(colors))}>Overview</Text>
+          <View style={themed($cardsRow)}>
+            <ActivityOverviewCard
+              type="prayer"
+              current={todayPrayerCount}
+              goal={5}
+              streak={getPrayerStreak()}
+              icon="person-praying"
+              color={colors.pray}
+              onPress={() => navigation.navigate("PrayerAnalytics")}
+            />
+            <ActivityOverviewCard
+              type="quran"
+              current={getTodayQuranPages()}
+              goal={2}
+              streak={quranStats.streakDays}
+              icon="book-quran"
+              color={colors.read}
+              onPress={() => navigation.navigate("QuranAnalytics")}
+            />
+          </View>
+          <View style={themed($cardsRow)}>
+            <ActivityOverviewCard
+              type="dhikr"
+              current={getTodayDhikrCount()}
+              goal={100}
+              streak={0}
+              icon="hand"
+              color="#9C27B0"
+              onPress={() => navigation.navigate("DhikrAnalytics")}
+            />
+            <View style={{ flex: 1 }} />
+          </View>
         </View>
 
         {/* Activity Tracker Section */}
@@ -739,6 +814,12 @@ const $sectionTitle: ThemedStyle<any> = (colors) => ({
   color: colors.text,
   marginBottom: 12,
 })
+
+const $cardsRow: ThemedStyle<any> = {
+  flexDirection: "row",
+  gap: 12,
+  marginBottom: 12,
+}
 
 const $sectionHeader: ThemedStyle<any> = {
   flexDirection: "row",

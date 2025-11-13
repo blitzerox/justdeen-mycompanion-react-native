@@ -30,6 +30,9 @@ import { HadithDetailsScreen } from "@/screens/reflect/HadithDetailsScreen"
 import { NamesOfAllahScreen } from "@/screens/reflect/NamesOfAllahScreen"
 import { NamesOfProphetScreen } from "@/screens/reflect/NamesOfProphetScreen"
 import { TasbihCounterScreen } from "@/screens/reflect/TasbihCounterScreen"
+import { PrayerAnalyticsScreen } from "@/screens/stats/PrayerAnalyticsScreen"
+import { QuranAnalyticsScreen } from "@/screens/stats/QuranAnalyticsScreen"
+import { DhikrAnalyticsScreen } from "@/screens/stats/DhikrAnalyticsScreen"
 
 import type { ReflectStackParamList } from "../navigationTypes"
 
@@ -132,6 +135,27 @@ export const ReflectStackNavigator = () => {
         component={TasbihCounterScreen}
         options={{
           title: "Tasbih",
+        }}
+      />
+      <Stack.Screen
+        name="PrayerAnalytics"
+        component={PrayerAnalyticsScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="QuranAnalytics"
+        component={QuranAnalyticsScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="DhikrAnalytics"
+        component={DhikrAnalyticsScreen}
+        options={{
+          headerShown: false,
         }}
       />
     </Stack.Navigator>

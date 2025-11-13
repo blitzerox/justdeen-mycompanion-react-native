@@ -65,7 +65,7 @@ export type ReadStackParamList = {
 
 /**
  * Reflect Tab Stack (Orange)
- * Screens: Duas, Hadith, Islamic names, Tasbih counter
+ * Screens: Duas, Hadith, Islamic names, Tasbih counter, Analytics
  */
 export type ReflectStackParamList = {
   ReflectHome: undefined
@@ -90,6 +90,9 @@ export type ReflectStackParamList = {
   NamesOfAllah: undefined
   NamesOfProphet: undefined
   TasbihCounter: undefined
+  PrayerAnalytics: undefined
+  QuranAnalytics: undefined
+  DhikrAnalytics: undefined
 }
 
 /**

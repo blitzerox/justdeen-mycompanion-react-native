@@ -41,15 +41,55 @@ export const HomeStatsWidget: React.FC<HomeStatsWidgetProps> = ({
     }, [refreshStats])
   )
 
+  // Helper to get today's date string
+  const getTodayDateString = () => {
+    const today = new Date()
+    return today.toISOString().split("T")[0]
+  }
+
+  // Calculate today's Quran pages read
+  const getTodayQuranPages = () => {
+    try {
+      const history = require("@/utils/storage").load(require("@/constants/storageKeys").STORAGE_KEYS.QURAN_HISTORY) || []
+      const todayDate = getTodayDateString()
+
+      const todaySessions = history.filter((session: any) => {
+        const sessionDate = session.timestamp?.split("T")[0]
+        return sessionDate === todayDate
+      })
+
+      return todaySessions.length
+    } catch {
+      return 0
+    }
+  }
+
+  // Calculate today's dhikr count
+  const getTodayDhikrCount = () => {
+    try {
+      const history = require("@/utils/storage").load(require("@/constants/storageKeys").STORAGE_KEYS.TASBIH_HISTORY) || []
+      const todayDate = getTodayDateString()
+
+      const todaySessions = history.filter((session: any) => {
+        const sessionDate = session.timestamp?.split("T")[0]
+        return sessionDate === todayDate
+      })
+
+      return todaySessions.reduce((sum: number, session: any) => sum + (session.count || 0), 0)
+    } catch {
+      return 0
+    }
+  }
+
   // Goals (can be made dynamic later)
   const prayerGoal = 5
   const quranGoal = 2 // pages
   const dhikrGoal = 100 // count
 
-  // Current values (using available data)
+  // Current values (using available data from hooks and storage)
   const prayerCurrent = todayPrayerCount
-  const quranCurrent = 0 // TODO: Add today's pages tracking
-  const dhikrCurrent = 0 // TODO: Add today's dhikr tracking
+  const quranCurrent = getTodayQuranPages()
+  const dhikrCurrent = getTodayDhikrCount()
 
   // Calculate progress percentages
   const prayerProgress = Math.min((prayerCurrent / prayerGoal) * 100, 100)
@@ -156,31 +196,43 @@ export const HomeStatsWidget: React.FC<HomeStatsWidgetProps> = ({
           </Svg>
         </View>
 
-        {/* Right side - Progress Text */}
+        {/* Right side - Progress Text with Icons */}
         <View style={themed($statsText)}>
           <TouchableOpacity onPress={onPrayerPress} activeOpacity={0.7}>
             <View style={themed($statRow)}>
-              <View style={themed($colorDot(colors.pray))} />
-              <Text style={themed($statLabel(colors))}>
-                Prayers {prayerCurrent}/{prayerGoal}
+              <View style={themed($iconCircle(colors.pray))}>
+                <FontAwesome6 name="person-praying" size={16} color={colors.pray} solid />
+              </View>
+              <Text style={themed($statLabel(colors))}>Prayers</Text>
+              <View style={themed($spacer)} />
+              <Text style={themed($statValue(colors))}>
+                {prayerCurrent}/{prayerGoal}
               </Text>
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={onQuranPress} activeOpacity={0.7}>
             <View style={themed($statRow)}>
-              <View style={themed($colorDot(colors.read))} />
-              <Text style={themed($statLabel(colors))}>
-                Quran {quranCurrent}/{quranGoal}
+              <View style={themed($iconCircle(colors.read))}>
+                <FontAwesome6 name="book-quran" size={16} color={colors.read} solid />
+              </View>
+              <Text style={themed($statLabel(colors))}>Quran</Text>
+              <View style={themed($spacer)} />
+              <Text style={themed($statValue(colors))}>
+                {quranCurrent}/{quranGoal}
               </Text>
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={onTasbihPress} activeOpacity={0.7}>
             <View style={themed($statRow)}>
-              <View style={themed($colorDot("#9C27B0"))} />
-              <Text style={themed($statLabel(colors))}>
-                Dhikr {dhikrCurrent}/{dhikrGoal}
+              <View style={themed($iconCircle("#9C27B0"))}>
+                <FontAwesome6 name="hand" size={16} color="#9C27B0" solid />
+              </View>
+              <Text style={themed($statLabel(colors))}>Dhikr</Text>
+              <View style={themed($spacer)} />
+              <Text style={themed($statValue(colors))}>
+                {dhikrCurrent}/{dhikrGoal}
               </Text>
             </View>
           </TouchableOpacity>
@@ -205,7 +257,7 @@ const $container: ThemedStyle<ViewStyle> = (colors) => ({
 const $content: ThemedStyle<ViewStyle> = {
   flexDirection: "row",
   alignItems: "center",
-  gap: 20,
+  gap: 80,
 }
 
 const $ringsContainer: ThemedStyle<ViewStyle> = {
@@ -221,18 +273,30 @@ const $statsText: ThemedStyle<ViewStyle> = {
 const $statRow: ThemedStyle<ViewStyle> = {
   flexDirection: "row",
   alignItems: "center",
-  gap: 8,
+  gap: 12,
 }
 
-const $colorDot: ThemedStyle<ViewStyle> = (color: string) => ({
-  width: 8,
-  height: 8,
-  borderRadius: 4,
-  backgroundColor: color,
+const $iconCircle: ThemedStyle<ViewStyle> = (color: string) => ({
+  width: 36,
+  height: 36,
+  borderRadius: 18,
+  backgroundColor: color + "20",
+  alignItems: "center",
+  justifyContent: "center",
 })
 
 const $statLabel: ThemedStyle<TextStyle> = (colors) => ({
   fontSize: 15,
   fontWeight: "500",
+  color: colors.text,
+})
+
+const $spacer: ThemedStyle<ViewStyle> = {
+  flex: 1,
+}
+
+const $statValue: ThemedStyle<TextStyle> = (colors) => ({
+  fontSize: 16,
+  fontWeight: "700",
   color: colors.text,
 })
