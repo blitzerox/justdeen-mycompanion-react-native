@@ -20,11 +20,13 @@ export const PrayerAnalyticsScreen: React.FC<
   ReflectStackScreenProps<"PrayerAnalytics">
 > = ({ navigation }) => {
   const { themed, theme: { colors } } = useAppTheme()
-  const { todayPrayerCount, getPrayerStreak } = usePrayerTracking()
+  const { todayPrayers, prayerStats } = usePrayerTracking()
   const { stats } = useUserStats()
   const [selectedRange, setSelectedRange] = useState<TimeRange>("week")
 
-  const prayerStreak = getPrayerStreak()
+  // Calculate today's prayer count
+  const todayPrayerCount = Object.values(todayPrayers).filter(Boolean).length
+  const prayerStreak = prayerStats.streakDays
 
   // Mock data for spider/radar chart - Prayer distribution
   // In real implementation, calculate from prayer history

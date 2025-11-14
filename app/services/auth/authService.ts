@@ -56,8 +56,10 @@ export interface AuthResult {
 export const signInWithAuth0 = async (): Promise<AuthResult> => {
   try {
     // Perform Auth0 authentication using Universal Login
+    // prompt: 'login' forces the login screen to appear even if user has an active session
     const credentials = await auth0.webAuth.authorize({
       scope: "openid profile email",
+      prompt: "login", // Force login screen to show all options
     })
 
     if (!credentials.accessToken || !credentials.idToken) {
@@ -124,30 +126,44 @@ export const signInWithAuth0 = async (): Promise<AuthResult> => {
 
 /**
  * Sign in anonymously (no authentication required)
+ * Creates a persistent guest user that will be remembered on subsequent app launches
  */
-export const signInAnonymously = async (): Promise<AuthResult> => {
+export const signInAnonymously = async (
+  existingGuestId?: string,
+): Promise<AuthResult> => {
   try {
-    // Generate anonymous user ID (will be replaced by backend)
-    const anonymousId = `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    // Use existing guest ID if provided, otherwise generate a new one
+    // This ensures the same guest user persists across app sessions
+    const anonymousId =
+      existingGuestId || `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const mockToken = `guest_token_${Date.now()}`
 
-    // Sign in to backend API
-    const backendResponse = await d1Api.signInAnonymous()
+    // Try to sign in to backend API (but allow fallback if it fails)
+    // Backend is optional - guest users work fully offline
+    let userId = anonymousId
+    let token = mockToken
 
-    if (!backendResponse) {
-      return {
-        success: false,
-        error: "Failed to create anonymous account",
+    try {
+      const backendResponse = await d1Api.signInAnonymous()
+
+      if (backendResponse) {
+        userId = backendResponse.userId
+        token = backendResponse.token
       }
+    } catch (error) {
+      console.warn("Backend API connection failed (using offline guest account):", error)
+      // Continue with offline credentials - guest users don't require backend
     }
 
     // Create JustDeen user object
     const user: JustDeenUser = {
-      id: backendResponse.userId,
+      id: userId,
       email: null,
       displayName: "Guest User",
       photoUrl: null,
       authProvider: "anonymous",
-      idToken: backendResponse.token,
+      accessToken: token,
+      idToken: token,
       createdAt: new Date(),
     }
 

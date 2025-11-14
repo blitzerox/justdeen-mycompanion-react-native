@@ -40,9 +40,10 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
 
   useEffect(() => {
     navigation.setOptions({
-      title: surah ? `${surah.name} - ${surah.transliteration}` : "Loading...",
+      title: surah ? surah.transliteration : "Loading...",
+      headerShown: true,
     })
-  }, [surah])
+  }, [surah, navigation])
 
   const loadSurah = async () => {
     setLoading(true)

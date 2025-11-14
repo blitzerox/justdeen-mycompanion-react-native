@@ -4,7 +4,7 @@
  * Displays Surah metadata and overview before reading
  */
 import React from "react"
-import { View, ViewStyle, TextStyle, TouchableOpacity, ScrollView } from "react-native"
+import { View, ViewStyle, TextStyle, TouchableOpacity } from "react-native"
 import { Screen, Text, Icon } from "@/components"
 import { useAppTheme } from "@/theme/context"
 import type { ReadStackScreenProps } from "@/navigators"
@@ -32,74 +32,72 @@ export const SurahDetailsScreen: React.FC<ReadStackScreenProps<"SurahDetails">> 
 
   return (
     <Screen preset="scroll" contentContainerStyle={themed($container)}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Surah Header */}
-        <View style={themed($header)}>
-          <Text style={themed($surahName)}>{surah.name}</Text>
-          <Text style={themed($surahTransliteration)}>{surah.transliteration}</Text>
-          <Text style={themed($surahTranslation)}>{surah.translation}</Text>
+      {/* Surah Header */}
+      <View style={themed($header)}>
+        <Text style={themed($surahName)}>{surah.name}</Text>
+        <Text style={themed($surahTransliteration)}>{surah.transliteration}</Text>
+        <Text style={themed($surahTranslation)}>{surah.translation}</Text>
+      </View>
+
+      {/* Bismillah (except for Surah 9 At-Tawbah) */}
+      {surah.id !== 9 && (
+        <View style={themed($bismillahContainer)}>
+          <Text style={themed($bismillahText)}>بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</Text>
+        </View>
+      )}
+
+      {/* Surah Info Cards */}
+      <View style={themed($infoGrid)}>
+        <View style={themed($infoCard)}>
+          <Icon icon="book" size={24} color={colors.read} />
+          <Text style={themed($infoLabel)}>Verses</Text>
+          <Text style={themed($infoValue)}>{surah.totalVerses}</Text>
         </View>
 
-        {/* Bismillah (except for Surah 9 At-Tawbah) */}
-        {surah.id !== 9 && (
-          <View style={themed($bismillahContainer)}>
-            <Text style={themed($bismillahText)}>بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</Text>
-          </View>
-        )}
-
-        {/* Surah Info Cards */}
-        <View style={themed($infoGrid)}>
-          <View style={themed($infoCard)}>
-            <Icon icon="book" size={24} color={colors.read} />
-            <Text style={themed($infoLabel)}>Verses</Text>
-            <Text style={themed($infoValue)}>{surah.totalVerses}</Text>
-          </View>
-
-          <View style={themed($infoCard)}>
-            <Icon icon="mapPin" size={24} color={colors.read} />
-            <Text style={themed($infoLabel)}>Revelation</Text>
-            <Text style={themed($infoValue)}>
-              {surah.type === "meccan" ? "Meccan" : "Medinan"}
-            </Text>
-          </View>
-
-          <View style={themed($infoCard)}>
-            <Icon icon="list" size={24} color={colors.read} />
-            <Text style={themed($infoLabel)}>Order</Text>
-            <Text style={themed($infoValue)}>{surah.revelationOrder}</Text>
-          </View>
-
-          <View style={themed($infoCard)}>
-            <Icon icon="hash" size={24} color={colors.read} />
-            <Text style={themed($infoLabel)}>Number</Text>
-            <Text style={themed($infoValue)}>{surah.id}</Text>
-          </View>
-        </View>
-
-        {/* Start Reading Button */}
-        <TouchableOpacity
-          style={themed($readButton)}
-          onPress={() =>
-            navigation.navigate("QuranReader", {
-              surahNumber: surah.id,
-              ayahNumber: 1,
-            })
-          }
-        >
-          <Icon icon="book" size={20} color={colors.palette.white} />
-          <Text style={themed($readButtonText)}>Start Reading</Text>
-        </TouchableOpacity>
-
-        {/* Description */}
-        <View style={themed($descriptionContainer)}>
-          <Text style={themed($descriptionTitle)}>About this Surah</Text>
-          <Text style={themed($descriptionText)}>
-            {surah.type === "meccan"
-              ? `This Surah was revealed in Mecca. It is the ${surah.revelationOrder}${getOrdinalSuffix(surah.revelationOrder)} chapter revealed chronologically. Meccan surahs generally focus on faith, the Day of Judgment, and stories of earlier prophets.`
-              : `This Surah was revealed in Medina. It is the ${surah.revelationOrder}${getOrdinalSuffix(surah.revelationOrder)} chapter revealed chronologically. Medinan surahs often contain detailed legal and social guidance for the Muslim community.`}
+        <View style={themed($infoCard)}>
+          <Icon icon="mapPin" size={24} color={colors.read} />
+          <Text style={themed($infoLabel)}>Revelation</Text>
+          <Text style={themed($infoValue)}>
+            {surah.type === "meccan" ? "Meccan" : "Medinan"}
           </Text>
         </View>
-      </ScrollView>
+
+        <View style={themed($infoCard)}>
+          <Icon icon="list" size={24} color={colors.read} />
+          <Text style={themed($infoLabel)}>Order</Text>
+          <Text style={themed($infoValue)}>{surah.revelationOrder}</Text>
+        </View>
+
+        <View style={themed($infoCard)}>
+          <Icon icon="hash" size={24} color={colors.read} />
+          <Text style={themed($infoLabel)}>Number</Text>
+          <Text style={themed($infoValue)}>{surah.id}</Text>
+        </View>
+      </View>
+
+      {/* Start Reading Button */}
+      <TouchableOpacity
+        style={themed($readButton)}
+        onPress={() =>
+          navigation.navigate("QuranReader", {
+            surahNumber: surah.id,
+            ayahNumber: 1,
+          })
+        }
+      >
+        <Icon icon="book" size={20} color={colors.palette.white} />
+        <Text style={themed($readButtonText)}>Start Reading</Text>
+      </TouchableOpacity>
+
+      {/* Description */}
+      <View style={themed($descriptionContainer)}>
+        <Text style={themed($descriptionTitle)}>About this Surah</Text>
+        <Text style={themed($descriptionText)}>
+          {surah.type === "meccan"
+            ? `This Surah was revealed in Mecca. It is the ${surah.revelationOrder}${getOrdinalSuffix(surah.revelationOrder)} chapter revealed chronologically. Meccan surahs generally focus on faith, the Day of Judgment, and stories of earlier prophets.`
+            : `This Surah was revealed in Medina. It is the ${surah.revelationOrder}${getOrdinalSuffix(surah.revelationOrder)} chapter revealed chronologically. Medinan surahs often contain detailed legal and social guidance for the Muslim community.`}
+        </Text>
+      </View>
     </Screen>
   )
 }
@@ -123,6 +121,7 @@ const $container: ThemedStyle<ViewStyle> = ({ spacing }) => ({
 const $header: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   alignItems: "center",
   paddingVertical: spacing.xl,
+  width: "100%",
 })
 
 const $surahName: ThemedStyle<TextStyle> = ({ colors }) => ({
@@ -130,6 +129,9 @@ const $surahName: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontWeight: "700",
   color: colors.text,
   marginBottom: 8,
+  textAlign: "center",
+  width: "100%",
+  numberOfLines: undefined,
 })
 
 const $surahTransliteration: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({

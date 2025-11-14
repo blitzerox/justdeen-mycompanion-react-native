@@ -252,7 +252,7 @@ export const AIChatHomeScreen: React.FC<AIStackScreenProps<"AIChatHome">> = ({ r
   }
 
   return (
-    <Screen preset="fixed" contentContainerStyle={themed($container(colors))}>
+    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={themed($container(colors))}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={themed($keyboardView)}

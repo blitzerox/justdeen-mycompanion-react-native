@@ -63,6 +63,7 @@ export const ReadStackNavigator = () => {
         component={ReadHomeScreen}
         options={{
           headerShown: false,
+          headerTitle: "Read", // Back button text
         }}
       />
       <Stack.Screen
@@ -70,7 +71,6 @@ export const ReadStackNavigator = () => {
         component={QuranHomeScreen}
         options={{
           title: "Al-Qur'an",
-          headerLargeTitle: true,
         }}
       />
       <Stack.Screen

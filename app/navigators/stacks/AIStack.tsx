@@ -48,6 +48,7 @@ export const AIStackNavigator = () => {
         component={AIHomeScreen}
         options={{
           headerShown: false,
+          headerTitle: "AI", // Back button text
         }}
       />
       <Stack.Screen

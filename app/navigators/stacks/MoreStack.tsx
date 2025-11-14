@@ -62,6 +62,7 @@ export const MoreStackNavigator = () => {
         component={CommunityHomeScreen}
         options={{
           headerShown: false,
+          headerTitle: "More", // Back button text
         }}
       />
       <Stack.Screen

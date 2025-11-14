@@ -62,9 +62,12 @@ export const ReflectHomeScreen: React.FC<ReflectStackScreenProps<"ReflectHome">>
   const drawerNavigation = useNavigation<DrawerNavigationProp<DrawerParamList>>()
 
   // Hooks for activity data
-  const { todayPrayerCount, getPrayerStreak } = usePrayerTracking()
+  const { todayPrayers, prayerStats } = usePrayerTracking()
   const { quranStats } = useQuranTracking()
   const { tasbihStats } = useTasbihCounter()
+
+  // Calculate today's prayer count
+  const todayPrayerCount = Object.values(todayPrayers).filter(Boolean).length
 
   // Helper to get today's date
   const getTodayDateString = () => {
@@ -258,7 +261,7 @@ export const ReflectHomeScreen: React.FC<ReflectStackScreenProps<"ReflectHome">>
               type="prayer"
               current={todayPrayerCount}
               goal={5}
-              streak={getPrayerStreak()}
+              streak={prayerStats.streakDays}
               icon="person-praying"
               color={colors.pray}
               onPress={() => navigation.navigate("PrayerAnalytics")}

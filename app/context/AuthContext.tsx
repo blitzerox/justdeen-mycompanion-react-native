@@ -57,7 +57,8 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
 
   /**
    * Initialize authentication on mount
-   * - Load saved user from storage
+   * - Load saved user from storage (Auth0 or Guest)
+   * - For guest users: Automatically restore their session so they don't need to login again
    */
   useEffect(() => {
     const initialize = async () => {
@@ -67,11 +68,17 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
         if (savedUserStr) {
           const parsedUser: JustDeenUser = JSON.parse(savedUserStr)
 
-          // Set user in state
-          setUser(parsedUser)
-
-          // Set auth token in D1 API client
-          d1Api.setAuthToken(parsedUser.idToken)
+          // For guest users, verify the user data is still valid
+          // Guest users persist across app launches - they only need to login once
+          if (parsedUser.authProvider === "anonymous") {
+            // Guest user found - restore their session automatically
+            setUser(parsedUser)
+            // Guest users don't sync with backend, so no need to set auth token
+          } else {
+            // Auth0 user - restore session and set backend token
+            setUser(parsedUser)
+            d1Api.setAuthToken(parsedUser.idToken)
+          }
         }
       } catch (err) {
         console.error("Auth initialization error:", err)

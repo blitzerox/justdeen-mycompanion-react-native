@@ -1,4 +1,4 @@
-import { ReactNode, useRef, useState } from "react"
+import React, { ReactNode, useRef, useState } from "react"
 import {
   KeyboardAvoidingView,
   KeyboardAvoidingViewProps,
@@ -172,7 +172,7 @@ function useAutoPreset(props: AutoScreenProps): {
  * @param {ScreenProps} props - The props for the `ScreenWithoutScrolling` component.
  * @returns {JSX.Element} - The rendered `ScreenWithoutScrolling` component.
  */
-function ScreenWithoutScrolling(props: ScreenProps) {
+function ScreenWithoutScrolling(props: ScreenProps): React.JSX.Element {
   const { style, contentContainerStyle, children, preset } = props
   return (
     <View style={[$outerStyle, style]}>
@@ -187,7 +187,7 @@ function ScreenWithoutScrolling(props: ScreenProps) {
  * @param {ScreenProps} props - The props for the `ScreenWithScrolling` component.
  * @returns {JSX.Element} - The rendered `ScreenWithScrolling` component.
  */
-function ScreenWithScrolling(props: ScreenProps) {
+function ScreenWithScrolling(props: ScreenProps): React.JSX.Element {
   const {
     children,
     keyboardShouldPersistTaps = "handled",
@@ -238,7 +238,7 @@ function ScreenWithScrolling(props: ScreenProps) {
  * @param {ScreenProps} props - The props for the `Screen` component.
  * @returns {JSX.Element} The rendered `Screen` component.
  */
-export function Screen(props: ScreenProps) {
+export function Screen(props: ScreenProps): React.JSX.Element {
   const {
     theme: { colors },
     themeContext,
