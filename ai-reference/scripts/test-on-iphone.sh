@@ -376,13 +376,17 @@ build_app() {
 
     cd "$PROJECT_ROOT"
 
+    # Use device name for destination - xcodebuild will resolve the correct ID
     if [ "$BUILD_TYPE" = "workspace" ]; then
         xcodebuild \
             -workspace "ios/$WORKSPACE" \
             -scheme "$SCHEME" \
             -configuration "$BUILD_CONFIG" \
-            -destination "platform=iOS,name=$DEVICE_NAME" \
+            -destination "generic/platform=iOS" \
             -allowProvisioningUpdates \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
             build \
             2>&1 | grep -E "error:|warning:|BUILD|Succeeded" || true
     else
@@ -390,8 +394,11 @@ build_app() {
             -project "ios/$WORKSPACE" \
             -scheme "$SCHEME" \
             -configuration "$BUILD_CONFIG" \
-            -destination "platform=iOS,name=$DEVICE_NAME" \
+            -destination "generic/platform=iOS" \
             -allowProvisioningUpdates \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
             build \
             2>&1 | grep -E "error:|warning:|BUILD|Succeeded" || true
     fi

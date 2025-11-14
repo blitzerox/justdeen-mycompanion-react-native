@@ -77,8 +77,25 @@ export const QuranHomeScreen: React.FC<ReadStackScreenProps<"QuranHome">> = ({
 
   const [viewMode, setViewMode] = useState<ViewMode>("surah")
   const [searchQuery, setSearchQuery] = useState("")
-  const [surahs] = useState<Surah[]>(quranApi.getSurahs())
+  const [surahs, setSurahs] = useState<Surah[]>([])
   const [juzList] = useState<JuzData[]>(JUZ_DATA)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Load surahs from API
+  useEffect(() => {
+    const loadSurahs = async () => {
+      try {
+        setIsLoading(true)
+        const data = await quranApi.getSurahs()
+        setSurahs(data)
+      } catch (error) {
+        console.error('Failed to load surahs:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadSurahs()
+  }, [])
 
   // Set header right button
   useEffect(() => {

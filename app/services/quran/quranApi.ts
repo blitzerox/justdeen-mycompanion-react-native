@@ -1,10 +1,12 @@
 /**
  * Quran API Service
- * Uses quran.com API for Quran text, translations, and audio
- * Documentation: https://api-docs.quran.com/
+ * Now uses Quran Foundation API with local SQLite caching
+ * Maintains backward compatibility with existing interface
  */
 
-import { ApisauceInstance, create } from "apisauce"
+import { getAllChapters, getChapterById } from './chapters-api'
+import { getChapterVerses, searchVerses } from './verses-api'
+import { getVerseTafsir, TAFSIR_RESOURCES } from './tafsir-api'
 
 export interface Surah {
   id: number
@@ -164,117 +166,129 @@ export const SURAHS: Surah[] = [
 
 /**
  * Quran API Client
- * Using Quran.com API v4
+ * Now uses Quran Foundation API with local SQLite caching
  */
 export class QuranApi {
-  private api: ApisauceInstance
-
-  constructor() {
-    this.api = create({
-      baseURL: "https://api.quran.com/api/v4",
-      timeout: 15000,
-      headers: {
-        Accept: "application/json",
-      },
-    })
-  }
-
   /**
    * Get list of all Surahs
    */
-  getSurahs(): Surah[] {
-    return SURAHS
+  async getSurahs(): Promise<Surah[]> {
+    const chapters = await getAllChapters()
+
+    // Map to existing interface
+    return chapters.map((chapter) => ({
+      id: chapter.id,
+      name: chapter.name_arabic,
+      transliteration: chapter.name_simple,
+      translation: chapter.translated_name,
+      type: chapter.revelation_place === 'makkah' ? 'meccan' : 'medinan',
+      totalVerses: chapter.verses_count,
+      revelationOrder: chapter.revelation_order,
+    }))
   }
 
   /**
    * Get Surah by ID
    */
-  getSurah(surahId: number): Surah | undefined {
-    return SURAHS.find((s) => s.id === surahId)
+  async getSurah(surahId: number): Promise<Surah | undefined> {
+    const chapter = await getChapterById(surahId)
+
+    if (!chapter) return undefined
+
+    return {
+      id: chapter.id,
+      name: chapter.name_arabic,
+      transliteration: chapter.name_simple,
+      translation: chapter.translated_name,
+      type: chapter.revelation_place === 'makkah' ? 'meccan' : 'medinan',
+      totalVerses: chapter.verses_count,
+      revelationOrder: chapter.revelation_order,
+    }
   }
 
   /**
    * Get verses for a Surah
+   * Now fetches from Quran Foundation API with caching
    */
   async getVerses(surahNumber: number, translationId: number = 131): Promise<Verse[]> {
-    // Translation IDs: 131 = Sahih International, 20 = English Saheeh International
-    const response = await this.api.get(`/quran/verses/uthmani`, {
-      chapter_number: surahNumber,
-      translations: translationId,
-      per_page: 300, // Max verses per request
-    })
+    const verses = await getChapterVerses(surahNumber)
 
-    if (!response.ok || !response.data) {
-      throw new Error(`Failed to fetch verses: ${response.problem}`)
-    }
-
-    const data = response.data as any
-    return this.parseVerses(data.verses)
+    // Map to existing interface
+    return verses.map((verse) => ({
+      id: verse.id,
+      verseNumber: verse.verse_number,
+      verseKey: verse.verse_key,
+      textUthmani: verse.text_uthmani,
+      textImlaei: verse.text_imlaei,
+      translations: verse.translations.map((t) => ({
+        id: t.resource_id,
+        languageCode: 'en',
+        text: t.text,
+        translatorName: t.resource_name || 'Clear Quran',
+      })),
+      juzNumber: verse.juz_number,
+      hizbNumber: verse.hizb_number,
+      pageNumber: verse.page_number,
+    }))
   }
 
   /**
    * Get a single verse
    */
   async getVerse(verseKey: string, translationId: number = 131): Promise<Verse> {
-    const response = await this.api.get(`/verses/by_key/${verseKey}`, {
-      translations: translationId,
-    })
+    const [chapterStr] = verseKey.split(':')
+    const chapterNumber = parseInt(chapterStr)
 
-    if (!response.ok || !response.data) {
-      throw new Error(`Failed to fetch verse: ${response.problem}`)
+    const verses = await this.getVerses(chapterNumber)
+    const verse = verses.find((v) => v.verseKey === verseKey)
+
+    if (!verse) {
+      throw new Error(`Verse ${verseKey} not found`)
     }
 
-    const data = response.data as any
-    return this.parseVerse(data.verse)
-  }
-
-  /**
-   * Parse API response verses
-   */
-  private parseVerses(verses: any[]): Verse[] {
-    return verses.map((v) => this.parseVerse(v))
-  }
-
-  /**
-   * Parse single verse from API
-   */
-  private parseVerse(v: any): Verse {
-    return {
-      id: v.id,
-      verseNumber: v.verse_number,
-      verseKey: v.verse_key,
-      textUthmani: v.text_uthmani,
-      textImlaei: v.text_imlaei,
-      translations: v.translations
-        ? v.translations.map((t: any) => ({
-            id: t.id,
-            languageCode: t.language_name || "en",
-            text: t.text,
-            translatorName: t.resource_name || "Sahih International",
-          }))
-        : [],
-      juzNumber: v.juz_number,
-      hizbNumber: v.hizb_number,
-      pageNumber: v.page_number,
-    }
+    return verse
   }
 
   /**
    * Search Quran
    */
-  async searchQuran(query: string, page: number = 1): Promise<Verse[]> {
-    const response = await this.api.get(`/search`, {
-      q: query,
-      page,
-      size: 20,
-    })
+  async searchQuran(query: string, limit: number = 20): Promise<Verse[]> {
+    const results = await searchVerses(query, limit)
 
-    if (!response.ok || !response.data) {
-      throw new Error(`Search failed: ${response.problem}`)
+    // Map to existing interface
+    return results.map((verse) => ({
+      id: verse.id,
+      verseNumber: verse.verse_number,
+      verseKey: verse.verse_key,
+      textUthmani: verse.text_uthmani,
+      textImlaei: verse.text_imlaei,
+      translations: verse.translations.map((t) => ({
+        id: t.resource_id,
+        languageCode: 'en',
+        text: t.text,
+        translatorName: t.resource_name || 'Clear Quran',
+      })),
+      juzNumber: verse.juz_number,
+      hizbNumber: verse.hizb_number,
+      pageNumber: verse.page_number,
+    }))
+  }
+
+  /**
+   * Get tafsir for a verse (new feature)
+   */
+  async getVerseTafsir(
+    verseKey: string,
+    tafsirId: number = TAFSIR_RESOURCES.IBN_KATHIR_EN
+  ): Promise<{ text: string; name: string } | null> {
+    const tafsir = await getVerseTafsir(verseKey, tafsirId)
+
+    if (!tafsir) return null
+
+    return {
+      text: tafsir.text,
+      name: tafsir.tafsir_name,
     }
-
-    const data = response.data as any
-    return data.search?.results?.map((r: any) => this.parseVerse(r)) || []
   }
 }
 
