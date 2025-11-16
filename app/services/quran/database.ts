@@ -98,7 +98,52 @@ async function initializeSchema(database: SQLite.SQLiteDatabase): Promise<void> 
       FOREIGN KEY (chapter_id) REFERENCES quran_chapters(id)
     );
 
-    -- 6. Cache Population Status
+    -- 6. Recitations (Reciters)
+    CREATE TABLE IF NOT EXISTS quran_recitations (
+      id INTEGER PRIMARY KEY,
+      reciter_name TEXT NOT NULL,
+      style TEXT,
+      translated_name TEXT NOT NULL,
+      language TEXT DEFAULT 'en',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(id, language)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_recitation_language ON quran_recitations(language);
+
+    -- 7. Audio Cache
+    CREATE TABLE IF NOT EXISTS quran_audio_cache (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      verse_key TEXT NOT NULL,
+      reciter_id INTEGER NOT NULL,
+      audio_file_path TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(verse_key, reciter_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_audio_verse_reciter ON quran_audio_cache(verse_key, reciter_id);
+
+    -- 8. User Reading Progress
+    CREATE TABLE IF NOT EXISTS quran_user_progress (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      verse_key TEXT UNIQUE NOT NULL,
+      chapter_id INTEGER NOT NULL,
+      verse_number INTEGER NOT NULL,
+      page_number INTEGER NOT NULL,
+      is_read INTEGER DEFAULT 0,
+      is_bookmarked INTEGER DEFAULT 0,
+      read_at TEXT,
+      bookmarked_at TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_progress_chapter ON quran_user_progress(chapter_id);
+    CREATE INDEX IF NOT EXISTS idx_progress_page ON quran_user_progress(page_number);
+    CREATE INDEX IF NOT EXISTS idx_progress_read ON quran_user_progress(is_read);
+    CREATE INDEX IF NOT EXISTS idx_progress_bookmarked ON quran_user_progress(is_bookmarked);
+
+    -- 9. Cache Population Status
     CREATE TABLE IF NOT EXISTS quran_cache_status (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       cache_type TEXT UNIQUE NOT NULL,
@@ -111,7 +156,8 @@ async function initializeSchema(database: SQLite.SQLiteDatabase): Promise<void> 
     INSERT OR IGNORE INTO quran_cache_status (cache_type) VALUES
       ('chapters'),
       ('verses'),
-      ('tafsirs');
+      ('tafsirs'),
+      ('recitations');
   `)
 
   console.log('✅ Quran database schema initialized')
@@ -129,6 +175,7 @@ export async function clearQuranCache(): Promise<void> {
     DELETE FROM quran_tafsirs;
     DELETE FROM quran_chapter_info;
     DELETE FROM quran_access_tokens;
+    DELETE FROM quran_audio_cache;
     UPDATE quran_cache_status SET is_populated = 0, total_records = 0, last_updated = NULL;
   `)
 

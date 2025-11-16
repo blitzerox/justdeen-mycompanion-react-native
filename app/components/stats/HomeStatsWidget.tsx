@@ -4,7 +4,7 @@
  * Shows prayer, Quran, and dhikr progress with concentric rings
  */
 
-import React from "react"
+import React, { useState } from "react"
 import { View, ViewStyle, TextStyle, TouchableOpacity } from "react-native"
 import { Text } from "@/components"
 import { FontAwesome6 } from "@expo/vector-icons"
@@ -15,6 +15,7 @@ import { useUserStats } from "@/hooks/useUserStats"
 import { usePrayerTracking } from "@/hooks/usePrayerTracking"
 import { useQuranTracking } from "@/hooks/useQuranTracking"
 import { useTasbihCounter } from "@/hooks/useTasbihCounter"
+import { getReadingStats } from "@/services/quran/user-progress"
 import Svg, { Circle } from "react-native-svg"
 
 interface HomeStatsWidgetProps {
@@ -33,11 +34,18 @@ export const HomeStatsWidget: React.FC<HomeStatsWidgetProps> = ({
   const { todayPrayerCount } = usePrayerTracking()
   const { quranStats } = useQuranTracking()
   const { tasbihStats } = useTasbihCounter()
+  const [quranPagesRead, setQuranPagesRead] = useState(0)
 
   // Refresh stats when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       refreshStats()
+      // Load Quran reading stats from database
+      getReadingStats().then(readingStats => {
+        setQuranPagesRead(readingStats.totalPagesRead)
+      }).catch(err => {
+        console.error('Failed to load reading stats:', err)
+      })
     }, [refreshStats])
   )
 
@@ -88,7 +96,7 @@ export const HomeStatsWidget: React.FC<HomeStatsWidgetProps> = ({
 
   // Current values (using available data from hooks and storage)
   const prayerCurrent = todayPrayerCount
-  const quranCurrent = getTodayQuranPages()
+  const quranCurrent = quranPagesRead // Use pages read from database
   const dhikrCurrent = getTodayDhikrCount()
 
   // Calculate progress percentages

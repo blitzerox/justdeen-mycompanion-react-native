@@ -3,13 +3,13 @@
  *
  * Displays Surah metadata and overview before reading
  */
-import React from "react"
-import { View, ViewStyle, TextStyle, TouchableOpacity } from "react-native"
+import React, { useState, useEffect } from "react"
+import { View, ViewStyle, TextStyle, TouchableOpacity, ActivityIndicator } from "react-native"
 import { Screen, Text, Icon } from "@/components"
 import { useAppTheme } from "@/theme/context"
 import type { ReadStackScreenProps } from "@/navigators"
 import type { ThemedStyle } from "@/theme/types"
-import { quranApi } from "@/services/quran/quranApi"
+import { quranApi, type Surah } from "@/services/quran/quranApi"
 
 export const SurahDetailsScreen: React.FC<ReadStackScreenProps<"SurahDetails">> = ({
   navigation,
@@ -17,8 +17,34 @@ export const SurahDetailsScreen: React.FC<ReadStackScreenProps<"SurahDetails">> 
 }) => {
   const { themed, theme: { colors } } = useAppTheme()
   const { surahNumber } = route.params
+  const [surah, setSurah] = useState<Surah | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const surah = quranApi.getSurah(surahNumber)
+  useEffect(() => {
+    const loadSurah = async () => {
+      try {
+        setIsLoading(true)
+        const data = await quranApi.getSurah(surahNumber)
+        setSurah(data || null)
+      } catch (error) {
+        console.error('Failed to load surah:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadSurah()
+  }, [surahNumber])
+
+  if (isLoading) {
+    return (
+      <Screen preset="fixed" contentContainerStyle={themed($container)}>
+        <View style={themed($loadingContainer)}>
+          <ActivityIndicator size="large" color={colors.read} />
+          <Text style={themed($loadingText)}>Loading Surah...</Text>
+        </View>
+      </Screen>
+    )
+  }
 
   if (!surah) {
     return (
@@ -221,6 +247,19 @@ const $descriptionTitle: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
 const $descriptionText: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 16,
   lineHeight: 24,
+  color: colors.textDim,
+})
+
+const $loadingContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flex: 1,
+  alignItems: "center",
+  justifyContent: "center",
+  paddingVertical: spacing.xxl,
+  gap: spacing.md,
+})
+
+const $loadingText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 17,
   color: colors.textDim,
 })
 

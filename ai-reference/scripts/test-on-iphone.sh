@@ -371,37 +371,13 @@ detect_device() {
 ###############################################################################
 
 build_app() {
-    print_step "Building iOS app..."
+    print_step "Building iOS app with Expo..."
     printf "${CYAN}  This may take a few minutes...${NC}\n\n"
 
     cd "$PROJECT_ROOT"
 
-    # Use device name for destination - xcodebuild will resolve the correct ID
-    if [ "$BUILD_TYPE" = "workspace" ]; then
-        xcodebuild \
-            -workspace "ios/$WORKSPACE" \
-            -scheme "$SCHEME" \
-            -configuration "$BUILD_CONFIG" \
-            -destination "generic/platform=iOS" \
-            -allowProvisioningUpdates \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            build \
-            2>&1 | grep -E "error:|warning:|BUILD|Succeeded" || true
-    else
-        xcodebuild \
-            -project "ios/$WORKSPACE" \
-            -scheme "$SCHEME" \
-            -configuration "$BUILD_CONFIG" \
-            -destination "generic/platform=iOS" \
-            -allowProvisioningUpdates \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            build \
-            2>&1 | grep -E "error:|warning:|BUILD|Succeeded" || true
-    fi
+    # Use npx expo build for building
+    npx expo build 2>&1 | tee /tmp/expo-build.log | grep -E "error:|warning:|Build|Succeeded|Successfully" || true
 
     if [ ${PIPESTATUS[0]} -ne 0 ]; then
         printf "\n"
@@ -414,117 +390,26 @@ build_app() {
 }
 
 ###############################################################################
-# Find Built App
+# Run on Device (Install, Start Metro, and Launch)
 ###############################################################################
 
-find_built_app() {
-    print_step "Locating built app..."
-
-    APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/${SCHEME}-* \
-        -name "${SCHEME}.app" \
-        -path "*/$BUILD_CONFIG-iphoneos/*" \
-        -type d \
-        2>/dev/null | head -1)
-
-    if [ -z "$APP_PATH" ]; then
-        print_error "Could not find built .app bundle"
-        exit 1
-    fi
-
-    print_success "Found app bundle\n"
-}
-
-###############################################################################
-# Install App
-###############################################################################
-
-install_app() {
-    print_step "Installing app on device..."
-    printf "${CYAN}  Transferring to iPhone...${NC}\n\n"
-
-    if [ -z "$DEVICECTL_ID" ]; then
-        print_error "Could not find devicectl ID"
-        exit 1
-    fi
-
-    xcrun devicectl device install app \
-        --device "$DEVICECTL_ID" \
-        "$APP_PATH" \
-        2>&1 | grep -E "App installed|bundleID|error|Installing" || true
-
-    if [ ${PIPESTATUS[0]} -ne 0 ]; then
-        printf "\n"
-        print_error "Installation failed"
-        exit 1
-    fi
-
-    printf "\n"
-    print_success "App installed successfully\n"
-}
-
-###############################################################################
-# Start Metro Bundler
-###############################################################################
-
-start_metro() {
-    print_step "Starting Metro bundler..."
+run_on_device() {
+    print_step "Running app on device with Expo..."
+    printf "${CYAN}  This will build, install, and launch the app...${NC}\n\n"
 
     cd "$PROJECT_ROOT"
 
-    if lsof -i :8081 > /dev/null 2>&1; then
-        print_warning "Metro bundler already running on port 8081\n"
-        return 0
-    fi
-
-    npx expo start --dev-client > metro.log 2>&1 &
-    METRO_PID=$!
-
-    print_progress "Waiting for Metro to start..."
-    local timeout=30
-    local elapsed=0
-
-    while [ $elapsed -lt $timeout ]; do
-        if lsof -i :8081 > /dev/null 2>&1; then
-            print_success "Metro bundler started (PID: $METRO_PID)"
-            printf "${CYAN}           Logs: ${NC}%s/metro.log\n\n" "$PROJECT_ROOT"
-            echo "$METRO_PID" > .metro.pid
-            return 0
-        fi
-        sleep 1
-        elapsed=$((elapsed + 1))
-    done
-
-    printf "\n"
-    print_error "Metro bundler failed to start within $timeout seconds"
-    exit 1
-}
-
-###############################################################################
-# Launch App
-###############################################################################
-
-launch_app() {
-    print_step "Launching app on device..."
-    printf "${CYAN}  Opening JustDeen MyCompanion...${NC}\n\n"
-
-    if [ -z "$DEVICECTL_ID" ]; then
-        print_error "Could not find devicectl ID"
-        exit 1
-    fi
-
-    xcrun devicectl device process launch \
-        --device "$DEVICECTL_ID" \
-        "$BUNDLE_ID" \
-        2>&1 | grep -E "Launched|error|Process" || true
+    # Use npx expo run:ios --device to handle everything
+    npx expo run:ios --device 2>&1 | tee /tmp/expo-run.log | grep -E "error:|warning:|Build|Installing|Opening|Successfully|Bundling" || true
 
     if [ ${PIPESTATUS[0]} -ne 0 ]; then
         printf "\n"
-        print_error "Failed to launch app"
+        print_error "Failed to run app on device"
         exit 1
     fi
 
     printf "\n"
-    print_success "App launched successfully\n"
+    print_success "App is running on device\n"
 }
 
 ###############################################################################
@@ -560,22 +445,20 @@ main() {
     if [ -n "$DEVICE_PARAM" ]; then
         DEVICE_NAME="$DEVICE_PARAM"
         print_step "Using specified device: $DEVICE_NAME"
-        # Still need to get UDID for specified device
-        local devices=$(xcrun xctrace list devices 2>&1)
-        DEVICE_UDID=$(echo "$devices" | grep "$DEVICE_NAME" | grep -o '[0-9A-Fa-f]\{8\}-[0-9A-Fa-f]\{16\}' | head -1)
-        local devicectl_devices=$(xcrun devicectl list devices 2>&1)
-        DEVICECTL_ID=$(echo "$devicectl_devices" | grep "$DEVICE_NAME" | grep "connected" | grep -o '[A-F0-9]\{8\}-[A-F0-9]\{4\}-[A-F0-9]\{4\}-[A-F0-9]\{4\}-[A-F0-9]\{12\}')
         printf "\n"
     else
         detect_device
     fi
 
-    print_header "Building & Deploying"
-    build_app
-    find_built_app
-    install_app
-    start_metro
-    launch_app
+    print_header "Building & Deploying with Expo"
+
+    # Option to just build or build + run
+    if [ "$BUILD_ONLY" = true ]; then
+        build_app
+    else
+        # Run on device (builds, installs, starts metro, and launches)
+        run_on_device
+    fi
 
     print_header "Testing Complete!"
 
@@ -583,7 +466,7 @@ main() {
     printf "📱 ${BOLD}Device:${NC}     %s\n" "$DEVICE_NAME"
     printf "📦 ${BOLD}Bundle ID:${NC}  %s\n" "$BUNDLE_ID"
     printf "🚀 ${BOLD}Metro:${NC}      http://localhost:8081\n"
-    printf "📄 ${BOLD}Logs:${NC}       %s/metro.log\n\n" "$PROJECT_ROOT"
+    printf "📄 ${BOLD}Logs:${NC}       /tmp/expo-run.log\n\n"
     printf "${CYAN}To stop Metro:${NC} %s --stop-metro\n" "$0"
     printf "${CYAN}To clean:${NC}      %s --clean\n\n" "$0"
 }
@@ -594,7 +477,8 @@ main() {
 
 parse_args() {
     DEVICE_PARAM=""
-    
+    BUILD_ONLY=false
+
     while [[ $# -gt 0 ]]; do
         case $1 in
             --clean)
@@ -617,6 +501,10 @@ parse_args() {
                 PROMPT_CLEAN=false
                 shift
                 ;;
+            --build-only)
+                BUILD_ONLY=true
+                shift
+                ;;
             --stop-metro)
                 PROJECT_ROOT=$(find_project_root)
                 cd "$PROJECT_ROOT"
@@ -625,19 +513,24 @@ parse_args() {
                 exit 0
                 ;;
             --help|-h)
-                printf "JustDeen MyCompanion - iPhone Testing Script\n\n"
+                printf "JustDeen MyCompanion - iPhone Testing Script (Expo)\n\n"
                 printf "Usage: %s [options] [device-name]\n\n" "$0"
                 printf "Options:\n"
                 printf "  --clean           Clean both Xcode + Metro\n"
                 printf "  --clean-xcode     Clean only Xcode build\n"
                 printf "  --clean-metro     Clean only Metro cache\n"
                 printf "  --no-prompt       Skip prompt, use existing build\n"
+                printf "  --build-only      Only build (don't run on device)\n"
                 printf "  --stop-metro      Stop Metro bundler\n"
                 printf "  --help, -h        Show this help\n\n"
+                printf "Commands used:\n"
+                printf "  Build:            npx expo build\n"
+                printf "  Run on device:    npx expo run:ios --device\n\n"
                 printf "Examples:\n"
                 printf "  %s                       # Interactive prompt\n" "$0"
-                printf "  %s --no-prompt           # Fast build\n" "$0"
+                printf "  %s --no-prompt           # Fast run\n" "$0"
                 printf "  %s --clean               # Clean everything\n" "$0"
+                printf "  %s --build-only          # Just build\n" "$0"
                 printf "  %s \"Husain's iPhone\"     # Specific device\n\n" "$0"
                 exit 0
                 ;;

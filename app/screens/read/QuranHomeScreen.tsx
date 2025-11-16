@@ -21,6 +21,8 @@ import type { ThemedStyle } from "@/theme/types"
 import { quranApi, Surah } from "@/services/quran/quranApi"
 import { FontAwesome6 } from "@expo/vector-icons"
 import { useQuranTracking } from "@/hooks/useQuranTracking"
+import { getReadingStats, type ReadingStats } from "@/services/quran/user-progress"
+import { useFocusEffect } from "@react-navigation/native"
 
 // Juz interface
 interface JuzData {
@@ -80,6 +82,7 @@ export const QuranHomeScreen: React.FC<ReadStackScreenProps<"QuranHome">> = ({
   const [surahs, setSurahs] = useState<Surah[]>([])
   const [juzList] = useState<JuzData[]>(JUZ_DATA)
   const [isLoading, setIsLoading] = useState(true)
+  const [readingStats, setReadingStats] = useState<ReadingStats | null>(null)
 
   // Load surahs from API
   useEffect(() => {
@@ -96,6 +99,17 @@ export const QuranHomeScreen: React.FC<ReadStackScreenProps<"QuranHome">> = ({
     }
     loadSurahs()
   }, [])
+
+  // Load reading stats
+  useFocusEffect(
+    React.useCallback(() => {
+      getReadingStats().then(stats => {
+        setReadingStats(stats)
+      }).catch(err => {
+        console.error('Failed to load reading stats:', err)
+      })
+    }, [])
+  )
 
   // Set header right button
   useEffect(() => {
@@ -246,6 +260,30 @@ export const QuranHomeScreen: React.FC<ReadStackScreenProps<"QuranHome">> = ({
 
   return (
     <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={themed($container)}>
+      {/* Reading Stats Card */}
+      {!searchQuery && readingStats && (
+        <View style={themed($statsCard)}>
+          <View style={themed($statsHeader)}>
+            <FontAwesome6 name="chart-line" size={18} color={colors.read} solid />
+            <Text style={themed($statsHeaderText)}>Your Reading Progress</Text>
+          </View>
+          <View style={themed($statsGrid)}>
+            <View style={themed($statItem)}>
+              <Text style={themed($statNumber)}>{readingStats.totalPagesRead}</Text>
+              <Text style={themed($statLabel)}>Pages Read</Text>
+            </View>
+            <View style={themed($statItem)}>
+              <Text style={themed($statNumber)}>{readingStats.totalVersesRead}</Text>
+              <Text style={themed($statLabel)}>Verses Read</Text>
+            </View>
+            <View style={themed($statItem)}>
+              <Text style={themed($statNumber)}>{readingStats.totalBookmarks}</Text>
+              <Text style={themed($statLabel)}>Bookmarks</Text>
+            </View>
+          </View>
+        </View>
+      )}
+
       {/* Quick Action Cards */}
       {!searchQuery && (
         <View style={themed($quickActionsContainer)}>
@@ -434,6 +472,55 @@ const $emptyContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
 const $emptyText: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 16,
   color: colors.textDim,
+})
+
+// Stats Card Styles
+const $statsCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  backgroundColor: colors.palette.neutral100,
+  marginHorizontal: spacing.md,
+  marginTop: spacing.sm,
+  marginBottom: spacing.sm,
+  padding: spacing.md,
+  borderRadius: 12,
+  borderLeftWidth: 3,
+  borderLeftColor: colors.read,
+})
+
+const $statsHeader: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flexDirection: "row",
+  alignItems: "center",
+  gap: spacing.xs,
+  marginBottom: spacing.md,
+})
+
+const $statsHeaderText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 16,
+  fontWeight: "600",
+  color: colors.text,
+})
+
+const $statsGrid: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flexDirection: "row",
+  justifyContent: "space-around",
+  gap: spacing.sm,
+})
+
+const $statItem: ThemedStyle<ViewStyle> = () => ({
+  flex: 1,
+  alignItems: "center",
+})
+
+const $statNumber: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 24,
+  fontWeight: "700",
+  color: colors.read,
+  marginBottom: 4,
+})
+
+const $statLabel: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 12,
+  color: colors.textDim,
+  textAlign: "center",
 })
 
 // Quick Action Card Styles

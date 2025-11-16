@@ -69,7 +69,7 @@ interface VersesResponse {
 
 /**
  * Fetch and cache all verses for a specific chapter
- * Includes translations and word-by-word data
+ * Uses separate API calls for verses and translations as per Quran Foundation API v4
  */
 export async function fetchAndCacheChapterVerses(
   chapterNumber: number,
@@ -94,25 +94,57 @@ export async function fetchAndCacheChapterVerses(
 
   console.log(`🔄 Fetching verses for chapter ${chapterNumber}...`)
 
-  // Build query parameters
-  const params = new URLSearchParams({
+  // Step 1: Fetch Arabic text (Uthmani/Imlaei) and metadata
+  const versesParams = new URLSearchParams({
     language: 'en',
-    translations: translations.join(','),
-    per_page: '300', // Max verses per chapter is 286
+    per_page: '300',
+    fields: 'text_uthmani,text_imlaei',
   })
 
   if (includeWords) {
-    params.append('words', 'true')
+    versesParams.append('words', 'true')
   }
 
-  const data = await makeQuranAPIRequest<VersesResponse>(
-    `/verses/by_chapter/${chapterNumber}?${params.toString()}`
+  const versesData = await makeQuranAPIRequest<VersesResponse>(
+    `/verses/by_chapter/${chapterNumber}?${versesParams.toString()}`
   )
 
-  console.log(`📖 Caching ${data.verses.length} verses for chapter ${chapterNumber}...`)
+  console.log(`📖 Fetched ${versesData.verses.length} verses for chapter ${chapterNumber}`)
 
-  // Insert all verses
-  for (const verse of data.verses) {
+  // Step 2: Fetch translations using the correct v4 endpoint
+  const translationData = await makeQuranAPIRequest<{
+    translations: Array<{
+      resource_id: number
+      text: string
+      resource_name?: string
+      verse_key: string
+      verse_number: number
+    }>
+  }>(`/v4/quran/translations/${translations[0]}?chapter_number=${chapterNumber}`)
+
+  console.log(`📖 Fetched ${translationData.translations.length} translations for chapter ${chapterNumber}`)
+
+  // Create a map of translations by verse_key for easy lookup
+  const translationsMap = new Map<string, Array<{
+    resource_id: number
+    text: string
+    resource_name?: string
+  }>>()
+
+  translationData.translations.forEach(t => {
+    const existing = translationsMap.get(t.verse_key) || []
+    existing.push({
+      resource_id: t.resource_id,
+      text: t.text,
+      resource_name: t.resource_name
+    })
+    translationsMap.set(t.verse_key, existing)
+  })
+
+  // Insert all verses with their translations
+  for (const verse of versesData.verses) {
+    const verseTranslations = translationsMap.get(verse.verse_key) || []
+
     await db.runAsync(
       `INSERT INTO quran_verses (
         id, verse_key, chapter_id, verse_number, page_number,
@@ -128,12 +160,12 @@ export async function fetchAndCacheChapterVerses(
       verse.hizb_number,
       verse.text_uthmani,
       verse.text_imlaei || null,
-      JSON.stringify(verse.translations || []),
+      JSON.stringify(verseTranslations),
       JSON.stringify(verse.words || [])
     )
   }
 
-  console.log(`✅ Cached ${data.verses.length} verses for chapter ${chapterNumber}`)
+  console.log(`✅ Cached ${versesData.verses.length} verses with translations for chapter ${chapterNumber}`)
 }
 
 /**
@@ -284,4 +316,22 @@ export async function searchVerses(query: string, limit: number = 50): Promise<V
     translations: JSON.parse(row.translations),
     words: row.words ? JSON.parse(row.words) : undefined,
   }))
+}
+
+/**
+ * Clear cached verses for a specific chapter
+ * Useful for forcing a re-fetch with updated data
+ */
+export async function clearChapterCache(chapterNumber: number): Promise<void> {
+  const db = await getDatabase()
+  await db.runAsync('DELETE FROM quran_verses WHERE chapter_id = ?', chapterNumber)
+  console.log(`✅ Cleared cache for chapter ${chapterNumber}`)
+}
+
+/**
+ * Force refresh verses for a chapter (clear cache and re-fetch)
+ */
+export async function refreshChapterVerses(chapterNumber: number): Promise<void> {
+  await clearChapterCache(chapterNumber)
+  await fetchAndCacheChapterVerses(chapterNumber)
 }
