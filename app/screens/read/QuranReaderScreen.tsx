@@ -23,7 +23,9 @@ import type { ReadStackScreenProps } from "@/navigators"
 import type { ThemedStyle } from "@/theme/types"
 import { quranApi, Verse, Surah } from "@/services/quran/quranApi"
 import { getRecitations, type Recitation } from "@/services/quran/recitations-api"
+import { getAllTranslations, type TranslationResource } from "@/services/quran/translations-api"
 import { getAudioUri, preloadAudioForVerses } from "@/services/quran/audio-cache"
+import { FontAwesome6, AntDesign } from "@expo/vector-icons"
 import {
   markVerseAsRead,
   toggleBookmark,
@@ -31,6 +33,7 @@ import {
   type UserProgress,
 } from "@/services/quran/user-progress"
 import { refreshChapterVerses } from "@/services/quran/verses-api"
+import { getChapterById, type Chapter } from "@/services/quran/chapters-api"
 
 interface Word {
   id: number
@@ -55,8 +58,9 @@ interface VerseWithWords extends Verse {
 interface ReadingSettings {
   showTranslation: boolean
   showTransliteration: boolean
-  arabicTextType: 'uthmani' | 'imlaei'
+  arabicTextType: 'uthmani' | 'indopak'
   reciterId: number
+  translationId: number
 }
 
 export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = ({
@@ -75,11 +79,19 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
   const [recitations, setRecitations] = useState<Recitation[]>([])
   const [loadingRecitations, setLoadingRecitations] = useState(false)
   const [versesProgress, setVersesProgress] = useState<Map<string, UserProgress>>(new Map())
+  const [prevChapter, setPrevChapter] = useState<Chapter | null>(null)
+  const [nextChapter, setNextChapter] = useState<Chapter | null>(null)
+  const [scriptExpanded, setScriptExpanded] = useState(false)
+  const [reciterExpanded, setReciterExpanded] = useState(false)
+  const [translationExpanded, setTranslationExpanded] = useState(false)
+  const [translations, setTranslations] = useState<TranslationResource[]>([])
+  const [loadingTranslations, setLoadingTranslations] = useState(false)
   const [settings, setSettings] = useState<ReadingSettings>({
     showTranslation: true,
     showTransliteration: false,
     arabicTextType: 'uthmani',
     reciterId: 7, // Default: Mishary Rashid Alafasy
+    translationId: 131, // Default: Clear Quran
   })
 
   const flatListRef = useRef<FlatList<VerseWithWords>>(null)
@@ -125,9 +137,12 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
   }, [player])
 
   useEffect(() => {
-    // Load recitations when settings modal opens
+    // Load recitations and translations when settings modal opens
     if (settingsVisible && recitations.length === 0) {
       loadRecitations()
+    }
+    if (settingsVisible && translations.length === 0) {
+      loadTranslations()
     }
   }, [settingsVisible])
 
@@ -140,6 +155,18 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
       console.error('Failed to load recitations:', err)
     } finally {
       setLoadingRecitations(false)
+    }
+  }
+
+  const loadTranslations = async () => {
+    setLoadingTranslations(true)
+    try {
+      const allTranslations = await getAllTranslations()
+      setTranslations(allTranslations)
+    } catch (err) {
+      console.error('Failed to load translations:', err)
+    } finally {
+      setLoadingTranslations(false)
     }
   }
 
@@ -169,7 +196,7 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
       }
       setSurah(surahData)
 
-      const versesData = await quranApi.getVerses(surahNumber, 131) // Clear Quran translation
+      const versesData = await quranApi.getVerses(surahNumber, settings.translationId)
 
       // Debug: Log first verse to see what data we're getting
       if (versesData.length > 0) {
@@ -184,6 +211,21 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
       const verseKeys = versesData.map(v => v.verseKey)
       const progress = await getVersesProgress(verseKeys)
       setVersesProgress(progress)
+
+      // Load previous and next chapter info for navigation
+      if (surahNumber > 1) {
+        const prev = await getChapterById(surahNumber - 1)
+        setPrevChapter(prev)
+      } else {
+        setPrevChapter(null)
+      }
+
+      if (surahNumber < 114) {
+        const next = await getChapterById(surahNumber + 1)
+        setNextChapter(next)
+      } else {
+        setNextChapter(null)
+      }
 
       // Scroll to specific ayah if provided
       if (ayahNumber && versesData.length > 0) {
@@ -233,11 +275,14 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
 
   const handleBookmark = async (verse: VerseWithWords) => {
     try {
+      // Derive chapter_id from verse_key (e.g., "1:5" -> chapter 1) or use surahNumber
+      const chapterId = parseInt(verse.verseKey.split(':')[0]) || surahNumber
+
       const isBookmarked = await toggleBookmark(
         verse.verseKey,
-        verse.chapterId,
+        chapterId,
         verse.verseNumber,
-        verse.pageNumber
+        verse.pageNumber || 0
       )
 
       // Update local state
@@ -246,9 +291,9 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
         const current = updated.get(verse.verseKey)
         updated.set(verse.verseKey, {
           verseKey: verse.verseKey,
-          chapterId: verse.chapterId,
+          chapterId: chapterId,
           verseNumber: verse.verseNumber,
-          pageNumber: verse.pageNumber,
+          pageNumber: verse.pageNumber || 0,
           isRead: current?.isRead || false,
           isBookmarked,
           readAt: current?.readAt,
@@ -263,11 +308,14 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
 
   const handleMarkAsRead = async (verse: VerseWithWords, currentIndex: number) => {
     try {
+      // Derive chapter_id from verse_key (e.g., "1:5" -> chapter 1) or use surahNumber
+      const chapterId = parseInt(verse.verseKey.split(':')[0]) || surahNumber
+
       await markVerseAsRead(
         verse.verseKey,
-        verse.chapterId,
+        chapterId,
         verse.verseNumber,
-        verse.pageNumber
+        verse.pageNumber || 0
       )
 
       // Update local state
@@ -276,9 +324,9 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
         const current = updated.get(verse.verseKey)
         updated.set(verse.verseKey, {
           verseKey: verse.verseKey,
-          chapterId: verse.chapterId,
+          chapterId: chapterId,
           verseNumber: verse.verseNumber,
-          pageNumber: verse.pageNumber,
+          pageNumber: verse.pageNumber || 0,
           isRead: true,
           isBookmarked: current?.isBookmarked || false,
           readAt: new Date().toISOString(),
@@ -302,7 +350,13 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
   }
 
   const renderVerse = ({ item, index }: { item: VerseWithWords; index: number }) => {
-    const arabicText = settings.arabicTextType === 'uthmani' ? item.textUthmani : (item.textImlaei || item.textUthmani)
+    const arabicText =
+      settings.arabicTextType === 'indopak' ? (item.textIndopak || item.textUthmani) : item.textUthmani
+
+    // Select appropriate font based on script type
+    const arabicFont =
+      settings.arabicTextType === 'indopak' ? 'IndoPak' : 'Uthman-Regular'
+
     const isPlaying = playingVerseId === item.id
     const progress = versesProgress.get(item.verseKey)
     const isBookmarked = progress?.isBookmarked || false
@@ -312,6 +366,11 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
     if (index === 0) {
       console.log('🔍 Rendering first verse:', {
         verseKey: item.verseKey,
+        arabicTextType: settings.arabicTextType,
+        selectedFont: arabicFont,
+        textUthmani: item.textUthmani?.substring(0, 30),
+        textIndopak: item.textIndopak?.substring(0, 30) || 'N/A',
+        selectedText: arabicText.substring(0, 30),
         hasTranslations: !!item.translations,
         translationsCount: item.translations?.length || 0,
         firstTranslation: item.translations?.[0]?.text?.substring(0, 50) || 'N/A',
@@ -331,7 +390,7 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
 
         {/* Arabic Text */}
         <View style={themed($arabicContainer)}>
-          <Text style={themed($arabicText)}>{arabicText}</Text>
+          <Text style={[themed($arabicText), { fontFamily: arabicFont }]}>{arabicText}</Text>
         </View>
 
         {/* Transliteration */}
@@ -370,10 +429,11 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
             style={themed($actionButton)}
             onPress={() => handleBookmark(item)}
           >
-            <Icon
-              icon={isBookmarked ? 'heart' : 'heart'}
+            <FontAwesome6
+              name="bookmark"
               size={20}
               color={isBookmarked ? colors.read : colors.textDim}
+              solid={isBookmarked}
             />
           </TouchableOpacity>
 
@@ -382,8 +442,8 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
             style={themed($actionButton)}
             onPress={() => playAudio(item.verseKey, item.id)}
           >
-            <Icon
-              icon={isPlaying ? 'stop' : 'caretRight'}
+            <AntDesign
+              name={isPlaying ? 'pause-circle' : 'play-circle'}
               size={20}
               color={isPlaying ? colors.read : colors.textDim}
             />
@@ -441,7 +501,7 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
             <View style={themed($settingRow)}>
               <View style={themed($settingInfo)}>
                 <Text style={themed($settingLabel)}>Show Translation</Text>
-                <Text style={themed($settingDescription)}>Display English translation</Text>
+                <Text style={themed($settingDescription)}>Display translation</Text>
               </View>
               <Switch
                 value={settings.showTranslation}
@@ -450,6 +510,70 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
                 thumbColor={colors.palette.white}
               />
             </View>
+
+            {/* Translation Selector - Only shown when translation is enabled */}
+            {settings.showTranslation && (
+              <>
+                <TouchableOpacity
+                  style={themed($settingRow)}
+                  onPress={() => setTranslationExpanded(!translationExpanded)}
+                >
+                  <View style={themed($settingInfo)}>
+                    <Text style={themed($settingLabel)}>Translation</Text>
+                    <Text style={themed($settingDescription)}>
+                      {loadingTranslations
+                        ? 'Loading translations...'
+                        : translations.find(t => t.id === settings.translationId)?.name || 'Clear Quran'}
+                    </Text>
+                  </View>
+                  <Icon
+                    icon={translationExpanded ? "caretLeft" : "caretRight"}
+                    size={20}
+                    color={colors.textDim}
+                  />
+                </TouchableOpacity>
+
+                {/* Translation List - Expanded */}
+                {translationExpanded && translations.length > 0 && (
+                  <ScrollView style={themed($translationList)} showsVerticalScrollIndicator={false} nestedScrollEnabled>
+                    {translations.map((translation) => (
+                      <TouchableOpacity
+                        key={translation.id}
+                        style={themed(
+                          settings.translationId === translation.id
+                            ? $dropdownItemActive
+                            : $dropdownItem
+                        )}
+                        onPress={() => {
+                          setSettings({ ...settings, translationId: translation.id })
+                          setTranslationExpanded(false)
+                          // Reload verses with new translation
+                          loadSurah()
+                        }}
+                      >
+                        <View style={{ flex: 1 }}>
+                          <Text
+                            style={themed(
+                              settings.translationId === translation.id
+                                ? $dropdownItemTextActive
+                                : $dropdownItemText
+                            )}
+                          >
+                            {translation.name}
+                          </Text>
+                          <Text style={themed($translationAuthor)}>
+                            by {translation.author_name} · {translation.language_name}
+                          </Text>
+                        </View>
+                        {settings.translationId === translation.id && (
+                          <Icon icon="check" size={20} color={colors.read} />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                )}
+              </>
+            )}
 
             {/* Transliteration Toggle */}
             <View style={themed($settingRow)}>
@@ -467,70 +591,108 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
               />
             </View>
 
-            {/* Arabic Script Type */}
-            <View style={themed($settingRow)}>
+            {/* Arabic Script Type - Collapsible Dropdown */}
+            <TouchableOpacity
+              style={themed($settingRow)}
+              onPress={() => setScriptExpanded(!scriptExpanded)}
+            >
               <View style={themed($settingInfo)}>
                 <Text style={themed($settingLabel)}>Arabic Script</Text>
-                <Text style={themed($settingDescription)}>Choose text style</Text>
+                <Text style={themed($settingDescription)}>
+                  {settings.arabicTextType === 'uthmani' ? 'Uthmani' : 'Indo-Pak'}
+                </Text>
               </View>
-              <View style={themed($scriptSelector)}>
+              <Icon
+                icon={scriptExpanded ? "caretLeft" : "caretRight"}
+                size={20}
+                color={colors.textDim}
+              />
+            </TouchableOpacity>
+
+            {/* Script Options - Expanded */}
+            {scriptExpanded && (
+              <View style={themed($dropdownOptions)}>
                 <TouchableOpacity
                   style={themed(
-                    settings.arabicTextType === 'uthmani' ? $scriptButtonActive : $scriptButton
+                    settings.arabicTextType === 'uthmani' ? $dropdownItemActive : $dropdownItem
                   )}
-                  onPress={() => setSettings({ ...settings, arabicTextType: 'uthmani' })}
+                  onPress={() => {
+                    setSettings({ ...settings, arabicTextType: 'uthmani' })
+                    setScriptExpanded(false)
+                  }}
                 >
                   <Text
                     style={themed(
                       settings.arabicTextType === 'uthmani'
-                        ? $scriptButtonTextActive
-                        : $scriptButtonText
+                        ? $dropdownItemTextActive
+                        : $dropdownItemText
                     )}
                   >
                     Uthmani
                   </Text>
+                  {settings.arabicTextType === 'uthmani' && (
+                    <Icon icon="check" size={20} color={colors.read} />
+                  )}
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={themed(
-                    settings.arabicTextType === 'imlaei' ? $scriptButtonActive : $scriptButton
+                    settings.arabicTextType === 'indopak' ? $dropdownItemActive : $dropdownItem
                   )}
-                  onPress={() => setSettings({ ...settings, arabicTextType: 'imlaei' })}
+                  onPress={() => {
+                    setSettings({ ...settings, arabicTextType: 'indopak' })
+                    setScriptExpanded(false)
+                  }}
                 >
                   <Text
                     style={themed(
-                      settings.arabicTextType === 'imlaei'
-                        ? $scriptButtonTextActive
-                        : $scriptButtonText
+                      settings.arabicTextType === 'indopak'
+                        ? $dropdownItemTextActive
+                        : $dropdownItemText
                     )}
                   >
-                    Imlaei
+                    Indo-Pak
                   </Text>
+                  {settings.arabicTextType === 'indopak' && (
+                    <Icon icon="check" size={20} color={colors.read} />
+                  )}
                 </TouchableOpacity>
               </View>
+            )}
+
+            {/* Info Message */}
+            <View style={themed($infoMessage)}>
+              <Icon icon="bell" size={16} color={colors.read} />
+              <Text style={themed($infoMessageText)}>
+                If Indo-Pak text or translations don't appear, tap "Reload Verses" below to fetch the latest data.
+              </Text>
             </View>
 
-            {/* Refresh Translations Button (Temporary Debug) */}
+            {/* Refresh Verses Button */}
             <TouchableOpacity
               style={themed($refreshButton)}
               onPress={async () => {
+                setSettingsVisible(false)
                 setLoading(true)
                 try {
                   await refreshChapterVerses(surahNumber)
                   // Reload the surah
                   await loadSurah()
-                  alert('Translations refreshed! Please check the verses.')
+                  alert('✅ Verses reloaded successfully! All script types and translations are now available.')
                 } catch (err) {
-                  console.error('Failed to refresh translations:', err)
-                  alert('Failed to refresh translations. Check console for details.')
+                  console.error('Failed to refresh verses:', err)
+                  alert('❌ Failed to reload verses. Please check your internet connection.')
                 }
                 setLoading(false)
               }}
             >
-              <Text style={themed($refreshButtonText)}>🔄 Refresh Translations (Clear Cache)</Text>
+              <Text style={themed($refreshButtonText)}>🔄 Reload Verses</Text>
             </TouchableOpacity>
 
-            {/* Reciter Selection */}
-            <View style={themed($settingRow)}>
+            {/* Reciter Selection - Collapsible Dropdown */}
+            <TouchableOpacity
+              style={themed($settingRow)}
+              onPress={() => setReciterExpanded(!reciterExpanded)}
+            >
               <View style={themed($settingInfo)}>
                 <Text style={themed($settingLabel)}>Audio Reciter</Text>
                 <Text style={themed($settingDescription)}>
@@ -539,10 +701,15 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
                     : recitations.find(r => r.id === settings.reciterId)?.reciter_name || 'Mishary Rashid Alafasy'}
                 </Text>
               </View>
-            </View>
+              <Icon
+                icon={reciterExpanded ? "caretLeft" : "caretRight"}
+                size={20}
+                color={colors.textDim}
+              />
+            </TouchableOpacity>
 
-            {/* Reciter List */}
-            {recitations.length > 0 && (
+            {/* Reciter List - Expanded */}
+            {reciterExpanded && recitations.length > 0 && (
               <ScrollView style={themed($reciterList)} showsVerticalScrollIndicator={false}>
                 {recitations.slice(0, 10).map((reciter) => (
                   <TouchableOpacity
@@ -552,7 +719,10 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
                         ? $reciterItemActive
                         : $reciterItem
                     )}
-                    onPress={() => setSettings({ ...settings, reciterId: reciter.id })}
+                    onPress={() => {
+                      setSettings({ ...settings, reciterId: reciter.id })
+                      setReciterExpanded(false)
+                    }}
                   >
                     <View style={themed($reciterInfo)}>
                       <Text
@@ -587,13 +757,6 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
         </View>
       </Modal>
 
-      {/* Bismillah (except for Surah 1 and 9) */}
-      {surah && surah.id !== 1 && surah.id !== 9 && (
-        <View style={themed($bismillahContainer)}>
-          <Text style={themed($bismillahText)}>بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</Text>
-        </View>
-      )}
-
       {/* Verses List */}
       <FlatList
         ref={flatListRef}
@@ -605,6 +768,55 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
         onScrollToIndexFailed={(info) => {
           console.warn("Scroll to index failed:", info)
         }}
+        ListHeaderComponent={
+          <>
+            {/* Bismillah (except for Surah 1 and 9) */}
+            {surah && surah.id !== 1 && surah.id !== 9 && (
+              <View style={themed($bismillahContainer)}>
+                <Text style={[themed($bismillahText), {
+                  fontFamily: settings.arabicTextType === 'indopak' ? 'IndoPak' : 'Uthman-Regular'
+                }]}>
+                  بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+                </Text>
+              </View>
+            )}
+          </>
+        }
+        ListFooterComponent={
+          <View style={themed($navigationFooter)}>
+            {/* Previous Surah Button */}
+            <TouchableOpacity
+              style={themed($navButton)}
+              onPress={() => prevChapter && navigation.replace('QuranReader', { surahNumber: prevChapter.id, ayahNumber: 1 })}
+              disabled={!prevChapter}
+            >
+              <Icon
+                icon="caretLeft"
+                size={20}
+                color={!prevChapter ? colors.textDim : colors.read}
+              />
+              <Text style={themed(!prevChapter ? $navButtonTextDisabled : $navButtonText)}>
+                {prevChapter ? prevChapter.name_simple : 'No Previous'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Next Surah Button */}
+            <TouchableOpacity
+              style={themed($navButton)}
+              onPress={() => nextChapter && navigation.replace('QuranReader', { surahNumber: nextChapter.id, ayahNumber: 1 })}
+              disabled={!nextChapter}
+            >
+              <Text style={themed(!nextChapter ? $navButtonTextDisabled : $navButtonText)}>
+                {nextChapter ? nextChapter.name_simple : 'No Next'}
+              </Text>
+              <Icon
+                icon="caretRight"
+                size={20}
+                color={!nextChapter ? colors.textDim : colors.read}
+              />
+            </TouchableOpacity>
+          </View>
+        }
       />
     </Screen>
   )
@@ -950,19 +1162,79 @@ const $scriptButtonTextActive: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontWeight: '600',
 })
 
+// Dropdown styles
+const $dropdownOptions: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  marginTop: spacing.xs,
+  marginBottom: spacing.md,
+})
+
+const $dropdownItem: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  paddingVertical: spacing.sm,
+  paddingHorizontal: spacing.md,
+  borderRadius: 8,
+  marginBottom: spacing.xs,
+  backgroundColor: colors.palette.neutral100,
+})
+
+const $dropdownItemActive: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  paddingVertical: spacing.sm,
+  paddingHorizontal: spacing.md,
+  borderRadius: 8,
+  marginBottom: spacing.xs,
+  backgroundColor: colors.read + '20',
+  borderWidth: 1,
+  borderColor: colors.read,
+})
+
+const $dropdownItemText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 15,
+  fontWeight: '500',
+  color: colors.text,
+})
+
+const $dropdownItemTextActive: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 15,
+  fontWeight: '600',
+  color: colors.read,
+})
+
+const $infoMessage: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  backgroundColor: colors.read + '10',
+  padding: spacing.md,
+  borderRadius: 8,
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  gap: spacing.xs,
+  marginTop: spacing.md,
+  marginBottom: spacing.xs,
+  borderWidth: 1,
+  borderColor: colors.read + '30',
+})
+
+const $infoMessageText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  flex: 1,
+  fontSize: 13,
+  color: colors.text,
+  lineHeight: 18,
+})
+
 const $refreshButton: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  backgroundColor: colors.palette.overlay20,
+  backgroundColor: colors.read,
   padding: spacing.md,
   borderRadius: 12,
   alignItems: 'center',
-  marginVertical: spacing.md,
-  borderWidth: 1,
-  borderColor: colors.border,
+  marginVertical: spacing.sm,
 })
 
 const $refreshButtonText: ThemedStyle<TextStyle> = ({ colors }) => ({
-  color: colors.text,
-  fontSize: 14,
+  color: colors.palette.white,
+  fontSize: 15,
   fontWeight: '600',
 })
 
@@ -985,6 +1257,18 @@ const $reciterList: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   maxHeight: 200,
   marginTop: spacing.sm,
   marginBottom: spacing.md,
+})
+
+const $translationList: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  maxHeight: 300,
+  marginTop: spacing.sm,
+  marginBottom: spacing.md,
+})
+
+const $translationAuthor: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 12,
+  color: colors.textDim,
+  marginTop: 2,
 })
 
 const $reciterItem: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
@@ -1033,4 +1317,35 @@ const $reciterStyle: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 12,
   color: colors.textDim,
   fontStyle: 'italic',
+})
+
+const $navigationFooter: ThemedStyle<ViewStyle> = ({ spacing, colors }) => ({
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  paddingHorizontal: spacing.lg,
+  paddingVertical: spacing.xl,
+  marginTop: spacing.lg,
+  borderTopWidth: 1,
+  borderTopColor: colors.border,
+})
+
+const $navButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: spacing.xs,
+  paddingVertical: spacing.sm,
+  paddingHorizontal: spacing.md,
+})
+
+const $navButtonText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 16,
+  fontWeight: '600',
+  color: colors.read,
+})
+
+const $navButtonTextDisabled: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 16,
+  fontWeight: '600',
+  color: colors.textDim,
 })

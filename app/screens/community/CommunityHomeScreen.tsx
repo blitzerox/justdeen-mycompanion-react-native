@@ -25,6 +25,8 @@ import { DrawerNavigationProp } from "@react-navigation/drawer"
 import type { MoreStackScreenProps } from "@/navigators"
 import type { ThemedStyle } from "@/theme/types"
 import type { DrawerParamList } from "@/navigators/navigationTypes"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { spacing } from "@/theme/spacing"
 
 type FeedFilter = "myMosque" | "city" | "global"
 
@@ -82,6 +84,7 @@ export const CommunityHomeScreen: React.FC<MoreStackScreenProps<"MoreHome">> = (
   const { user, isAuthenticated } = useAuth()
   const drawerNavigation = useNavigation<DrawerNavigationProp<DrawerParamList>>()
   const [selectedFilter, setSelectedFilter] = useState<FeedFilter>("city")
+  const insets = useSafeAreaInsets()
 
   const getCategoryIcon = (category: CommunityPost["category"]) => {
     switch (category) {
@@ -110,9 +113,9 @@ export const CommunityHomeScreen: React.FC<MoreStackScreenProps<"MoreHome">> = (
   }
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={themed($container(colors))}>
+    <Screen preset="fixed" safeAreaEdges={[]} contentContainerStyle={themed($container(colors))}>
       {/* Custom Header */}
-      <View style={themed($header)}>
+      <View style={[themed($header), { paddingTop: insets.top + spacing.sm }]}>
         <View style={themed($headerLeft)}>
           <TouchableOpacity
             style={themed($hamburger(colors))}
@@ -178,6 +181,7 @@ export const CommunityHomeScreen: React.FC<MoreStackScreenProps<"MoreHome">> = (
       {/* Community Feed */}
       <ScrollView
         style={themed($scrollView)}
+        contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >

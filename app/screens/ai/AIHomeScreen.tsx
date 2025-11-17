@@ -26,6 +26,8 @@ import type { AIStackScreenProps } from "@/navigators"
 import type { ThemedStyle } from "@/theme/types"
 import type { DrawerParamList } from "@/navigators/navigationTypes"
 import { getChatHistory } from "@/services/ai/cloudflareRagApi"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { spacing } from "@/theme/spacing"
 
 interface QuickAction {
   id: string
@@ -111,6 +113,7 @@ export const AIHomeScreen: React.FC<AIStackScreenProps<"AIHome">> = ({ navigatio
   const { themed, theme: { colors } } = useAppTheme()
   const { user, isAuthenticated } = useAuth()
   const drawerNavigation = useNavigation<DrawerNavigationProp<DrawerParamList>>()
+  const insets = useSafeAreaInsets()
 
   const [recentChats, setRecentChats] = useState<ChatHistoryItem[]>([])
   const [isLoadingChats, setIsLoadingChats] = useState(false)
@@ -216,9 +219,9 @@ export const AIHomeScreen: React.FC<AIStackScreenProps<"AIHome">> = ({ navigatio
   }
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={themed($container(colors))}>
+    <Screen preset="fixed" safeAreaEdges={[]} contentContainerStyle={themed($container(colors))}>
       {/* Custom Header */}
-      <View style={themed($header)}>
+      <View style={[themed($header), { paddingTop: insets.top + spacing.sm }]}>
         <View style={themed($headerLeft)}>
           <TouchableOpacity
             style={themed($hamburger(colors))}
@@ -249,6 +252,7 @@ export const AIHomeScreen: React.FC<AIStackScreenProps<"AIHome">> = ({ navigatio
 
       <ScrollView
         style={themed($scrollView)}
+        contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >

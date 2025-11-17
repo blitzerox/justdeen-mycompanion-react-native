@@ -2,11 +2,12 @@
  * Read Tab Stack Navigator
  *
  * Screens:
- * - QuranHome: Main Quran reading screen with Surah list (CRITICAL - P0)
+ * - QuranHome: Main Quran reading screen with Surah/Juz/Page list (CRITICAL - P0)
  * - QuranReader: Verse-by-verse reading with translations (CRITICAL - P0)
  * - SurahDetails: Surah overview and metadata (P1)
  * - JuzList: List of 30 Juz (P1)
  * - JuzReader: Read by Juz (P1)
+ * - PageReader: Read by Page (P1)
  * - BookmarksList: Saved bookmarks (P1)
  * - ReadingHistory: Recently read verses (P1)
  * - TranslationSettings: Manage translations (P1)
@@ -25,6 +26,7 @@ import { QuranReaderScreen } from "@/screens/read/QuranReaderScreen"
 import { SurahDetailsScreen } from "@/screens/read/SurahDetailsScreen"
 import { JuzListScreen } from "@/screens/read/JuzListScreen"
 import { JuzReaderScreen } from "@/screens/read/JuzReaderScreen"
+import { PageReaderScreen } from "@/screens/read/PageReaderScreen"
 import { BookmarksListScreen } from "@/screens/read/BookmarksListScreen"
 import { ReadingHistoryScreen } from "@/screens/read/ReadingHistoryScreen"
 import { TranslationSettingsScreen } from "@/screens/read/TranslationSettingsScreen"
@@ -98,6 +100,14 @@ export const ReadStackNavigator = () => {
       <Stack.Screen
         name="JuzReader"
         component={JuzReaderScreen}
+        options={{
+          title: "Reading",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="PageReader"
+        component={PageReaderScreen}
         options={{
           title: "Reading",
           headerShown: false,

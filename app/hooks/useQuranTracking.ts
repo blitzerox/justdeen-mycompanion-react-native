@@ -41,6 +41,8 @@ export interface UseQuranTrackingReturn {
   removeBookmark: (bookmarkId: string) => Promise<void>
   getBookmarks: () => QuranBookmark[]
 
+  refresh: () => void
+
   // Stats
   quranStats: {
     totalPagesRead: number
@@ -63,13 +65,21 @@ const getTodayDateString = (): string => {
  * Hook for Quran reading tracking
  */
 export const useQuranTracking = (): UseQuranTrackingReturn => {
-  const { stats, updateStat, addPoints } = useUserStats()
+  const { stats, updateStat, addPoints, refreshStats } = useUserStats()
   const [bookmarks, setBookmarks] = useState<QuranBookmark[]>([])
 
   // Load bookmarks on mount
   useEffect(() => {
     loadBookmarks()
   }, [])
+
+  /**
+   * Refresh tracking data (call when returning to screen)
+   */
+  const refresh = useCallback(() => {
+    refreshStats()
+    loadBookmarks()
+  }, [refreshStats, loadBookmarks])
 
   /**
    * Load bookmarks from storage
@@ -246,6 +256,7 @@ export const useQuranTracking = (): UseQuranTrackingReturn => {
     addBookmark,
     removeBookmark,
     getBookmarks,
+    refresh,
     quranStats,
   }
 }

@@ -40,6 +40,7 @@ export interface Verse {
   hizb_number: number
   text_uthmani: string
   text_imlaei?: string
+  text_indopak?: string
   translations: Translation[]
   words?: Word[]
 }
@@ -55,6 +56,7 @@ interface VersesResponse {
     rub_el_hizb_number: number
     text_uthmani: string
     text_imlaei?: string
+    text_indopak?: string
     words?: any[]
     translations?: any[]
   }>
@@ -111,7 +113,20 @@ export async function fetchAndCacheChapterVerses(
 
   console.log(`📖 Fetched ${versesData.verses.length} verses for chapter ${chapterNumber}`)
 
-  // Step 2: Fetch translations using the correct v4 endpoint
+  // Step 2: Fetch Indo-Pak script verses
+  const indopakData = await makeQuranAPIRequest<VersesResponse>(
+    `/quran/verses/indopak?chapter_number=${chapterNumber}`
+  )
+
+  console.log(`📖 Fetched ${indopakData.verses.length} Indo-Pak verses for chapter ${chapterNumber}`)
+
+  // Create a map of Indo-Pak text by verse_key
+  const indopakMap = new Map<string, string>()
+  indopakData.verses.forEach(v => {
+    indopakMap.set(v.verse_key, v.text_indopak || '')
+  })
+
+  // Step 3: Fetch translations using the correct v4 endpoint
   const translationData = await makeQuranAPIRequest<{
     translations: Array<{
       resource_id: number
@@ -144,13 +159,14 @@ export async function fetchAndCacheChapterVerses(
   // Insert all verses with their translations
   for (const verse of versesData.verses) {
     const verseTranslations = translationsMap.get(verse.verse_key) || []
+    const indopakText = indopakMap.get(verse.verse_key) || null
 
     await db.runAsync(
       `INSERT INTO quran_verses (
         id, verse_key, chapter_id, verse_number, page_number,
-        juz_number, hizb_number, text_uthmani, text_imlaei,
+        juz_number, hizb_number, text_uthmani, text_imlaei, text_indopak,
         translations, words
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       verse.id,
       verse.verse_key,
       chapterNumber,
@@ -160,6 +176,7 @@ export async function fetchAndCacheChapterVerses(
       verse.hizb_number,
       verse.text_uthmani,
       verse.text_imlaei || null,
+      indopakText,
       JSON.stringify(verseTranslations),
       JSON.stringify(verse.words || [])
     )
@@ -192,6 +209,7 @@ export async function getChapterVerses(chapterNumber: number): Promise<Verse[]> 
     hizb_number: row.hizb_number,
     text_uthmani: row.text_uthmani,
     text_imlaei: row.text_imlaei,
+    text_indopak: row.text_indopak,
     translations: JSON.parse(row.translations),
     words: row.words ? JSON.parse(row.words) : undefined,
   }))
@@ -238,8 +256,20 @@ export async function getVerseByKey(verseKey: string): Promise<Verse | null> {
 export async function getVersesByJuz(juzNumber: number): Promise<Verse[]> {
   const db = await getDatabase()
 
-  // For first access, we need to ensure relevant chapters are cached
-  // This is a more complex query, you might want to cache juz data separately
+  // Check if juz data exists in cache
+  const existing = await db.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM quran_verses WHERE juz_number = ?',
+    juzNumber
+  )
+
+  // If not cached, we need to fetch all 114 chapters to ensure juz data is complete
+  if (!existing || existing.count === 0) {
+    console.log(`📚 Juz ${juzNumber} not cached, fetching all chapters...`)
+    // Fetch all chapters (this will populate the database with all verses including juz numbers)
+    for (let i = 1; i <= 114; i++) {
+      await fetchAndCacheChapterVerses(i)
+    }
+  }
 
   const result = await db.getAllAsync<any>(
     'SELECT * FROM quran_verses WHERE juz_number = ? ORDER BY id',
@@ -256,6 +286,7 @@ export async function getVersesByJuz(juzNumber: number): Promise<Verse[]> {
     hizb_number: row.hizb_number,
     text_uthmani: row.text_uthmani,
     text_imlaei: row.text_imlaei,
+    text_indopak: row.text_indopak,
     translations: JSON.parse(row.translations),
     words: row.words ? JSON.parse(row.words) : undefined,
   }))
@@ -266,6 +297,21 @@ export async function getVersesByJuz(juzNumber: number): Promise<Verse[]> {
  */
 export async function getVersesByPage(pageNumber: number): Promise<Verse[]> {
   const db = await getDatabase()
+
+  // Check if page data exists in cache
+  const existing = await db.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM quran_verses WHERE page_number = ?',
+    pageNumber
+  )
+
+  // If not cached, we need to fetch all 114 chapters to ensure page data is complete
+  if (!existing || existing.count === 0) {
+    console.log(`📚 Page ${pageNumber} not cached, fetching all chapters...`)
+    // Fetch all chapters (this will populate the database with all verses including page numbers)
+    for (let i = 1; i <= 114; i++) {
+      await fetchAndCacheChapterVerses(i)
+    }
+  }
 
   const result = await db.getAllAsync<any>(
     'SELECT * FROM quran_verses WHERE page_number = ? ORDER BY id',
@@ -282,6 +328,7 @@ export async function getVersesByPage(pageNumber: number): Promise<Verse[]> {
     hizb_number: row.hizb_number,
     text_uthmani: row.text_uthmani,
     text_imlaei: row.text_imlaei,
+    text_indopak: row.text_indopak,
     translations: JSON.parse(row.translations),
     words: row.words ? JSON.parse(row.words) : undefined,
   }))
@@ -313,6 +360,7 @@ export async function searchVerses(query: string, limit: number = 50): Promise<V
     hizb_number: row.hizb_number,
     text_uthmani: row.text_uthmani,
     text_imlaei: row.text_imlaei,
+    text_indopak: row.text_indopak,
     translations: JSON.parse(row.translations),
     words: row.words ? JSON.parse(row.words) : undefined,
   }))

@@ -24,6 +24,7 @@ export interface Verse {
   verseKey: string // e.g., "1:1"
   textUthmani: string // Uthmani Arabic text
   textImlaei?: string // Imlaei Arabic text
+  textIndopak?: string // Indo-Pak Arabic text
   translations: Translation[]
   audio?: string // Audio URL
   juzNumber?: number
@@ -220,6 +221,7 @@ export class QuranApi {
       verseKey: verse.verse_key,
       textUthmani: verse.text_uthmani,
       textImlaei: verse.text_imlaei,
+      textIndopak: verse.text_indopak,
       translations: verse.translations.map((t) => ({
         id: t.resource_id,
         languageCode: 'en',

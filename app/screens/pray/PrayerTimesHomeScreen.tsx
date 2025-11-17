@@ -39,6 +39,8 @@ import type { ThemedStyle } from "@/theme/types"
 import { getCurrentLocation, requestLocationPermission, checkLocationPermission, LocationPermissionStatus } from "@/services/location/locationService"
 import { aladhanApi, PrayerTime } from "@/services/prayer/aladhanApi"
 import { PrayerTrackingStatus } from "@/types/prayer"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { spacing } from "@/theme/spacing"
 
 const { width } = Dimensions.get("window")
 
@@ -58,6 +60,7 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
   const { user, isAuthenticated } = useAuth()
   const { location, setLocation, getNextPrayer, getPrayerStatus, cyclePrayerStatus } = usePrayer()
   const drawerNavigation = useNavigation<DrawerNavigationProp<DrawerParamList>>()
+  const insets = useSafeAreaInsets()
 
   const [loadingLocation, setLoadingLocation] = useState(false)
   const [permissionStatus, setPermissionStatus] = useState<LocationPermissionStatus>("undetermined")
@@ -410,9 +413,9 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
   const currentMonth = selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={themed($container(colors))}>
+    <Screen preset="fixed" safeAreaEdges={[]} contentContainerStyle={themed($container(colors))}>
       {/* Custom Header */}
-      <View style={themed($header)}>
+      <View style={[themed($header), { paddingTop: insets.top + spacing.sm }]}>
         <View style={themed($headerLeft)}>
           <TouchableOpacity
             style={themed($hamburger(colors))}
@@ -450,7 +453,7 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
 
       <ScrollView
         style={themed($scrollView)}
-        contentContainerStyle={themed($scrollContentContainer)}
+        contentContainerStyle={themed($scrollContentContainer(insets.bottom))}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
@@ -823,10 +826,10 @@ const $scrollView: ThemedStyle<ViewStyle> = {
   flex: 1,
 }
 
-const $scrollContentContainer: ThemedStyle<ViewStyle> = {
+const $scrollContentContainer: ThemedStyle<ViewStyle> = (bottomInset: number) => ({
   flexGrow: 1,
-  paddingBottom: 24,
-}
+  paddingBottom: bottomInset + spacing.xl,
+})
 
 const $monthYearHeader: ThemedStyle<ViewStyle> = {
   flexDirection: "row",

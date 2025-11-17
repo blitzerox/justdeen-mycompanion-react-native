@@ -14,15 +14,16 @@ import {
   TouchableOpacity,
   TextInput,
 } from "react-native"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { useFocusEffect } from "@react-navigation/native"
 import { Screen, Text, Icon } from "@/components"
 import { useAppTheme } from "@/theme/context"
 import type { ReadStackScreenProps } from "@/navigators"
 import type { ThemedStyle } from "@/theme/types"
 import { quranApi, Surah } from "@/services/quran/quranApi"
-import { FontAwesome6 } from "@expo/vector-icons"
+import { FontAwesome6, Feather, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useQuranTracking } from "@/hooks/useQuranTracking"
-import { getReadingStats, type ReadingStats } from "@/services/quran/user-progress"
-import { useFocusEffect } from "@react-navigation/native"
+import { getBookmarkedVerses, type UserProgress } from "@/services/quran/user-progress"
 
 // Juz interface
 interface JuzData {
@@ -69,20 +70,40 @@ const JUZ_DATA: JuzData[] = [
   { id: 30, name: "Juz 30", nameArabic: "الجزء ٣٠", startSurah: 78, startAyah: 1, endSurah: 114, endAyah: 6 },
 ]
 
-type ViewMode = "surah" | "juz"
+type ViewMode = "surah" | "juz" | "page"
 
 export const QuranHomeScreen: React.FC<ReadStackScreenProps<"QuranHome">> = ({
   navigation,
 }) => {
   const { themed, theme: { colors, spacing } } = useAppTheme()
-  const { lastReadPosition, bookmarks } = useQuranTracking()
+  const { lastReadPosition, bookmarks, refresh: refreshTracking } = useQuranTracking()
+  const insets = useSafeAreaInsets()
 
   const [viewMode, setViewMode] = useState<ViewMode>("surah")
   const [searchQuery, setSearchQuery] = useState("")
   const [surahs, setSurahs] = useState<Surah[]>([])
   const [juzList] = useState<JuzData[]>(JUZ_DATA)
+  const [pageList] = useState<number[]>(Array.from({ length: 604 }, (_, i) => i + 1))
   const [isLoading, setIsLoading] = useState(true)
-  const [readingStats, setReadingStats] = useState<ReadingStats | null>(null)
+  const [sqliteBookmarks, setSqliteBookmarks] = useState<UserProgress[]>([])
+
+  // Load bookmarks from SQLite
+  const loadBookmarks = async () => {
+    try {
+      const bookmarkedVerses = await getBookmarkedVerses()
+      setSqliteBookmarks(bookmarkedVerses)
+    } catch (error) {
+      console.error('Failed to load bookmarks:', error)
+    }
+  }
+
+  // Refresh tracking data and bookmarks when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      refreshTracking()
+      loadBookmarks()
+    }, [refreshTracking])
+  )
 
   // Load surahs from API
   useEffect(() => {
@@ -100,30 +121,25 @@ export const QuranHomeScreen: React.FC<ReadStackScreenProps<"QuranHome">> = ({
     loadSurahs()
   }, [])
 
-  // Load reading stats
-  useFocusEffect(
-    React.useCallback(() => {
-      getReadingStats().then(stats => {
-        setReadingStats(stats)
-      }).catch(err => {
-        console.error('Failed to load reading stats:', err)
-      })
-    }, [])
-  )
-
   // Set header right button
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <TouchableOpacity
-          onPress={() => setViewMode(viewMode === "surah" ? "juz" : "surah")}
+          onPress={() => {
+            if (viewMode === "surah") setViewMode("juz")
+            else if (viewMode === "juz") setViewMode("page")
+            else setViewMode("surah")
+          }}
           style={{ padding: 8 }}
         >
-          <FontAwesome6
-            name={viewMode === "surah" ? "book-quran" : "list"}
-            size={20}
-            color={colors.read}
-          />
+          {viewMode === "surah" ? (
+            <Feather name="book-open" size={20} color={colors.read} />
+          ) : viewMode === "juz" ? (
+            <MaterialIcons name="menu-book" size={20} color={colors.read} />
+          ) : (
+            <MaterialCommunityIcons name="book-open-page-variant-outline" size={20} color={colors.read} />
+          )}
         </TouchableOpacity>
       ),
     })
@@ -150,6 +166,12 @@ export const QuranHomeScreen: React.FC<ReadStackScreenProps<"QuranHome">> = ({
     )
   })
 
+  // Filter pages based on search
+  const filteredPages = pageList.filter((page) => {
+    const query = searchQuery.toLowerCase()
+    return page.toString().includes(query)
+  })
+
   // Get last read Surah info
   const getLastReadSurah = () => {
     if (!lastReadPosition.surahNumber) return null
@@ -159,10 +181,11 @@ export const QuranHomeScreen: React.FC<ReadStackScreenProps<"QuranHome">> = ({
 
   // Get last bookmark info
   const getLastBookmark = () => {
-    if (bookmarks.length === 0) return null
-    const lastBookmark = bookmarks[bookmarks.length - 1]
-    const surah = surahs.find((s) => s.id === lastBookmark.surahNumber)
-    return surah ? `${surah.transliteration} ${lastBookmark.ayahNumber}` : null
+    if (sqliteBookmarks.length === 0) return null
+    // Get the most recent bookmark (they're sorted by bookmarked_at DESC)
+    const lastBookmark = sqliteBookmarks[0]
+    const surah = surahs.find((s) => s.id === lastBookmark.chapterId)
+    return surah ? `${surah.transliteration} ${lastBookmark.verseNumber}` : null
   }
 
   const renderQuickActionCard = (
@@ -255,40 +278,40 @@ export const QuranHomeScreen: React.FC<ReadStackScreenProps<"QuranHome">> = ({
     )
   }
 
+  const renderPage = ({ item }: { item: number }) => (
+    <TouchableOpacity
+      style={themed($surahCard)}
+      onPress={() => navigation.navigate("PageReader", { pageNumber: item })}
+      activeOpacity={0.7}
+    >
+      <View style={themed($surahLeft)}>
+        <View style={themed($surahNumber)}>
+          <Text style={themed($surahNumberText)}>{item}</Text>
+        </View>
+        <View style={themed($surahInfo)}>
+          <Text style={themed($surahName)}>صفحة {item}</Text>
+          <Text style={themed($surahTransliteration)}>Page {item}</Text>
+        </View>
+      </View>
+
+      <View style={themed($surahRight)}>
+        <Text style={themed($surahMetaText)}>
+          Mushaf page
+        </Text>
+      </View>
+    </TouchableOpacity>
+  )
+
   const lastReadText = getLastReadSurah()
   const lastBookmarkText = getLastBookmark()
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={themed($container)}>
-      {/* Reading Stats Card */}
-      {!searchQuery && readingStats && (
-        <View style={themed($statsCard)}>
-          <View style={themed($statsHeader)}>
-            <FontAwesome6 name="chart-line" size={18} color={colors.read} solid />
-            <Text style={themed($statsHeaderText)}>Your Reading Progress</Text>
-          </View>
-          <View style={themed($statsGrid)}>
-            <View style={themed($statItem)}>
-              <Text style={themed($statNumber)}>{readingStats.totalPagesRead}</Text>
-              <Text style={themed($statLabel)}>Pages Read</Text>
-            </View>
-            <View style={themed($statItem)}>
-              <Text style={themed($statNumber)}>{readingStats.totalVersesRead}</Text>
-              <Text style={themed($statLabel)}>Verses Read</Text>
-            </View>
-            <View style={themed($statItem)}>
-              <Text style={themed($statNumber)}>{readingStats.totalBookmarks}</Text>
-              <Text style={themed($statLabel)}>Bookmarks</Text>
-            </View>
-          </View>
-        </View>
-      )}
-
+    <Screen preset="fixed" safeAreaEdges={[]} contentContainerStyle={themed($container)}>
       {/* Quick Action Cards */}
       {!searchQuery && (
-        <View style={themed($quickActionsContainer)}>
+        <View style={[themed($quickActionsContainer), { paddingTop: insets.top / 2 }]}>
           {renderQuickActionCard(
-            "Continue Reading",
+            "Last Read",
             lastReadText,
             "book-open",
             () => {
@@ -305,11 +328,11 @@ export const QuranHomeScreen: React.FC<ReadStackScreenProps<"QuranHome">> = ({
             lastBookmarkText,
             "bookmark",
             () => {
-              if (bookmarks.length > 0) {
-                const lastBookmark = bookmarks[bookmarks.length - 1]
+              if (sqliteBookmarks.length > 0) {
+                const lastBookmark = sqliteBookmarks[0]
                 navigation.navigate("QuranReader", {
-                  surahNumber: lastBookmark.surahNumber,
-                  startAyah: lastBookmark.ayahNumber,
+                  surahNumber: lastBookmark.chapterId,
+                  startAyah: lastBookmark.verseNumber,
                 })
               }
             }
@@ -322,7 +345,13 @@ export const QuranHomeScreen: React.FC<ReadStackScreenProps<"QuranHome">> = ({
         <Icon icon="search" size={20} color={colors.textDim} />
         <TextInput
           style={themed($searchInput)}
-          placeholder={viewMode === "surah" ? "Search Surah name, number..." : "Search Juz number..."}
+          placeholder={
+            viewMode === "surah"
+              ? "Search Surah name, number..."
+              : viewMode === "juz"
+              ? "Search Juz number..."
+              : "Search Page number..."
+          }
           placeholderTextColor={colors.textDim}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -334,13 +363,13 @@ export const QuranHomeScreen: React.FC<ReadStackScreenProps<"QuranHome">> = ({
         )}
       </View>
 
-      {/* List - Surahs or Juz */}
+      {/* List - Surahs, Juz, or Pages */}
       {viewMode === "surah" ? (
         <FlatList
           data={filteredSurahs}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderSurah}
-          contentContainerStyle={themed($listContent)}
+          contentContainerStyle={[themed($listContent), { paddingBottom: insets.bottom + spacing.xl }]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={themed($emptyContainer)}>
@@ -348,16 +377,29 @@ export const QuranHomeScreen: React.FC<ReadStackScreenProps<"QuranHome">> = ({
             </View>
           }
         />
-      ) : (
+      ) : viewMode === "juz" ? (
         <FlatList
           data={filteredJuz}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderJuz}
-          contentContainerStyle={themed($listContent)}
+          contentContainerStyle={[themed($listContent), { paddingBottom: insets.bottom + spacing.xl }]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={themed($emptyContainer)}>
               <Text style={themed($emptyText)}>No Juz found</Text>
+            </View>
+          }
+        />
+      ) : (
+        <FlatList
+          data={filteredPages}
+          keyExtractor={(item) => item.toString()}
+          renderItem={renderPage}
+          contentContainerStyle={[themed($listContent), { paddingBottom: insets.bottom + spacing.xl }]}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={themed($emptyContainer)}>
+              <Text style={themed($emptyText)}>No Pages found</Text>
             </View>
           }
         />
@@ -378,7 +420,7 @@ const $searchContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   paddingHorizontal: spacing.md,
   paddingVertical: spacing.sm,
   marginHorizontal: spacing.md,
-  marginTop: spacing.sm,
+  marginTop: 0,
   marginBottom: spacing.md,
   borderRadius: 12,
   gap: spacing.sm,
@@ -393,7 +435,6 @@ const $searchInput: ThemedStyle<TextStyle> = ({ colors }) => ({
 
 const $listContent: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   paddingHorizontal: spacing.md,
-  paddingBottom: spacing.xl,
 })
 
 const $surahCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
@@ -474,62 +515,12 @@ const $emptyText: ThemedStyle<TextStyle> = ({ colors }) => ({
   color: colors.textDim,
 })
 
-// Stats Card Styles
-const $statsCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  backgroundColor: colors.palette.neutral100,
-  marginHorizontal: spacing.md,
-  marginTop: spacing.sm,
-  marginBottom: spacing.sm,
-  padding: spacing.md,
-  borderRadius: 12,
-  borderLeftWidth: 3,
-  borderLeftColor: colors.read,
-})
-
-const $statsHeader: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  flexDirection: "row",
-  alignItems: "center",
-  gap: spacing.xs,
-  marginBottom: spacing.md,
-})
-
-const $statsHeaderText: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 16,
-  fontWeight: "600",
-  color: colors.text,
-})
-
-const $statsGrid: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  flexDirection: "row",
-  justifyContent: "space-around",
-  gap: spacing.sm,
-})
-
-const $statItem: ThemedStyle<ViewStyle> = () => ({
-  flex: 1,
-  alignItems: "center",
-})
-
-const $statNumber: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 24,
-  fontWeight: "700",
-  color: colors.read,
-  marginBottom: 4,
-})
-
-const $statLabel: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 12,
-  color: colors.textDim,
-  textAlign: "center",
-})
-
 // Quick Action Card Styles
 const $quickActionsContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flexDirection: "row",
   gap: spacing.sm,
   paddingHorizontal: spacing.md,
-  paddingTop: spacing.sm,
-  marginBottom: spacing.sm,
+  marginBottom: spacing.md,
 })
 
 const $quickActionCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({

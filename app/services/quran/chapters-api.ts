@@ -164,15 +164,26 @@ export async function fetchAndCacheChapterInfo(chapterId: number): Promise<void>
 
   console.log(`🔄 Fetching info for chapter ${chapterId}...`)
 
-  const data = await makeQuranAPIRequest<any>(`/chapters/${chapterId}/info`)
+  const response = await makeQuranAPIRequest<{
+    chapter_info: {
+      id: number
+      chapter_id: number
+      short_text: string
+      text: string
+      source: string
+      language_name: string
+    }
+  }>(`/chapters/${chapterId}/info`)
+
+  const info = response.chapter_info
 
   await db.runAsync(
     'INSERT INTO quran_chapter_info (chapter_id, short_text, text, source, language_name) VALUES (?, ?, ?, ?, ?)',
     chapterId,
-    data.short_text,
-    data.text,
-    data.source,
-    data.language_name
+    info.short_text || '',
+    info.text || '',
+    info.source || 'Unknown',
+    info.language_name || 'english'
   )
 
   console.log(`✅ Cached info for chapter ${chapterId}`)

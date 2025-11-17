@@ -13,6 +13,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { useAppTheme } from "@/theme/context"
 import { Icon } from "@/components"
 import { FontAwesome6 } from "@expo/vector-icons"
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons"
 
 // Tab Stack Navigators
 import { PrayStackNavigator } from "./stacks/PrayStack"
@@ -57,7 +58,7 @@ export const TabNavigator = () => {
           tabBarLabel: "Home",
           tabBarActiveTintColor: colors.home,
           tabBarIcon: ({ focused, color, size }) => (
-            <FontAwesome6 name="house" color={color} size={size} solid={focused} />
+            <MaterialCommunityIcons name="mosque" color={color} size={size} />
           ),
         }}
       />

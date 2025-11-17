@@ -236,7 +236,7 @@ export const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props
             style={themed($optionRow)}
             onPress={() => {
               navigation.navigate("MainTabs", {
-                screen: "MoreTab",
+                screen: "ReflectTab",
                 params: { screen: "SettingsHome" }
               })
               navigation.closeDrawer()

@@ -16,6 +16,8 @@ export const customFontsToLoad = {
   // Arabic fonts for Quranic text
   "Uthman-Regular": require("../../assets/fonts/Uthman-Regular.ttf"),
   "Uthman-Bold": require("../../assets/fonts/Uthman-Bold.ttf"),
+  // Indo-Pak Nastaliq font (official Quran.com font for Indo-Pak script)
+  "IndoPak": require("../../assets/fonts/IndoPak.ttf"),
   // Arabic fonts for Islamic calligraphy (names, duas)
   "Jameel-Noori-Nastaleeq": require("../../assets/fonts/JameelNooriNastaleeq.ttf"),
 }
@@ -51,6 +53,8 @@ const fonts = {
     // Quran text (Uthmani script)
     quran: "Uthman-Regular",
     quranBold: "Uthman-Bold",
+    // Indo-Pak Nastaliq script (official Quran.com font)
+    indopak: "IndoPak",
     // Islamic calligraphy (for names, duas, etc.)
     islamic: "Jameel-Noori-Nastaleeq",
   },

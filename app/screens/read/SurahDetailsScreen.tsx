@@ -9,7 +9,15 @@ import { Screen, Text, Icon } from "@/components"
 import { useAppTheme } from "@/theme/context"
 import type { ReadStackScreenProps } from "@/navigators"
 import type { ThemedStyle } from "@/theme/types"
-import { quranApi, type Surah } from "@/services/quran/quranApi"
+import { getChapterById, getChapterInfo, type Chapter } from "@/services/quran/chapters-api"
+
+interface ChapterInfo {
+  chapter_id: number
+  short_text: string
+  text: string
+  source: string
+  language_name: string
+}
 
 export const SurahDetailsScreen: React.FC<ReadStackScreenProps<"SurahDetails">> = ({
   navigation,
@@ -17,22 +25,30 @@ export const SurahDetailsScreen: React.FC<ReadStackScreenProps<"SurahDetails">> 
 }) => {
   const { themed, theme: { colors } } = useAppTheme()
   const { surahNumber } = route.params
-  const [surah, setSurah] = useState<Surah | null>(null)
+  const [chapter, setChapter] = useState<Chapter | null>(null)
+  const [chapterInfo, setChapterInfo] = useState<ChapterInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const loadSurah = async () => {
+    const loadChapterData = async () => {
       try {
         setIsLoading(true)
-        const data = await quranApi.getSurah(surahNumber)
-        setSurah(data || null)
+
+        // Load chapter metadata and info in parallel
+        const [chapterData, infoData] = await Promise.all([
+          getChapterById(surahNumber),
+          getChapterInfo(surahNumber)
+        ])
+
+        setChapter(chapterData)
+        setChapterInfo(infoData)
       } catch (error) {
-        console.error('Failed to load surah:', error)
+        console.error('Failed to load chapter data:', error)
       } finally {
         setIsLoading(false)
       }
     }
-    loadSurah()
+    loadChapterData()
   }, [surahNumber])
 
   if (isLoading) {
@@ -46,7 +62,7 @@ export const SurahDetailsScreen: React.FC<ReadStackScreenProps<"SurahDetails">> 
     )
   }
 
-  if (!surah) {
+  if (!chapter) {
     return (
       <Screen preset="fixed" contentContainerStyle={themed($container)}>
         <View style={themed($errorContainer)}>
@@ -56,48 +72,45 @@ export const SurahDetailsScreen: React.FC<ReadStackScreenProps<"SurahDetails">> 
     )
   }
 
+  const revelationType = chapter.revelation_place === 'makkah' ? 'Meccan' : 'Madani'
+
   return (
     <Screen preset="scroll" contentContainerStyle={themed($container)}>
       {/* Surah Header */}
       <View style={themed($header)}>
-        <Text style={themed($surahName)}>{surah.name}</Text>
-        <Text style={themed($surahTransliteration)}>{surah.transliteration}</Text>
-        <Text style={themed($surahTranslation)}>{surah.translation}</Text>
+        <Text style={themed($surahName)}>{chapter.name_arabic}</Text>
+        <Text style={themed($surahTransliteration)}>{chapter.name_complex}</Text>
       </View>
 
-      {/* Bismillah (except for Surah 9 At-Tawbah) */}
-      {surah.id !== 9 && (
-        <View style={themed($bismillahContainer)}>
-          <Text style={themed($bismillahText)}>بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</Text>
-        </View>
-      )}
+      {/* Translation Card */}
+      <View style={themed($translationCard)}>
+        <Text style={themed($translationCardText)}>{chapter.translated_name}</Text>
+      </View>
 
       {/* Surah Info Cards */}
       <View style={themed($infoGrid)}>
         <View style={themed($infoCard)}>
           <Icon icon="book" size={24} color={colors.read} />
           <Text style={themed($infoLabel)}>Verses</Text>
-          <Text style={themed($infoValue)}>{surah.totalVerses}</Text>
+          <Text style={themed($infoValue)}>{chapter.verses_count}</Text>
         </View>
 
         <View style={themed($infoCard)}>
           <Icon icon="mapPin" size={24} color={colors.read} />
           <Text style={themed($infoLabel)}>Revelation</Text>
-          <Text style={themed($infoValue)}>
-            {surah.type === "meccan" ? "Meccan" : "Medinan"}
-          </Text>
+          <Text style={themed($infoValue)}>{revelationType}</Text>
         </View>
 
         <View style={themed($infoCard)}>
           <Icon icon="list" size={24} color={colors.read} />
           <Text style={themed($infoLabel)}>Order</Text>
-          <Text style={themed($infoValue)}>{surah.revelationOrder}</Text>
+          <Text style={themed($infoValue)}>{chapter.revelation_order}</Text>
         </View>
 
         <View style={themed($infoCard)}>
           <Icon icon="hash" size={24} color={colors.read} />
           <Text style={themed($infoLabel)}>Number</Text>
-          <Text style={themed($infoValue)}>{surah.id}</Text>
+          <Text style={themed($infoValue)}>{chapter.id}</Text>
         </View>
       </View>
 
@@ -106,7 +119,7 @@ export const SurahDetailsScreen: React.FC<ReadStackScreenProps<"SurahDetails">> 
         style={themed($readButton)}
         onPress={() =>
           navigation.navigate("QuranReader", {
-            surahNumber: surah.id,
+            surahNumber: chapter.id,
             ayahNumber: 1,
           })
         }
@@ -118,11 +131,27 @@ export const SurahDetailsScreen: React.FC<ReadStackScreenProps<"SurahDetails">> 
       {/* Description */}
       <View style={themed($descriptionContainer)}>
         <Text style={themed($descriptionTitle)}>About this Surah</Text>
-        <Text style={themed($descriptionText)}>
-          {surah.type === "meccan"
-            ? `This Surah was revealed in Mecca. It is the ${surah.revelationOrder}${getOrdinalSuffix(surah.revelationOrder)} chapter revealed chronologically. Meccan surahs generally focus on faith, the Day of Judgment, and stories of earlier prophets.`
-            : `This Surah was revealed in Medina. It is the ${surah.revelationOrder}${getOrdinalSuffix(surah.revelationOrder)} chapter revealed chronologically. Medinan surahs often contain detailed legal and social guidance for the Muslim community.`}
-        </Text>
+        {chapterInfo?.text ? (
+          <>
+            {parseHTMLContent(chapterInfo.text).map((section, index) => (
+              <Text
+                key={index}
+                style={themed(section.type === 'heading' ? $descriptionSubheading : $descriptionText)}
+              >
+                {section.content}
+              </Text>
+            ))}
+          </>
+        ) : (
+          <Text style={themed($descriptionText)}>
+            {revelationType === "Meccan"
+              ? `This Surah was revealed in Mecca. It is the ${chapter.revelation_order}${getOrdinalSuffix(chapter.revelation_order)} chapter revealed chronologically. Meccan surahs generally focus on faith, the Day of Judgment, and stories of earlier prophets.`
+              : `This Surah was revealed in Medina. It is the ${chapter.revelation_order}${getOrdinalSuffix(chapter.revelation_order)} chapter revealed chronologically. Madani surahs often contain detailed legal and social guidance for the Muslim community.`}
+          </Text>
+        )}
+        {chapterInfo?.source && (
+          <Text style={themed($sourceText)}>Source: {chapterInfo.source}</Text>
+        )}
       </View>
     </Screen>
   )
@@ -138,26 +167,70 @@ function getOrdinalSuffix(num: number): string {
   return "th"
 }
 
+// Helper function to parse HTML content
+interface ParsedSection {
+  type: 'heading' | 'paragraph'
+  content: string
+  hasEmphasis?: boolean
+}
+
+function parseHTMLContent(html: string): ParsedSection[] {
+  const sections: ParsedSection[] = []
+
+  // First, remove all <a> tags but keep their text content
+  let cleanedHtml = html.replace(/<a[^>]*>(.*?)<\/a>/gi, '$1')
+
+  // Match both <h2> and <p> tags in order they appear
+  const tagRegex = /<(h2|p)[^>]*>(.*?)<\/\1>/gi
+  let match
+
+  // Extract tags in the order they appear
+  while ((match = tagRegex.exec(cleanedHtml)) !== null) {
+    const tagName = match[1].toLowerCase()
+    let content = match[2].trim()
+
+    if (content) { // Only add non-empty content
+      // Check if content has emphasis tags
+      const hasEmphasis = /<(strong|em|b|i)[^>]*>/.test(content)
+
+      // Remove HTML tags from content but keep the text
+      // Replace <strong> and <b> with the text (bold effect will be handled in rendering)
+      content = content.replace(/<(strong|b)[^>]*>(.*?)<\/\1>/gi, '$2')
+      // Replace <em> and <i> with the text (italic effect will be handled in rendering)
+      content = content.replace(/<(em|i)[^>]*>(.*?)<\/\1>/gi, '$2')
+
+      sections.push({
+        type: tagName === 'h2' ? 'heading' : 'paragraph',
+        content: content,
+        hasEmphasis: hasEmphasis
+      })
+    }
+  }
+
+  return sections
+}
+
 // Styles
 const $container: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  paddingHorizontal: spacing.lg,
+  paddingHorizontal: spacing.xl,
   paddingVertical: spacing.md,
 })
 
 const $header: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   alignItems: "center",
   paddingVertical: spacing.xl,
+  paddingHorizontal: spacing.md,
   width: "100%",
 })
 
-const $surahName: ThemedStyle<TextStyle> = ({ colors }) => ({
+const $surahName: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   fontSize: 48,
   fontWeight: "700",
   color: colors.text,
-  marginBottom: 8,
+  marginBottom: spacing.xs,
   textAlign: "center",
-  width: "100%",
-  numberOfLines: undefined,
+  paddingHorizontal: spacing.md,
+  lineHeight: 56, // Add this - slightly more than fontSize for proper rendering
 })
 
 const $surahTransliteration: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
@@ -167,12 +240,7 @@ const $surahTransliteration: ThemedStyle<TextStyle> = ({ colors, spacing }) => (
   marginBottom: spacing.xxs,
 })
 
-const $surahTranslation: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 18,
-  color: colors.textDim,
-})
-
-const $bismillahContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+const $translationCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   backgroundColor: colors.palette.neutral100,
   padding: spacing.lg,
   borderRadius: 12,
@@ -180,10 +248,11 @@ const $bismillahContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   marginBottom: spacing.lg,
 })
 
-const $bismillahText: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 24,
+const $translationCardText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 18,
   color: colors.text,
   textAlign: "center",
+  fontWeight: "500",
 })
 
 const $infoGrid: ThemedStyle<ViewStyle> = ({ spacing }) => ({
@@ -244,10 +313,26 @@ const $descriptionTitle: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   marginBottom: spacing.sm,
 })
 
-const $descriptionText: ThemedStyle<TextStyle> = ({ colors }) => ({
+const $descriptionSubheading: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  fontSize: 18,
+  fontWeight: "600",
+  color: colors.text,
+  marginTop: spacing.md,
+  marginBottom: spacing.xs,
+})
+
+const $descriptionText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   fontSize: 16,
   lineHeight: 24,
   color: colors.textDim,
+  marginBottom: spacing.sm,
+})
+
+const $sourceText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  fontSize: 14,
+  fontStyle: 'italic',
+  color: colors.textDim,
+  marginTop: spacing.sm,
 })
 
 const $loadingContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({

@@ -25,6 +25,8 @@ import type { ReadStackScreenProps } from "@/navigators"
 import type { DrawerParamList } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { spacing } from "@/theme/spacing"
 
 const { width } = Dimensions.get("window")
 const CARD_WIDTH = (width - 48) / 2.5
@@ -52,6 +54,7 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
   const colors = theme.colors
   const drawerNavigation = useNavigation<DrawerNavigationProp<DrawerParamList>>()
   const [isNowReadingGridView, setIsNowReadingGridView] = React.useState(false)
+  const insets = useSafeAreaInsets()
 
   const libraryCards: LibraryCard[] = [
     {
@@ -101,9 +104,9 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
   ]
 
   return (
-  <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={themed($container)}>
+  <Screen preset="fixed" safeAreaEdges={[]} contentContainerStyle={themed($container)}>
       {/* Custom Header */}
-      <View style={themed($header)}>
+      <View style={[themed($header), { paddingTop: insets.top + spacing.sm }]}>
         <View style={themed($headerLeft)}>
           <TouchableOpacity
             style={themed($hamburger)}
@@ -134,6 +137,7 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
 
       <ScrollView
         style={themed($scrollView)}
+        contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >

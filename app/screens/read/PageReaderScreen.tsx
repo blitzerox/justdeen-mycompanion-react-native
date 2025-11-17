@@ -1,8 +1,8 @@
 /**
- * Juz Reader Screen
+ * Page Reader Screen
  *
- * Reads Quran by Juz (1-30)
- * Similar to QuranReaderScreen but fetches verses by Juz number
+ * Reads Quran by Page (1-604)
+ * Displays verses from a specific Mushaf page
  */
 import React, { useEffect, useState, useRef } from "react"
 import {
@@ -21,7 +21,7 @@ import { Screen, Text, Icon } from "@/components"
 import { useAppTheme } from "@/theme/context"
 import type { ReadStackScreenProps } from "@/navigators"
 import type { ThemedStyle } from "@/theme/types"
-import { getVersesByJuz, type Verse as VerseAPI } from "@/services/quran/verses-api"
+import { getVersesByPage, type Verse as VerseAPI } from "@/services/quran/verses-api"
 import { getRecitations, type Recitation } from "@/services/quran/recitations-api"
 import { getAudioUri, preloadAudioForVerses } from "@/services/quran/audio-cache"
 import { FontAwesome6, AntDesign } from "@expo/vector-icons"
@@ -59,12 +59,12 @@ interface ReadingSettings {
   reciterId: number
 }
 
-export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
+export const PageReaderScreen: React.FC<ReadStackScreenProps<"PageReader">> = ({
   route,
   navigation,
 }) => {
   const { themed, theme: { colors } } = useAppTheme()
-  const { juzNumber } = route.params
+  const { pageNumber } = route.params
 
   const [verses, setVerses] = useState<VerseWithWords[]>([])
   const [loading, setLoading] = useState(true)
@@ -85,8 +85,8 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
   const player = useAudioPlayer()
 
   useEffect(() => {
-    loadJuz()
-  }, [juzNumber])
+    loadPage()
+  }, [pageNumber])
 
   useEffect(() => {
     // Configure audio mode for playback
@@ -143,7 +143,7 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
 
   useEffect(() => {
     navigation.setOptions({
-      title: `Juz ${juzNumber}`,
+      title: `Page ${pageNumber}`,
       headerShown: true,
       headerRight: () => (
         <TouchableOpacity
@@ -154,17 +154,17 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
         </TouchableOpacity>
       ),
     })
-  }, [juzNumber, navigation])
+  }, [pageNumber, navigation])
 
-  const loadJuz = async () => {
+  const loadPage = async () => {
     setLoading(true)
     setError(null)
 
     try {
-      const versesData = await getVersesByJuz(juzNumber)
+      const versesData = await getVersesByPage(pageNumber)
 
       if (versesData.length === 0) {
-        throw new Error("No verses found for this Juz")
+        throw new Error("No verses found for this page")
       }
 
       setVerses(versesData)
@@ -176,11 +176,11 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
 
       // Preload audio for all verses in background
       preloadAudioForVerses(verseKeys, settings.reciterId).catch(err => {
-        console.warn('⚠️ Background audio preloading failed:', err)
+        console.warn('� Background audio preloading failed:', err)
       })
     } catch (err) {
-      console.error("Error loading Juz:", err)
-      setError(err instanceof Error ? err.message : "Failed to load Juz")
+      console.error("Error loading Page:", err)
+      setError(err instanceof Error ? err.message : "Failed to load Page")
     } finally {
       setLoading(false)
     }
@@ -205,7 +205,7 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
       player.play()
       setPlayingVerseId(verseId)
     } catch (error) {
-      console.error('❌ Error playing audio:', error)
+      console.error('L Error playing audio:', error)
       setPlayingVerseId(null)
     }
   }
@@ -239,7 +239,7 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
         return updated
       })
     } catch (error) {
-      console.error('❌ Error toggling bookmark:', error)
+      console.error('L Error toggling bookmark:', error)
     }
   }
 
@@ -282,7 +282,7 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
         }, 300)
       }
     } catch (error) {
-      console.error('❌ Error marking verse as read:', error)
+      console.error('L Error marking verse as read:', error)
     }
   }
 
@@ -319,7 +319,7 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
           <View style={themed($translationContainer)}>
             <Text style={themed($translationText)}>{item.translations[0].text}</Text>
             <Text style={themed($translatorName)}>
-              — {item.translations[0].resource_name || 'Clear Quran'}
+               {item.translations[0].resource_name || 'Clear Quran'}
             </Text>
           </View>
         )}
@@ -372,7 +372,7 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
       <Screen preset="fixed" contentContainerStyle={themed($container)}>
         <View style={themed($loadingContainer)}>
           <ActivityIndicator size="large" color={colors.read} />
-          <Text style={themed($loadingText)}>Loading Juz...</Text>
+          <Text style={themed($loadingText)}>Loading Page...</Text>
         </View>
       </Screen>
     )
@@ -383,7 +383,7 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
       <Screen preset="fixed" contentContainerStyle={themed($container)}>
         <View style={themed($errorContainer)}>
           <Text style={themed($errorText)}>{error}</Text>
-          <TouchableOpacity style={themed($retryButton)} onPress={loadJuz}>
+          <TouchableOpacity style={themed($retryButton)} onPress={loadPage}>
             <Text style={themed($retryButtonText)}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -393,7 +393,7 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
 
   return (
     <Screen preset="fixed" contentContainerStyle={themed($container)}>
-      {/* Settings Modal */}
+      {/* Settings Modal - Same as JuzReader */}
       <Modal
         visible={settingsVisible}
         animationType="slide"
@@ -410,8 +410,6 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-
-            {/* Translation Toggle */}
             <View style={themed($settingRow)}>
               <View style={themed($settingInfo)}>
                 <Text style={themed($settingLabel)}>Show Translation</Text>
@@ -425,7 +423,6 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
               />
             </View>
 
-            {/* Transliteration Toggle */}
             <View style={themed($settingRow)}>
               <View style={themed($settingInfo)}>
                 <Text style={themed($settingLabel)}>Show Transliteration</Text>
@@ -441,7 +438,6 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
               />
             </View>
 
-            {/* Arabic Script Type */}
             <View style={themed($settingRow)}>
               <View style={themed($settingInfo)}>
                 <Text style={themed($settingLabel)}>Arabic Script</Text>
@@ -483,19 +479,6 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
               </View>
             </View>
 
-            {/* Reciter Selection */}
-            <View style={themed($settingRow)}>
-              <View style={themed($settingInfo)}>
-                <Text style={themed($settingLabel)}>Audio Reciter</Text>
-                <Text style={themed($settingDescription)}>
-                  {loadingRecitations
-                    ? 'Loading reciters...'
-                    : recitations.find(r => r.id === settings.reciterId)?.reciter_name || 'Mishary Rashid Alafasy'}
-                </Text>
-              </View>
-            </View>
-
-            {/* Reciter List */}
             {recitations.length > 0 && (
               <ScrollView style={themed($reciterList)} showsVerticalScrollIndicator={false}>
                 {recitations.slice(0, 10).map((reciter) => (
@@ -543,7 +526,7 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
 
       {/* Info Header */}
       <View style={themed($infoHeader)}>
-        <Text style={themed($infoText)}>Juz {juzNumber} • {verses.length} verses</Text>
+        <Text style={themed($infoText)}>Page {pageNumber} • {verses.length} verses</Text>
       </View>
 
       {/* Verses List */}
@@ -557,12 +540,47 @@ export const JuzReaderScreen: React.FC<ReadStackScreenProps<"JuzReader">> = ({
         onScrollToIndexFailed={(info) => {
           console.warn("Scroll to index failed:", info)
         }}
+        ListFooterComponent={
+          <View style={themed($navigationFooter)}>
+            {/* Previous Page Button */}
+            <TouchableOpacity
+              style={themed($navButton)}
+              onPress={() => navigation.replace('PageReader', { pageNumber: pageNumber - 1 })}
+              disabled={pageNumber <= 1}
+            >
+              <Icon
+                icon="caretLeft"
+                size={20}
+                color={pageNumber <= 1 ? colors.textDim : colors.read}
+              />
+              <Text style={themed(pageNumber <= 1 ? $navButtonTextDisabled : $navButtonText)}>
+                Page {pageNumber - 1}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Next Page Button */}
+            <TouchableOpacity
+              style={themed($navButton)}
+              onPress={() => navigation.replace('PageReader', { pageNumber: pageNumber + 1 })}
+              disabled={pageNumber >= 604}
+            >
+              <Text style={themed(pageNumber >= 604 ? $navButtonTextDisabled : $navButtonText)}>
+                Page {pageNumber + 1}
+              </Text>
+              <Icon
+                icon="caretRight"
+                size={20}
+                color={pageNumber >= 604 ? colors.textDim : colors.read}
+              />
+            </TouchableOpacity>
+          </View>
+        }
       />
     </Screen>
   )
 }
 
-// Styles
+// Styles (same as JuzReaderScreen)
 const $container: ThemedStyle<ViewStyle> = () => ({
   flex: 1,
 })
@@ -725,7 +743,6 @@ const $transliterationText: ThemedStyle<TextStyle> = ({ colors }) => ({
   lineHeight: 22,
 })
 
-// Modal styles
 const $modalOverlay: ThemedStyle<ViewStyle> = () => ({
   flex: 1,
   backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -829,7 +846,6 @@ const $doneButtonText: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontWeight: '600',
 })
 
-// Reciter selection styles
 const $reciterList: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   maxHeight: 200,
   marginTop: spacing.sm,
@@ -882,4 +898,35 @@ const $reciterStyle: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 12,
   color: colors.textDim,
   fontStyle: 'italic',
+})
+
+const $navigationFooter: ThemedStyle<ViewStyle> = ({ spacing, colors }) => ({
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  paddingHorizontal: spacing.lg,
+  paddingVertical: spacing.xl,
+  marginTop: spacing.lg,
+  borderTopWidth: 1,
+  borderTopColor: colors.border,
+})
+
+const $navButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: spacing.xs,
+  paddingVertical: spacing.sm,
+  paddingHorizontal: spacing.md,
+})
+
+const $navButtonText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 16,
+  fontWeight: '600',
+  color: colors.read,
+})
+
+const $navButtonTextDisabled: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 16,
+  fontWeight: '600',
+  color: colors.textDim,
 })

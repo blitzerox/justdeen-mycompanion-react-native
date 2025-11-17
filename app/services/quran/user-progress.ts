@@ -4,6 +4,8 @@
  */
 
 import { getDatabase } from './database'
+import * as storage from '@/utils/storage'
+import { STORAGE_KEYS } from '@/constants/storageKeys'
 
 export interface UserProgress {
   verseKey: string
@@ -45,6 +47,15 @@ export async function markVerseAsRead(
 ): Promise<void> {
   const db = await getDatabase()
 
+  // Debug: Log the parameters
+  console.log('🔍 markVerseAsRead params:', { verseKey, chapterId, verseNumber, pageNumber })
+
+  // Validate parameters
+  if (!chapterId || chapterId === null || chapterId === undefined) {
+    console.error('❌ Invalid chapterId:', chapterId, 'for verse:', verseKey)
+    throw new Error(`Invalid chapterId for verse ${verseKey}`)
+  }
+
   await db.runAsync(
     `INSERT INTO quran_user_progress (verse_key, chapter_id, verse_number, page_number, is_read, read_at, updated_at)
      VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
@@ -57,6 +68,18 @@ export async function markVerseAsRead(
     verseNumber,
     pageNumber
   )
+
+  // Also update the global last read position in AsyncStorage
+  // This ensures the "Continue Reading" card on QuranHome screen reflects the latest progress
+  try {
+    const userStats = storage.load(STORAGE_KEYS.USER_STATS) || {}
+    userStats.lastQuranSurah = chapterId
+    userStats.lastQuranAyah = verseNumber
+    userStats.lastQuranPage = pageNumber
+    storage.save(STORAGE_KEYS.USER_STATS, userStats)
+  } catch (err) {
+    console.warn('Failed to update global last read position:', err)
+  }
 
   console.log(`✅ Marked verse ${verseKey} as read`)
 }

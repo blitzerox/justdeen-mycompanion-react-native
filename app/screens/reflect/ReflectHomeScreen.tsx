@@ -20,7 +20,7 @@ import {
   TextInput,
 } from "react-native"
 import { Screen, Icon } from "@/components"
-import { HomeStatsWidget, LevelCard, ActivityOverviewCard } from "@/components/stats"
+import { HomeStatsWidget, LevelCard, ActivityOverviewCard, QuranProgressCard } from "@/components/stats"
 import { useAppTheme } from "@/theme/context"
 import { useAuth } from "@/context/AuthContext"
 import { FontAwesome6 } from "@expo/vector-icons"
@@ -34,6 +34,8 @@ import { useQuranTracking } from "@/hooks/useQuranTracking"
 import { useTasbihCounter } from "@/hooks/useTasbihCounter"
 import * as storage from "@/utils/storage"
 import { STORAGE_KEYS } from "@/constants/storageKeys"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { spacing } from "@/theme/spacing"
 
 const { width } = Dimensions.get("window")
 
@@ -60,6 +62,7 @@ export const ReflectHomeScreen: React.FC<ReflectStackScreenProps<"ReflectHome">>
   const { themed, theme: { colors } } = useAppTheme()
   const { user, isAuthenticated } = useAuth()
   const drawerNavigation = useNavigation<DrawerNavigationProp<DrawerParamList>>()
+  const insets = useSafeAreaInsets()
 
   // Hooks for activity data
   const { todayPrayers, prayerStats } = usePrayerTracking()
@@ -194,9 +197,9 @@ export const ReflectHomeScreen: React.FC<ReflectStackScreenProps<"ReflectHome">>
   const maxValue = Math.max(...weeklyActivity.map(d => d.value))
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={themed($container(colors))}>
+    <Screen preset="fixed" safeAreaEdges={[]} contentContainerStyle={themed($container(colors))}>
       {/* Fixed Greeting Header */}
-      <View style={themed($header)}>
+      <View style={[themed($header), { paddingTop: insets.top + spacing.sm }]}>
         <View style={themed($headerLeft)}>
           <TouchableOpacity
             style={themed($hamburger(colors))}
@@ -238,10 +241,22 @@ export const ReflectHomeScreen: React.FC<ReflectStackScreenProps<"ReflectHome">>
 
       <ScrollView
         style={themed($scrollView)}
+        contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
         showsVerticalScrollIndicator={false}
       >
         {/* Level Card */}
         <LevelCard />
+
+        {/* Quran Progress Card */}
+        <View style={themed($section)}>
+          <QuranProgressCard
+            onContinueReading={() => {
+              navigation.navigate("ReadTab", {
+                screen: "QuranHome"
+              })
+            }}
+          />
+        </View>
 
         {/* Today Section */}
         <View style={themed($section)}>

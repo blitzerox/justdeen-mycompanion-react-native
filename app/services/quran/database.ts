@@ -61,6 +61,7 @@ async function initializeSchema(database: SQLite.SQLiteDatabase): Promise<void> 
       hizb_number INTEGER NOT NULL,
       text_uthmani TEXT NOT NULL,
       text_imlaei TEXT,
+      text_indopak TEXT,
       translations TEXT NOT NULL,
       words TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -111,7 +112,32 @@ async function initializeSchema(database: SQLite.SQLiteDatabase): Promise<void> 
 
     CREATE INDEX IF NOT EXISTS idx_recitation_language ON quran_recitations(language);
 
-    -- 7. Audio Cache
+    -- 7. Languages
+    CREATE TABLE IF NOT EXISTS quran_languages (
+      id INTEGER PRIMARY KEY,
+      name TEXT NOT NULL,
+      iso_code TEXT NOT NULL,
+      native_name TEXT NOT NULL,
+      direction TEXT NOT NULL,
+      translations_count INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_language_iso ON quran_languages(iso_code);
+
+    -- 8. Translation Resources
+    CREATE TABLE IF NOT EXISTS quran_translations (
+      id INTEGER PRIMARY KEY,
+      name TEXT NOT NULL,
+      author_name TEXT NOT NULL,
+      slug TEXT,
+      language_name TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_translation_language ON quran_translations(language_name);
+
+    -- 9. Audio Cache
     CREATE TABLE IF NOT EXISTS quran_audio_cache (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       verse_key TEXT NOT NULL,
@@ -123,7 +149,7 @@ async function initializeSchema(database: SQLite.SQLiteDatabase): Promise<void> 
 
     CREATE INDEX IF NOT EXISTS idx_audio_verse_reciter ON quran_audio_cache(verse_key, reciter_id);
 
-    -- 8. User Reading Progress
+    -- 10. User Reading Progress
     CREATE TABLE IF NOT EXISTS quran_user_progress (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       verse_key TEXT UNIQUE NOT NULL,
@@ -143,7 +169,7 @@ async function initializeSchema(database: SQLite.SQLiteDatabase): Promise<void> 
     CREATE INDEX IF NOT EXISTS idx_progress_read ON quran_user_progress(is_read);
     CREATE INDEX IF NOT EXISTS idx_progress_bookmarked ON quran_user_progress(is_bookmarked);
 
-    -- 9. Cache Population Status
+    -- 11. Cache Population Status
     CREATE TABLE IF NOT EXISTS quran_cache_status (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       cache_type TEXT UNIQUE NOT NULL,
@@ -159,6 +185,38 @@ async function initializeSchema(database: SQLite.SQLiteDatabase): Promise<void> 
       ('tafsirs'),
       ('recitations');
   `)
+
+  // Add migration for text_indopak column (if it doesn't exist)
+  try {
+    await database.execAsync(`
+      ALTER TABLE quran_verses ADD COLUMN text_indopak TEXT;
+    `)
+    console.log('✅ Added text_indopak column to quran_verses table')
+  } catch (err) {
+    // Column already exists, ignore error
+    // SQLite will throw "duplicate column name" error if column exists
+  }
+
+  // Migration: Drop and recreate quran_translations table to remove language_id constraint and make slug nullable
+  try {
+    await database.execAsync(`
+      DROP TABLE IF EXISTS quran_translations;
+
+      CREATE TABLE quran_translations (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        author_name TEXT NOT NULL,
+        slug TEXT,
+        language_name TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX idx_translation_language ON quran_translations(language_name);
+    `)
+    console.log('✅ Migrated quran_translations table (removed language_id, made slug nullable)')
+  } catch (err) {
+    console.error('❌ Failed to migrate quran_translations table:', err)
+  }
 
   console.log('✅ Quran database schema initialized')
 }

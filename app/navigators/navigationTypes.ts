@@ -53,6 +53,9 @@ export type ReadStackParamList = {
   JuzReader: {
     juzNumber: number
   }
+  PageReader: {
+    pageNumber: number
+  }
   BookmarksList: undefined
   ReadingHistory: undefined
   TranslationSettings: undefined
