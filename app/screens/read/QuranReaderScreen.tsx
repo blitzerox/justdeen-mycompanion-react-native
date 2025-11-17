@@ -30,6 +30,7 @@ import {
   getVersesProgress,
   type UserProgress,
 } from "@/services/quran/user-progress"
+import { refreshChapterVerses } from "@/services/quran/verses-api"
 
 interface Word {
   id: number
@@ -508,6 +509,26 @@ export const QuranReaderScreen: React.FC<ReadStackScreenProps<"QuranReader">> = 
               </View>
             </View>
 
+            {/* Refresh Translations Button (Temporary Debug) */}
+            <TouchableOpacity
+              style={themed($refreshButton)}
+              onPress={async () => {
+                setLoading(true)
+                try {
+                  await refreshChapterVerses(surahNumber)
+                  // Reload the surah
+                  await loadSurah()
+                  alert('Translations refreshed! Please check the verses.')
+                } catch (err) {
+                  console.error('Failed to refresh translations:', err)
+                  alert('Failed to refresh translations. Check console for details.')
+                }
+                setLoading(false)
+              }}
+            >
+              <Text style={themed($refreshButtonText)}>🔄 Refresh Translations (Clear Cache)</Text>
+            </TouchableOpacity>
+
             {/* Reciter Selection */}
             <View style={themed($settingRow)}>
               <View style={themed($settingInfo)}>
@@ -926,6 +947,22 @@ const $scriptButtonText: ThemedStyle<TextStyle> = ({ colors }) => ({
 const $scriptButtonTextActive: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 13,
   color: colors.palette.white,
+  fontWeight: '600',
+})
+
+const $refreshButton: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  backgroundColor: colors.palette.overlay20,
+  padding: spacing.md,
+  borderRadius: 12,
+  alignItems: 'center',
+  marginVertical: spacing.md,
+  borderWidth: 1,
+  borderColor: colors.border,
+})
+
+const $refreshButtonText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.text,
+  fontSize: 14,
   fontWeight: '600',
 })
 

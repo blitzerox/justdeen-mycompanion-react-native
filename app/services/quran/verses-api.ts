@@ -120,7 +120,7 @@ export async function fetchAndCacheChapterVerses(
       verse_key: string
       verse_number: number
     }>
-  }>(`/v4/quran/translations/${translations[0]}?chapter_number=${chapterNumber}`)
+  }>(`/quran/translations/${translations[0]}?chapter_number=${chapterNumber}`)
 
   console.log(`📖 Fetched ${translationData.translations.length} translations for chapter ${chapterNumber}`)
 

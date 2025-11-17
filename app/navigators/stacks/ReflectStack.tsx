@@ -33,6 +33,7 @@ import { TasbihCounterScreen } from "@/screens/reflect/TasbihCounterScreen"
 import { PrayerAnalyticsScreen } from "@/screens/stats/PrayerAnalyticsScreen"
 import { QuranAnalyticsScreen } from "@/screens/stats/QuranAnalyticsScreen"
 import { DhikrAnalyticsScreen } from "@/screens/stats/DhikrAnalyticsScreen"
+import { AchievementsScreen } from "@/screens/more/AchievementsScreen"
 
 import type { ReflectStackParamList } from "../navigationTypes"
 
@@ -65,6 +66,7 @@ export const ReflectStackNavigator = () => {
         component={ReflectHomeScreen}
         options={{
           headerShown: false,
+          headerTitle: "Home", // Back button text for child screens
         }}
       />
       <Stack.Screen
@@ -156,6 +158,13 @@ export const ReflectStackNavigator = () => {
         component={DhikrAnalyticsScreen}
         options={{
           headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="Achievements"
+        component={AchievementsScreen}
+        options={{
+          title: "Achievements",
         }}
       />
     </Stack.Navigator>

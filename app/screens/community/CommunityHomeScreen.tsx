@@ -123,15 +123,6 @@ export const CommunityHomeScreen: React.FC<MoreStackScreenProps<"MoreHome">> = (
           </TouchableOpacity>
           <Text style={themed($greeting(colors))}>Community</Text>
         </View>
-        <View style={themed($headerRight)}>
-          <TouchableOpacity
-            style={themed($iconButton(colors))}
-            onPress={() => navigation.navigate("Achievements")}
-            activeOpacity={0.7}
-          >
-            <FontAwesome6 name="trophy" size={20} color={colors.more} />
-          </TouchableOpacity>
-        </View>
       </View>
 
       {/* Filter Tabs */}

@@ -81,55 +81,70 @@ export const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props
     )
   }
 
-  // Define shortcuts
+  // Define shortcuts - Now navigating to specific screens
   const allShortcuts: Shortcut[] = [
     {
-      id: "home",
-      icon: "house",
-      label: "Home",
-      iconColor: colors.reflect,
-      onPress: () => {
-        navigation.navigate("ReflectTab")
-        navigation.closeDrawer()
-      },
-    },
-    {
-      id: "pray",
-      icon: "person-praying",
-      label: "Pray",
+      id: "prayer-times",
+      icon: "clock",
+      label: "Prayer Times",
       iconColor: colors.pray,
       onPress: () => {
-        navigation.navigate("PrayTab")
+        navigation.navigate("MainTabs", {
+          screen: "PrayTab",
+          params: { screen: "PrayerTimesHome" }
+        })
         navigation.closeDrawer()
       },
     },
     {
-      id: "read",
+      id: "quran-reader",
       icon: "book-quran",
-      label: "Read",
+      label: "Quran Reader",
       iconColor: colors.read,
       onPress: () => {
-        navigation.navigate("ReadTab")
+        navigation.navigate("MainTabs", {
+          screen: "ReadTab",
+          params: { screen: "QuranHome" }
+        })
         navigation.closeDrawer()
       },
     },
     {
-      id: "ai",
-      icon: "robot",
-      label: "AI Assistant",
-      iconColor: colors.ai,
+      id: "tasbih-counter",
+      icon: "hand",
+      label: "Tasbih Counter",
+      iconColor: "#9C27B0",
       onPress: () => {
-        navigation.navigate("AITab")
+        navigation.navigate("MainTabs", {
+          screen: "ReflectTab",
+          params: { screen: "TasbihCounter" }
+        })
         navigation.closeDrawer()
       },
     },
     {
-      id: "community",
-      icon: "users",
-      label: "Community",
-      iconColor: colors.more,
+      id: "qibla-finder",
+      icon: "compass",
+      label: "Qibla Finder",
+      iconColor: colors.pray,
       onPress: () => {
-        navigation.navigate("MoreTab")
+        navigation.navigate("MainTabs", {
+          screen: "PrayTab",
+          params: { screen: "QiblaCompass" }
+        })
+        navigation.closeDrawer()
+      },
+    },
+    {
+      id: "dua-collection",
+      icon: "hands-praying",
+      label: "Dua Collection",
+      iconColor: colors.reflect,
+      onPress: () => {
+        navigation.navigate("MainTabs", {
+          screen: "ReflectTab",
+          params: { screen: "DuasCategories" }
+        })
         navigation.closeDrawer()
       },
     },
@@ -204,7 +219,10 @@ export const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props
           <TouchableOpacity
             style={themed($optionRow)}
             onPress={() => {
-              navigation.navigate("MoreTab", { screen: "Achievements" })
+              navigation.navigate("MainTabs", {
+                screen: "ReflectTab",
+                params: { screen: "Achievements" }
+              })
               navigation.closeDrawer()
             }}
             activeOpacity={0.7}
@@ -217,7 +235,10 @@ export const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props
           <TouchableOpacity
             style={themed($optionRow)}
             onPress={() => {
-              navigation.navigate("MoreTab", { screen: "SettingsHome" })
+              navigation.navigate("MainTabs", {
+                screen: "MoreTab",
+                params: { screen: "SettingsHome" }
+              })
               navigation.closeDrawer()
             }}
             activeOpacity={0.7}
@@ -230,7 +251,10 @@ export const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props
           <TouchableOpacity
             style={themed($optionRow)}
             onPress={() => {
-              navigation.navigate("MoreTab", { screen: "About" })
+              navigation.navigate("MainTabs", {
+                screen: "MoreTab",
+                params: { screen: "About" }
+              })
               navigation.closeDrawer()
             }}
             activeOpacity={0.7}
