@@ -15,11 +15,11 @@ import {
 } from "react-native"
 import { Screen, Text, Icon } from "@/components"
 import { useAppTheme } from "@/theme/context"
-import type { ReflectStackScreenProps } from "@/navigators"
+import type { ReadStackScreenProps } from "@/navigators"
 import type { ThemedStyle } from "@/theme/types"
 import { hadithApi, HadithCollection } from "@/services/hadith/hadithApi"
 
-export const HadithCollectionsScreen: React.FC<ReflectStackScreenProps<"HadithCollections">> = ({
+export const HadithCollectionsScreen: React.FC<ReadStackScreenProps<"HadithCollections">> = ({
   navigation,
 }) => {
   const { themed, theme: { colors, spacing } } = useAppTheme()
@@ -118,7 +118,7 @@ const $header: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   paddingBottom: spacing.sm,
 })
 
-const $headerTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
+const $headerTitle: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   fontSize: 28,
   fontWeight: "700",
   color: colors.reflect,

@@ -7,9 +7,9 @@ import React from "react"
 import { View, Text, StyleSheet } from "react-native"
 import { Screen } from "@/components"
 import { useAppTheme } from "@/theme/context"
-import type { ReflectStackScreenProps } from "@/navigators"
+import type { ReadStackScreenProps } from "@/navigators"
 
-export const HadithDetailsScreen: React.FC<ReflectStackScreenProps<"HadithDetails">> = () => {
+export const HadithDetailsScreen: React.FC<ReadStackScreenProps<"HadithDetails">> = () => {
   const {
     theme: { colors },
   } = useAppTheme()

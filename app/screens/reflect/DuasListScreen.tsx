@@ -15,11 +15,11 @@ import {
 } from "react-native"
 import { Screen, Text, Icon } from "@/components"
 import { useAppTheme } from "@/theme/context"
-import type { ReflectStackScreenProps } from "@/navigators"
+import type { ReadStackScreenProps } from "@/navigators"
 import type { ThemedStyle } from "@/theme/types"
 import { duasApi, DuaCategory, Dua } from "@/services/duas/duasApi"
 
-export const DuasListScreen: React.FC<ReflectStackScreenProps<"DuasList">> = ({
+export const DuasListScreen: React.FC<ReadStackScreenProps<"DuasList">> = ({
   route,
 }) => {
   const { categoryId } = route.params
@@ -205,7 +205,7 @@ const $header: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   paddingBottom: spacing.sm,
 })
 
-const $headerTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
+const $headerTitle: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   fontSize: 24,
   fontWeight: "700",
   color: colors.reflect,

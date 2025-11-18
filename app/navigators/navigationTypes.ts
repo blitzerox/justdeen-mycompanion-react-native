@@ -37,7 +37,7 @@ export type PrayStackParamList = {
 
 /**
  * Read Tab Stack (Blue)
- * Screens: Quran reading, translations, bookmarks, reading groups
+ * Screens: Quran reading, translations, bookmarks, reading groups, Hadith, Duas
  */
 export type ReadStackParamList = {
   ReadHome: undefined
@@ -64,21 +64,6 @@ export type ReadStackParamList = {
     groupId: string
   }
   CreateGroup: undefined
-}
-
-/**
- * Reflect Tab Stack (Orange)
- * Screens: Duas, Hadith, Islamic names, Tasbih counter, Analytics
- */
-export type ReflectStackParamList = {
-  ReflectHome: undefined
-  DuasCategories: undefined
-  DuasList: {
-    categoryId: string
-  }
-  DuaDetails: {
-    duaId: string
-  }
   HadithCollections: undefined
   HadithBooks: {
     collectionId: string
@@ -90,6 +75,21 @@ export type ReflectStackParamList = {
   HadithDetails: {
     hadithId: string
   }
+  DuasCategories: undefined
+  DuasList: {
+    categoryId: string
+  }
+  DuaDetails: {
+    duaId: string
+  }
+}
+
+/**
+ * Reflect Tab Stack (Orange)
+ * Screens: Islamic names, Tasbih counter, Analytics
+ */
+export type ReflectStackParamList = {
+  ReflectHome: undefined
   NamesOfAllah: undefined
   NamesOfProphet: undefined
   TasbihCounter: undefined

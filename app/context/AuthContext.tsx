@@ -18,9 +18,12 @@ import {
   signInWithAuth0,
   signInAnonymously,
   signOut as authSignOut,
+  refreshAuthToken,
+  isTokenExpired,
   type JustDeenUser,
 } from "@/services/auth/authService"
 import { d1Api } from "@/services/cloudflare/d1Api"
+import { registerUser } from "@/services/ai/cloudflareRagApi"
 
 export type AuthContextType = {
   // Authentication state
@@ -34,6 +37,9 @@ export type AuthContextType = {
 
   // Sign-out
   logout: () => Promise<void>
+
+  // Token refresh
+  refreshToken: () => Promise<{ success: boolean; error?: string; user?: JustDeenUser }>
 
   // Error handling
   error: string | null
@@ -68,6 +74,13 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
         if (savedUserStr) {
           const parsedUser: JustDeenUser = JSON.parse(savedUserStr)
 
+          console.log('🔍 Loaded user from storage:', {
+            authProvider: parsedUser.authProvider,
+            email: parsedUser.email,
+            hasRefreshToken: !!parsedUser.refreshToken,
+            expiresAt: parsedUser.expiresAt ? new Date(parsedUser.expiresAt).toISOString() : 'N/A'
+          })
+
           // For guest users, verify the user data is still valid
           // Guest users persist across app launches - they only need to login once
           if (parsedUser.authProvider === "anonymous") {
@@ -79,6 +92,8 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
             setUser(parsedUser)
             d1Api.setAuthToken(parsedUser.idToken)
           }
+        } else {
+          console.log('ℹ️ No saved user found in storage')
         }
       } catch (err) {
         console.error("Auth initialization error:", err)
@@ -93,13 +108,31 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
   /**
    * Save user to state and storage
    */
-  const saveUser = useCallback((newUser: JustDeenUser) => {
+  const saveUser = useCallback(async (newUser: JustDeenUser) => {
     setUser(newUser)
     storage.set(STORAGE_KEYS.USER, JSON.stringify(newUser))
     storage.set(STORAGE_KEYS.TOKEN, newUser.idToken)
 
     // Set auth token in D1 API client
     d1Api.setAuthToken(newUser.idToken)
+
+    // Register user in Cloudflare RAG backend (for AI chat)
+    // Only register Auth0 users (anonymous users don't need backend registration)
+    if (newUser.authProvider === "auth0") {
+      try {
+        await registerUser(
+          newUser.accessToken,
+          newUser.id,
+          newUser.email,
+          newUser.displayName
+        )
+        console.log("✅ User registered in Cloudflare backend")
+      } catch (error) {
+        console.warn("Failed to register user in Cloudflare backend:", error)
+        // Don't fail the login if backend registration fails
+        // The user can still use other features
+      }
+    }
   }, [])
 
   /**
@@ -125,7 +158,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
       const result = await signInWithAuth0()
 
       if (result.success && result.user) {
-        saveUser(result.user)
+        await saveUser(result.user)
         return { success: true }
       }
 
@@ -151,7 +184,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
       const result = await signInAnonymously()
 
       if (result.success && result.user) {
-        saveUser(result.user)
+        await saveUser(result.user)
         return { success: true }
       }
 
@@ -187,6 +220,68 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
   }, [user, clearUser])
 
   /**
+   * Refresh token if expired
+   */
+  const handleRefreshToken = useCallback(async () => {
+    if (!user || user.authProvider !== "auth0") {
+      return { success: false, error: "No auth user to refresh" }
+    }
+
+    if (!user.refreshToken) {
+      return { success: false, error: "No refresh token available" }
+    }
+
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      const result = await refreshAuthToken(user.refreshToken)
+
+      if (result.success && result.user) {
+        await saveUser(result.user)
+        // Return the new user object so callers can use the fresh token immediately
+        return { success: true, user: result.user }
+      }
+
+      setError(result.error || "Token refresh failed")
+      return { success: false, error: result.error }
+    } catch (err: any) {
+      const errorMessage = err.message || "Token refresh failed"
+      setError(errorMessage)
+      return { success: false, error: errorMessage }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [user, saveUser])
+
+  /**
+   * Check token expiration and auto-refresh if needed
+   */
+  useEffect(() => {
+    if (!user || user.authProvider !== "auth0") return
+
+    const checkAndRefreshToken = async () => {
+      if (isTokenExpired(user.expiresAt)) {
+        console.log("Token expired or expiring soon, refreshing...")
+        const result = await handleRefreshToken()
+        if (!result.success) {
+          console.error("Failed to refresh token:", result.error)
+          // Clear user if refresh fails - they'll need to log in again
+          clearUser()
+        }
+      }
+    }
+
+    // Check immediately
+    checkAndRefreshToken()
+
+    // Check every 5 minutes
+    const interval = setInterval(checkAndRefreshToken, 5 * 60 * 1000)
+
+    return () => clearInterval(interval)
+  }, [user, handleRefreshToken, clearUser])
+
+  /**
    * Clear error message
    */
   const clearError = useCallback(() => {
@@ -205,6 +300,9 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
 
     // Sign-out
     logout,
+
+    // Token refresh
+    refreshToken: handleRefreshToken,
 
     // Error handling
     error,

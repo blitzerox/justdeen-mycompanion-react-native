@@ -33,6 +33,13 @@ import { TranslationSettingsScreen } from "@/screens/read/TranslationSettingsScr
 import { ReadingGroupsScreen } from "@/screens/read/ReadingGroupsScreen"
 import { GroupDetailsScreen } from "@/screens/read/GroupDetailsScreen"
 import { CreateGroupScreen } from "@/screens/read/CreateGroupScreen"
+import { HadithCollectionsScreen } from "@/screens/reflect/HadithCollectionsScreen"
+import { HadithBooksScreen } from "@/screens/reflect/HadithBooksScreen"
+import { HadithListScreen } from "@/screens/reflect/HadithListScreen"
+import { HadithDetailsScreen } from "@/screens/reflect/HadithDetailsScreen"
+import { DuasCategoriesScreen } from "@/screens/reflect/DuasCategoriesScreen"
+import { DuasListScreen } from "@/screens/reflect/DuasListScreen"
+import { DuaDetailsScreen } from "@/screens/reflect/DuaDetailsScreen"
 
 import type { ReadStackParamList } from "../navigationTypes"
 
@@ -153,6 +160,55 @@ export const ReadStackNavigator = () => {
         component={CreateGroupScreen}
         options={{
           title: "Create Group",
+        }}
+      />
+      <Stack.Screen
+        name="HadithCollections"
+        component={HadithCollectionsScreen}
+        options={{
+          title: "Hadith",
+        }}
+      />
+      <Stack.Screen
+        name="HadithBooks"
+        component={HadithBooksScreen}
+        options={{
+          title: "Books",
+        }}
+      />
+      <Stack.Screen
+        name="HadithList"
+        component={HadithListScreen}
+        options={{
+          title: "Hadith",
+        }}
+      />
+      <Stack.Screen
+        name="HadithDetails"
+        component={HadithDetailsScreen}
+        options={{
+          title: "Hadith",
+        }}
+      />
+      <Stack.Screen
+        name="DuasCategories"
+        component={DuasCategoriesScreen}
+        options={{
+          title: "Duas",
+        }}
+      />
+      <Stack.Screen
+        name="DuasList"
+        component={DuasListScreen}
+        options={{
+          title: "Duas",
+        }}
+      />
+      <Stack.Screen
+        name="DuaDetails"
+        component={DuaDetailsScreen}
+        options={{
+          title: "Dua",
         }}
       />
     </Stack.Navigator>

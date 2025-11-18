@@ -46,7 +46,8 @@ interface LibraryCard {
   icon: string
   backgroundColor: string
   image: any
-  route: keyof import("@/navigators").ReadStackParamList
+  route?: keyof import("@/navigators").ReadStackParamList
+  reflectRoute?: keyof import("@/navigators").ReflectStackParamList
 }
 
 export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ navigation }) => {
@@ -88,7 +89,7 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
       icon: "community",
       backgroundColor: "#2A9D8F",
       image: hadithCover,
-      route: "QuranHome", // TODO: Update when Hadith screen is ready
+      reflectRoute: "HadithCollections",
     },
     {
       id: "dua",
@@ -99,7 +100,7 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
       icon: "heart",
       backgroundColor: colors.reflect,
       image: duaCover,
-      route: "QuranHome", // TODO: Update when Dua screen is ready
+      reflectRoute: "DuasCategories",
     },
   ]
 
@@ -153,7 +154,16 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
             {libraryCards.map((card) => (
               <TouchableOpacity
                 key={card.id}
-                onPress={() => navigation.navigate(card.route as any)}
+                onPress={() => {
+                  if (card.reflectRoute) {
+                    // Navigate to Reflect tab with specific screen
+                    navigation.navigate("ReflectTab" as any, {
+                      screen: card.reflectRoute,
+                    })
+                  } else if (card.route) {
+                    navigation.navigate(card.route as any)
+                  }
+                }}
                 activeOpacity={0.8}
                 style={themed($libraryCardContainer)}
               >

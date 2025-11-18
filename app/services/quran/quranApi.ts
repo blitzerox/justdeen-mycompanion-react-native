@@ -212,7 +212,7 @@ export class QuranApi {
    * Now fetches from Quran Foundation API with caching
    */
   async getVerses(surahNumber: number, translationId: number = 131): Promise<Verse[]> {
-    const verses = await getChapterVerses(surahNumber)
+    const verses = await getChapterVerses(surahNumber, translationId)
 
     // Map to existing interface
     return verses.map((verse) => ({

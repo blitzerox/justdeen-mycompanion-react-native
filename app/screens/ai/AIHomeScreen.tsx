@@ -7,7 +7,7 @@
  * - Suggested Topics section
  * - Recent Conversations section (integrates with Cloudflare RAG)
  */
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import {
   View,
   Text,
@@ -20,7 +20,7 @@ import { Screen, Icon } from "@/components"
 import { useAppTheme } from "@/theme/context"
 import { useAuth } from "@/context/AuthContext"
 import { FontAwesome6 } from "@expo/vector-icons"
-import { useNavigation } from "@react-navigation/native"
+import { useNavigation, useFocusEffect } from "@react-navigation/native"
 import { DrawerNavigationProp } from "@react-navigation/drawer"
 import type { AIStackScreenProps } from "@/navigators"
 import type { ThemedStyle } from "@/theme/types"
@@ -118,33 +118,37 @@ export const AIHomeScreen: React.FC<AIStackScreenProps<"AIHome">> = ({ navigatio
   const [recentChats, setRecentChats] = useState<ChatHistoryItem[]>([])
   const [isLoadingChats, setIsLoadingChats] = useState(false)
 
-  // Load recent conversations
-  useEffect(() => {
-    const loadRecentChats = async () => {
-      if (!isAuthenticated || !user) return
+  // Load recent conversations function (extracted for reuse)
+  const loadRecentChats = useCallback(async () => {
+    if (!isAuthenticated || !user) return
 
-      setIsLoadingChats(true)
-      try {
-        const chats = await getChatHistory(user.idToken, user.id)
-        if (chats) {
-          // Map to ChatHistoryItem format
-          const mappedChats = chats.slice(0, 5).map((chat: any) => ({
-            id: chat.id,
-            title: chat.title || "Untitled Conversation",
-            lastMessage: chat.last_message || "",
-            timestamp: chat.updated_at || chat.created_at,
-          }))
-          setRecentChats(mappedChats)
-        }
-      } catch (error) {
-        console.error("Failed to load chat history:", error)
-      } finally {
-        setIsLoadingChats(false)
+    setIsLoadingChats(true)
+    try {
+      const chats = await getChatHistory(user.idToken, user.id)
+      if (chats) {
+        // Map to ChatHistoryItem format
+        const mappedChats = chats.slice(0, 5).map((chat: any) => ({
+          id: chat.id,
+          title: chat.title || "Untitled Conversation",
+          lastMessage: chat.last_message || "",
+          timestamp: chat.updated_at || chat.created_at,
+        }))
+        setRecentChats(mappedChats)
       }
+    } catch (error) {
+      console.error("Failed to load chat history:", error)
+    } finally {
+      setIsLoadingChats(false)
     }
-
-    loadRecentChats()
   }, [isAuthenticated, user])
+
+  // Refresh chat history when screen comes into focus
+  // This ensures the list updates after creating a new chat
+  useFocusEffect(
+    useCallback(() => {
+      loadRecentChats()
+    }, [loadRecentChats])
+  )
 
   // Handle sign-in requirement
   const handleSignInRequired = () => {

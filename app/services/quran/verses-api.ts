@@ -187,11 +187,15 @@ export async function fetchAndCacheChapterVerses(
 
 /**
  * Get all verses for a chapter from cache
+ * Optionally fetch a specific translation dynamically
  */
-export async function getChapterVerses(chapterNumber: number): Promise<Verse[]> {
+export async function getChapterVerses(
+  chapterNumber: number,
+  translationId: number = 131
+): Promise<Verse[]> {
   const db = await getDatabase()
 
-  // Ensure verses are cached
+  // Ensure verses are cached (with default translation)
   await fetchAndCacheChapterVerses(chapterNumber)
 
   const result = await db.getAllAsync<any>(
@@ -199,20 +203,58 @@ export async function getChapterVerses(chapterNumber: number): Promise<Verse[]> 
     chapterNumber
   )
 
-  return result.map((row) => ({
-    id: row.id,
-    verse_key: row.verse_key,
-    chapter_id: row.chapter_id,
-    verse_number: row.verse_number,
-    page_number: row.page_number,
-    juz_number: row.juz_number,
-    hizb_number: row.hizb_number,
-    text_uthmani: row.text_uthmani,
-    text_imlaei: row.text_imlaei,
-    text_indopak: row.text_indopak,
-    translations: JSON.parse(row.translations),
-    words: row.words ? JSON.parse(row.words) : undefined,
-  }))
+  // If requesting a different translation than the default (131),
+  // fetch it from the API and merge with cached verses
+  let dynamicTranslations: Map<string, Translation> = new Map()
+
+  if (translationId !== 131) {
+    try {
+      const translationData = await makeQuranAPIRequest<{
+        translations: Array<{
+          resource_id: number
+          text: string
+          resource_name?: string
+          verse_key: string
+        }>
+      }>(`/quran/translations/${translationId}?chapter_number=${chapterNumber}`)
+
+      translationData.translations.forEach(t => {
+        dynamicTranslations.set(t.verse_key, {
+          resource_id: t.resource_id,
+          text: t.text,
+          resource_name: t.resource_name
+        })
+      })
+
+      console.log(`📖 Fetched ${translationData.translations.length} dynamic translations for chapter ${chapterNumber}`)
+    } catch (err) {
+      console.error(`Failed to fetch translation ${translationId}:`, err)
+    }
+  }
+
+  return result.map((row) => {
+    const cachedTranslations = JSON.parse(row.translations)
+
+    // If we have a dynamic translation for this verse, use it instead of cached one
+    const translations = dynamicTranslations.has(row.verse_key)
+      ? [dynamicTranslations.get(row.verse_key)!]
+      : cachedTranslations
+
+    return {
+      id: row.id,
+      verse_key: row.verse_key,
+      chapter_id: row.chapter_id,
+      verse_number: row.verse_number,
+      page_number: row.page_number,
+      juz_number: row.juz_number,
+      hizb_number: row.hizb_number,
+      text_uthmani: row.text_uthmani,
+      text_imlaei: row.text_imlaei,
+      text_indopak: row.text_indopak,
+      translations,
+      words: row.words ? JSON.parse(row.words) : undefined,
+    }
+  })
 }
 
 /**

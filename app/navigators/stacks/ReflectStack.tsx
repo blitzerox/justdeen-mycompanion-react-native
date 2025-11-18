@@ -20,13 +20,6 @@ import { useAppTheme } from "@/theme/context"
 
 // Screens
 import { ReflectHomeScreen } from "@/screens/reflect/ReflectHomeScreen"
-import { DuasCategoriesScreen } from "@/screens/reflect/DuasCategoriesScreen"
-import { DuasListScreen } from "@/screens/reflect/DuasListScreen"
-import { DuaDetailsScreen } from "@/screens/reflect/DuaDetailsScreen"
-import { HadithCollectionsScreen } from "@/screens/reflect/HadithCollectionsScreen"
-import { HadithBooksScreen } from "@/screens/reflect/HadithBooksScreen"
-import { HadithListScreen } from "@/screens/reflect/HadithListScreen"
-import { HadithDetailsScreen } from "@/screens/reflect/HadithDetailsScreen"
 import { NamesOfAllahScreen } from "@/screens/reflect/NamesOfAllahScreen"
 import { NamesOfProphetScreen } from "@/screens/reflect/NamesOfProphetScreen"
 import { TasbihCounterScreen } from "@/screens/reflect/TasbihCounterScreen"
@@ -67,55 +60,6 @@ export const ReflectStackNavigator = () => {
         options={{
           headerShown: false,
           headerTitle: "Home", // Back button text for child screens
-        }}
-      />
-      <Stack.Screen
-        name="DuasCategories"
-        component={DuasCategoriesScreen}
-        options={{
-          title: "Duas",
-        }}
-      />
-      <Stack.Screen
-        name="DuasList"
-        component={DuasListScreen}
-        options={{
-          title: "Duas",
-        }}
-      />
-      <Stack.Screen
-        name="DuaDetails"
-        component={DuaDetailsScreen}
-        options={{
-          title: "Dua",
-        }}
-      />
-      <Stack.Screen
-        name="HadithCollections"
-        component={HadithCollectionsScreen}
-        options={{
-          title: "Hadith",
-        }}
-      />
-      <Stack.Screen
-        name="HadithBooks"
-        component={HadithBooksScreen}
-        options={{
-          title: "Books",
-        }}
-      />
-      <Stack.Screen
-        name="HadithList"
-        component={HadithListScreen}
-        options={{
-          title: "Hadith",
-        }}
-      />
-      <Stack.Screen
-        name="HadithDetails"
-        component={HadithDetailsScreen}
-        options={{
-          title: "Hadith",
         }}
       />
       <Stack.Screen

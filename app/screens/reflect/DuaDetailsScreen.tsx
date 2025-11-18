@@ -7,9 +7,9 @@ import React from "react"
 import { View, Text, StyleSheet } from "react-native"
 import { Screen } from "@/components"
 import { useAppTheme } from "@/theme/context"
-import type { ReflectStackScreenProps } from "@/navigators"
+import type { ReadStackScreenProps } from "@/navigators"
 
-export const DuaDetailsScreen: React.FC<ReflectStackScreenProps<"DuaDetails">> = () => {
+export const DuaDetailsScreen: React.FC<ReadStackScreenProps<"DuaDetails">> = () => {
   const {
     theme: { colors },
   } = useAppTheme()
