@@ -17,7 +17,7 @@ export const HadithDetailsScreen: React.FC<ReadStackScreenProps<"HadithDetails">
   return (
     <Screen preset="scroll" contentContainerStyle={styles.container}>
       <View style={[styles.content, { backgroundColor: colors.background }]}>
-        <Text style={[styles.title, { color: colors.reflect }]}>Hadith Details</Text>
+        <Text style={[styles.title, { color: colors.read }]}>Hadith Details</Text>
         <Text style={[styles.description, { color: colors.textDim }]}>
           Week 16: Full hadith with commentary
         </Text>

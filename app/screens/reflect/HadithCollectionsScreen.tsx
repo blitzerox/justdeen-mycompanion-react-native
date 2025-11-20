@@ -3,6 +3,7 @@
  *
  * Displays list of 6 major Hadith collections (Bukhari, Muslim, etc.)
  * Users can navigate to individual collection books
+ * Layout matches QuranHomeScreen with Last Read/Last Bookmark cards
  */
 import React, { useState } from "react"
 import {
@@ -13,19 +14,39 @@ import {
   TouchableOpacity,
   TextInput,
 } from "react-native"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Screen, Text, Icon } from "@/components"
 import { useAppTheme } from "@/theme/context"
 import type { ReadStackScreenProps } from "@/navigators"
 import type { ThemedStyle } from "@/theme/types"
 import { hadithApi, HadithCollection } from "@/services/hadith/hadithApi"
+import { FontAwesome6 } from "@expo/vector-icons"
 
 export const HadithCollectionsScreen: React.FC<ReadStackScreenProps<"HadithCollections">> = ({
   navigation,
 }) => {
   const { themed, theme: { colors, spacing } } = useAppTheme()
+  const insets = useSafeAreaInsets()
 
   const [searchQuery, setSearchQuery] = useState("")
-  const [collections] = useState<HadithCollection[]>(hadithApi.getCollections())
+  const [collections, setCollections] = useState<HadithCollection[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Load collections from backend
+  React.useEffect(() => {
+    const loadCollections = async () => {
+      setLoading(true)
+      try {
+        const data = await hadithApi.getCollections()
+        setCollections(data)
+      } catch (error) {
+        console.error("Failed to load hadith collections:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadCollections()
+  }, [])
 
   // Filter collections based on search
   const filteredCollections = collections.filter((collection) => {
@@ -37,6 +58,31 @@ export const HadithCollectionsScreen: React.FC<ReadStackScreenProps<"HadithColle
     )
   })
 
+  const renderQuickActionCard = (
+    title: string,
+    subtitle: string | null,
+    icon: string,
+    onPress: () => void
+  ) => (
+    <TouchableOpacity
+      style={themed($quickActionCard)}
+      onPress={onPress}
+      activeOpacity={0.7}
+      disabled={!subtitle}
+    >
+      <View style={themed($quickActionIcon)}>
+        <FontAwesome6 name={icon} size={18} color={colors.read} solid />
+      </View>
+      <View style={themed($quickActionInfo)}>
+        <Text style={themed($quickActionTitle)}>{title}</Text>
+        <Text style={themed($quickActionSubtitle)}>
+          {subtitle || "No data yet"}
+        </Text>
+      </View>
+      <FontAwesome6 name="chevron-right" size={14} color={colors.textDim} />
+    </TouchableOpacity>
+  )
+
   const renderCollection = ({ item }: { item: HadithCollection }) => (
     <TouchableOpacity
       style={themed($collectionCard)}
@@ -44,34 +90,45 @@ export const HadithCollectionsScreen: React.FC<ReadStackScreenProps<"HadithColle
       activeOpacity={0.7}
     >
       <View style={themed($collectionLeft)}>
-        <View style={themed($collectionIcon)}>
-          <Icon icon="book" size={24} color={colors.palette.white} />
+        <View style={themed($collectionNumber)}>
+          <Icon icon="book" size={20} color={colors.palette.white} />
         </View>
         <View style={themed($collectionInfo)}>
-          <Text style={themed($collectionName)}>{item.name}</Text>
-          <Text style={themed($collectionArabic)}>{item.arabicName}</Text>
+          <Text style={themed($collectionName)}>{item.arabicName}</Text>
+          <Text style={themed($collectionTransliteration)}>{item.name}</Text>
         </View>
       </View>
 
       <View style={themed($collectionRight)}>
+        <Text style={themed($collectionTranslation)}>{item.description}</Text>
         <View style={themed($collectionMeta)}>
-          <Text style={themed($collectionMetaText)}>{item.totalHadith.toLocaleString()} Hadiths</Text>
-          <Text style={themed($collectionMetaText)}>{item.books} Books</Text>
+          <Text style={themed($collectionMetaText)}>
+            {item.totalHadith.toLocaleString()} Hadiths • {item.books} Books
+          </Text>
         </View>
-        <Icon icon="caretRight" size={16} color={colors.textDim} />
       </View>
     </TouchableOpacity>
   )
 
   return (
-    <Screen preset="fixed" contentContainerStyle={themed($container)}>
-      {/* Header */}
-      <View style={themed($header)}>
-        <Text style={themed($headerTitle)}>Hadith Collections</Text>
-        <Text style={themed($headerSubtitle)}>
-          Explore authentic collections of Prophet Muhammad's (ﷺ) sayings
-        </Text>
-      </View>
+    <Screen preset="fixed" safeAreaEdges={[]} contentContainerStyle={themed($container)}>
+      {/* Quick Action Cards */}
+      {!searchQuery && (
+        <View style={[themed($quickActionsContainer), { paddingTop: insets.top / 2 }]}>
+          {renderQuickActionCard(
+            "Last Read",
+            null, // TODO: Implement hadith reading tracking
+            "book-open",
+            () => {}
+          )}
+          {renderQuickActionCard(
+            "Last Bookmark",
+            null, // TODO: Implement hadith bookmark tracking
+            "bookmark",
+            () => {}
+          )}
+        </View>
+      )}
 
       {/* Search Bar */}
       <View style={themed($searchContainer)}>
@@ -95,7 +152,7 @@ export const HadithCollectionsScreen: React.FC<ReadStackScreenProps<"HadithColle
         data={filteredCollections}
         keyExtractor={(item) => item.id}
         renderItem={renderCollection}
-        contentContainerStyle={themed($listContent)}
+        contentContainerStyle={[themed($listContent), { paddingBottom: insets.bottom + spacing.xl }]}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={themed($emptyContainer)}>
@@ -112,25 +169,6 @@ const $container: ThemedStyle<ViewStyle> = () => ({
   flex: 1,
 })
 
-const $header: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.md,
-  paddingBottom: spacing.sm,
-})
-
-const $headerTitle: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  fontSize: 28,
-  fontWeight: "700",
-  color: colors.reflect,
-  marginBottom: spacing.xxs,
-})
-
-const $headerSubtitle: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 14,
-  color: colors.textDim,
-  lineHeight: 20,
-})
-
 const $searchContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   flexDirection: "row",
   alignItems: "center",
@@ -138,7 +176,7 @@ const $searchContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   paddingHorizontal: spacing.md,
   paddingVertical: spacing.sm,
   marginHorizontal: spacing.md,
-  marginTop: spacing.sm,
+  marginTop: 0,
   marginBottom: spacing.md,
   borderRadius: 12,
   gap: spacing.sm,
@@ -153,7 +191,6 @@ const $searchInput: ThemedStyle<TextStyle> = ({ colors }) => ({
 
 const $listContent: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   paddingHorizontal: spacing.md,
-  paddingBottom: spacing.xl,
 })
 
 const $collectionCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
@@ -173,11 +210,11 @@ const $collectionLeft: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flex: 1,
 })
 
-const $collectionIcon: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  width: 48,
-  height: 48,
-  borderRadius: 24,
-  backgroundColor: colors.reflect,
+const $collectionNumber: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: colors.read,
   alignItems: "center",
   justifyContent: "center",
 })
@@ -187,33 +224,34 @@ const $collectionInfo: ThemedStyle<ViewStyle> = () => ({
 })
 
 const $collectionName: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 16,
+  fontSize: 18,
   fontWeight: "600",
   color: colors.text,
-  marginBottom: 4,
+  marginBottom: 2,
 })
 
-const $collectionArabic: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 18,
+const $collectionTransliteration: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 14,
   color: colors.textDim,
-  fontFamily: "uthman",
-  textAlign: "left",
 })
 
-const $collectionRight: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  flexDirection: "row",
-  alignItems: "center",
-  gap: spacing.sm,
-})
-
-const $collectionMeta: ThemedStyle<ViewStyle> = () => ({
+const $collectionRight: ThemedStyle<ViewStyle> = () => ({
   alignItems: "flex-end",
 })
+
+const $collectionTranslation: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  fontSize: 14,
+  color: colors.text,
+  fontWeight: "500",
+  marginBottom: spacing.xxs,
+  textAlign: "right",
+})
+
+const $collectionMeta: ThemedStyle<ViewStyle> = () => ({})
 
 const $collectionMetaText: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 12,
   color: colors.textDim,
-  marginBottom: 2,
 })
 
 const $emptyContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
@@ -224,5 +262,48 @@ const $emptyContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
 
 const $emptyText: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 16,
+  color: colors.textDim,
+})
+
+// Quick Action Card Styles
+const $quickActionsContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flexDirection: "row",
+  gap: spacing.sm,
+  paddingHorizontal: spacing.md,
+  marginBottom: spacing.md,
+})
+
+const $quickActionCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  flex: 1,
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: colors.palette.neutral100,
+  padding: spacing.sm,
+  borderRadius: 12,
+  gap: spacing.sm,
+})
+
+const $quickActionIcon: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: colors.read + "20",
+  alignItems: "center",
+  justifyContent: "center",
+})
+
+const $quickActionInfo: ThemedStyle<ViewStyle> = () => ({
+  flex: 1,
+})
+
+const $quickActionTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 12,
+  fontWeight: "600",
+  color: colors.text,
+  marginBottom: 2,
+})
+
+const $quickActionSubtitle: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 11,
   color: colors.textDim,
 })

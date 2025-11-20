@@ -1,8 +1,9 @@
 /**
  * Duas Categories Screen
  *
- * Displays categories of Islamic supplications (duas)
+ * Displays categories of duas (Morning Adhkar, Evening Adhkar, etc.)
  * Users can navigate to view duas within each category
+ * Layout matches QuranHomeScreen with Last Read/Last Bookmark cards
  */
 import React, { useState } from "react"
 import {
@@ -13,19 +14,39 @@ import {
   TouchableOpacity,
   TextInput,
 } from "react-native"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Screen, Text, Icon } from "@/components"
 import { useAppTheme } from "@/theme/context"
 import type { ReadStackScreenProps } from "@/navigators"
 import type { ThemedStyle } from "@/theme/types"
 import { duasApi, DuaCategory } from "@/services/duas/duasApi"
+import { FontAwesome6 } from "@expo/vector-icons"
 
 export const DuasCategoriesScreen: React.FC<ReadStackScreenProps<"DuasCategories">> = ({
   navigation,
 }) => {
   const { themed, theme: { colors, spacing } } = useAppTheme()
+  const insets = useSafeAreaInsets()
 
   const [searchQuery, setSearchQuery] = useState("")
-  const [categories] = useState<DuaCategory[]>(duasApi.getCategories())
+  const [categories, setCategories] = useState<DuaCategory[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Load categories from backend
+  React.useEffect(() => {
+    const loadCategories = async () => {
+      setLoading(true)
+      try {
+        const data = await duasApi.getCategories()
+        setCategories(data)
+      } catch (error) {
+        console.error("Failed to load dua categories:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadCategories()
+  }, [])
 
   // Filter categories based on search
   const filteredCategories = categories.filter((category) => {
@@ -37,6 +58,31 @@ export const DuasCategoriesScreen: React.FC<ReadStackScreenProps<"DuasCategories
     )
   })
 
+  const renderQuickActionCard = (
+    title: string,
+    subtitle: string | null,
+    icon: string,
+    onPress: () => void
+  ) => (
+    <TouchableOpacity
+      style={themed($quickActionCard)}
+      onPress={onPress}
+      activeOpacity={0.7}
+      disabled={!subtitle}
+    >
+      <View style={themed($quickActionIcon)}>
+        <FontAwesome6 name={icon} size={18} color={colors.read} solid />
+      </View>
+      <View style={themed($quickActionInfo)}>
+        <Text style={themed($quickActionTitle)}>{title}</Text>
+        <Text style={themed($quickActionSubtitle)}>
+          {subtitle || "No data yet"}
+        </Text>
+      </View>
+      <FontAwesome6 name="chevron-right" size={14} color={colors.textDim} />
+    </TouchableOpacity>
+  )
+
   const renderCategory = ({ item }: { item: DuaCategory }) => (
     <TouchableOpacity
       style={themed($categoryCard)}
@@ -44,44 +90,52 @@ export const DuasCategoriesScreen: React.FC<ReadStackScreenProps<"DuasCategories
       activeOpacity={0.7}
     >
       <View style={themed($categoryLeft)}>
-        <View style={themed($categoryIcon)}>
-          <Icon icon={item.icon as any} size={28} color={colors.palette.white} />
+        <View style={themed($categoryNumber)}>
+          <Icon icon={item.icon as any} size={20} color={colors.palette.white} />
         </View>
         <View style={themed($categoryInfo)}>
-          <Text style={themed($categoryName)}>{item.name}</Text>
-          <Text style={themed($categoryArabic)}>{item.arabicName}</Text>
-          <Text style={themed($categoryDescription)} numberOfLines={2}>
-            {item.description}
-          </Text>
+          <Text style={themed($categoryName)}>{item.arabicName}</Text>
+          <Text style={themed($categoryTransliteration)}>{item.name}</Text>
         </View>
       </View>
 
       <View style={themed($categoryRight)}>
-        <View style={themed($duasCount)}>
-          <Text style={themed($duasCountText)}>{item.duasCount}</Text>
-          <Text style={themed($duasCountLabel)}>Duas</Text>
+        <Text style={themed($categoryTranslation)}>{item.description}</Text>
+        <View style={themed($categoryMeta)}>
+          <Text style={themed($categoryMetaText)}>
+            {item.duasCount} Duas
+          </Text>
         </View>
-        <Icon icon="caretRight" size={16} color={colors.textDim} />
       </View>
     </TouchableOpacity>
   )
 
   return (
-    <Screen preset="fixed" contentContainerStyle={themed($container)}>
-      {/* Header */}
-      <View style={themed($header)}>
-        <Text style={themed($headerTitle)}>Duas & Adhkar</Text>
-        <Text style={themed($headerSubtitle)}>
-          Supplications for daily life and special occasions
-        </Text>
-      </View>
+    <Screen preset="fixed" safeAreaEdges={[]} contentContainerStyle={themed($container)}>
+      {/* Quick Action Cards */}
+      {!searchQuery && (
+        <View style={[themed($quickActionsContainer), { paddingTop: insets.top / 2 }]}>
+          {renderQuickActionCard(
+            "Last Read",
+            null, // TODO: Implement dua reading tracking
+            "book-open",
+            () => {}
+          )}
+          {renderQuickActionCard(
+            "Last Bookmark",
+            null, // TODO: Implement dua bookmark tracking
+            "bookmark",
+            () => {}
+          )}
+        </View>
+      )}
 
       {/* Search Bar */}
       <View style={themed($searchContainer)}>
         <Icon icon="search" size={20} color={colors.textDim} />
         <TextInput
           style={themed($searchInput)}
-          placeholder="Search categories..."
+          placeholder="Search category name..."
           placeholderTextColor={colors.textDim}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -98,7 +152,7 @@ export const DuasCategoriesScreen: React.FC<ReadStackScreenProps<"DuasCategories
         data={filteredCategories}
         keyExtractor={(item) => item.id}
         renderItem={renderCategory}
-        contentContainerStyle={themed($listContent)}
+        contentContainerStyle={[themed($listContent), { paddingBottom: insets.bottom + spacing.xl }]}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={themed($emptyContainer)}>
@@ -115,25 +169,6 @@ const $container: ThemedStyle<ViewStyle> = () => ({
   flex: 1,
 })
 
-const $header: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  paddingHorizontal: spacing.md,
-  paddingTop: spacing.md,
-  paddingBottom: spacing.sm,
-})
-
-const $headerTitle: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  fontSize: 28,
-  fontWeight: "700",
-  color: colors.reflect,
-  marginBottom: spacing.xxs,
-})
-
-const $headerSubtitle: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 14,
-  color: colors.textDim,
-  lineHeight: 20,
-})
-
 const $searchContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   flexDirection: "row",
   alignItems: "center",
@@ -141,7 +176,7 @@ const $searchContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   paddingHorizontal: spacing.md,
   paddingVertical: spacing.sm,
   marginHorizontal: spacing.md,
-  marginTop: spacing.sm,
+  marginTop: 0,
   marginBottom: spacing.md,
   borderRadius: 12,
   gap: spacing.sm,
@@ -156,7 +191,6 @@ const $searchInput: ThemedStyle<TextStyle> = ({ colors }) => ({
 
 const $listContent: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   paddingHorizontal: spacing.md,
-  paddingBottom: spacing.xl,
 })
 
 const $categoryCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
@@ -166,21 +200,21 @@ const $categoryCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   backgroundColor: colors.palette.neutral100,
   padding: spacing.md,
   borderRadius: 12,
-  marginBottom: spacing.md,
+  marginBottom: spacing.sm,
 })
 
 const $categoryLeft: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flexDirection: "row",
-  alignItems: "flex-start",
+  alignItems: "center",
   gap: spacing.md,
   flex: 1,
 })
 
-const $categoryIcon: ThemedStyle<ViewStyle> = ({ colors }) => ({
-  width: 56,
-  height: 56,
-  borderRadius: 28,
-  backgroundColor: colors.reflect,
+const $categoryNumber: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: colors.read,
   alignItems: "center",
   justifyContent: "center",
 })
@@ -189,47 +223,35 @@ const $categoryInfo: ThemedStyle<ViewStyle> = () => ({
   flex: 1,
 })
 
-const $categoryName: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  fontSize: 17,
+const $categoryName: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 18,
   fontWeight: "600",
   color: colors.text,
-  marginBottom: spacing.xxs,
+  marginBottom: 2,
 })
 
-const $categoryArabic: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  fontSize: 16,
+const $categoryTransliteration: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 14,
   color: colors.textDim,
-  fontFamily: "uthman",
-  textAlign: "left",
-  marginBottom: spacing.xs,
 })
 
-const $categoryDescription: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 13,
-  color: colors.textDim,
-  lineHeight: 18,
+const $categoryRight: ThemedStyle<ViewStyle> = () => ({
+  alignItems: "flex-end",
 })
 
-const $categoryRight: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  flexDirection: "row",
-  alignItems: "center",
-  gap: spacing.sm,
-})
-
-const $duasCount: ThemedStyle<ViewStyle> = () => ({
-  alignItems: "center",
-})
-
-const $duasCountText: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 20,
-  fontWeight: "700",
-  color: colors.reflect,
-})
-
-const $duasCountLabel: ThemedStyle<TextStyle> = ({ colors }) => ({
-  fontSize: 11,
-  color: colors.textDim,
+const $categoryTranslation: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  fontSize: 14,
+  color: colors.text,
   fontWeight: "500",
+  marginBottom: spacing.xxs,
+  textAlign: "right",
+})
+
+const $categoryMeta: ThemedStyle<ViewStyle> = () => ({})
+
+const $categoryMetaText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 12,
+  color: colors.textDim,
 })
 
 const $emptyContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
@@ -240,5 +262,48 @@ const $emptyContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
 
 const $emptyText: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 16,
+  color: colors.textDim,
+})
+
+// Quick Action Card Styles
+const $quickActionsContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flexDirection: "row",
+  gap: spacing.sm,
+  paddingHorizontal: spacing.md,
+  marginBottom: spacing.md,
+})
+
+const $quickActionCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  flex: 1,
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: colors.palette.neutral100,
+  padding: spacing.sm,
+  borderRadius: 12,
+  gap: spacing.sm,
+})
+
+const $quickActionIcon: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: colors.read + "20",
+  alignItems: "center",
+  justifyContent: "center",
+})
+
+const $quickActionInfo: ThemedStyle<ViewStyle> = () => ({
+  flex: 1,
+})
+
+const $quickActionTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 12,
+  fontWeight: "600",
+  color: colors.text,
+  marginBottom: 2,
+})
+
+const $quickActionSubtitle: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 11,
   color: colors.textDim,
 })

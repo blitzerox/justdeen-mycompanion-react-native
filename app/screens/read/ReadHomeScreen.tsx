@@ -47,7 +47,6 @@ interface LibraryCard {
   backgroundColor: string
   image: any
   route?: keyof import("@/navigators").ReadStackParamList
-  reflectRoute?: keyof import("@/navigators").ReflectStackParamList
 }
 
 export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ navigation }) => {
@@ -89,7 +88,7 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
       icon: "community",
       backgroundColor: "#2A9D8F",
       image: hadithCover,
-      reflectRoute: "HadithCollections",
+      route: "HadithCollections",
     },
     {
       id: "dua",
@@ -100,7 +99,7 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
       icon: "heart",
       backgroundColor: colors.reflect,
       image: duaCover,
-      reflectRoute: "DuasCategories",
+      route: "DuasCategories",
     },
   ]
 
@@ -155,12 +154,7 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
               <TouchableOpacity
                 key={card.id}
                 onPress={() => {
-                  if (card.reflectRoute) {
-                    // Navigate to Reflect tab with specific screen
-                    navigation.navigate("ReflectTab" as any, {
-                      screen: card.reflectRoute,
-                    })
-                  } else if (card.route) {
+                  if (card.route) {
                     navigation.navigate(card.route as any)
                   }
                 }}

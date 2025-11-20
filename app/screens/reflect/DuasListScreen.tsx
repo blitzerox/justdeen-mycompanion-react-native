@@ -21,6 +21,7 @@ import { duasApi, DuaCategory, Dua } from "@/services/duas/duasApi"
 
 export const DuasListScreen: React.FC<ReadStackScreenProps<"DuasList">> = ({
   route,
+  navigation,
 }) => {
   const { categoryId } = route.params
   const { themed, theme: { colors, spacing } } = useAppTheme()
@@ -34,6 +35,15 @@ export const DuasListScreen: React.FC<ReadStackScreenProps<"DuasList">> = ({
   useEffect(() => {
     loadDuas()
   }, [categoryId])
+
+  // Set header title based on category
+  useEffect(() => {
+    if (category) {
+      navigation.setOptions({
+        title: category.name,
+      })
+    }
+  }, [category, navigation])
 
   const loadDuas = async () => {
     setLoading(true)
@@ -122,17 +132,17 @@ export const DuasListScreen: React.FC<ReadStackScreenProps<"DuasList">> = ({
             {/* Actions */}
             <View style={themed($actions)}>
               <TouchableOpacity style={themed($actionButton)} activeOpacity={0.7}>
-                <Icon icon="heart" size={18} color={colors.reflect} />
+                <Icon icon="heart" size={18} color={colors.read} />
                 <Text style={themed($actionText)}>Save</Text>
               </TouchableOpacity>
               {item.audioUrl && (
                 <TouchableOpacity style={themed($actionButton)} activeOpacity={0.7}>
-                  <Icon icon="play" size={18} color={colors.reflect} />
+                  <Icon icon="play" size={18} color={colors.read} />
                   <Text style={themed($actionText)}>Listen</Text>
                 </TouchableOpacity>
               )}
               <TouchableOpacity style={themed($actionButton)} activeOpacity={0.7}>
-                <Icon icon="share" size={18} color={colors.reflect} />
+                <Icon icon="share" size={18} color={colors.read} />
                 <Text style={themed($actionText)}>Share</Text>
               </TouchableOpacity>
             </View>
@@ -146,7 +156,7 @@ export const DuasListScreen: React.FC<ReadStackScreenProps<"DuasList">> = ({
     return (
       <Screen preset="fixed" contentContainerStyle={themed($container)}>
         <View style={themed($loadingContainer)}>
-          <ActivityIndicator size="large" color={colors.reflect} />
+          <ActivityIndicator size="large" color={colors.read} />
           <Text style={themed($loadingText)}>Loading Duas...</Text>
         </View>
       </Screen>
@@ -208,7 +218,7 @@ const $header: ThemedStyle<ViewStyle> = ({ spacing }) => ({
 const $headerTitle: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   fontSize: 24,
   fontWeight: "700",
-  color: colors.reflect,
+  color: colors.read,
   marginBottom: spacing.xxs,
 })
 
@@ -259,7 +269,7 @@ const $duaName: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
 
 const $occasionText: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 12,
-  color: colors.reflect,
+  color: colors.read,
   fontWeight: "500",
 })
 
@@ -351,7 +361,7 @@ const $actionButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({
 
 const $actionText: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 13,
-  color: colors.reflect,
+  color: colors.read,
   fontWeight: "500",
 })
 

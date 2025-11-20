@@ -3,16 +3,13 @@
  *
  * Screens:
  * - ReflectHome: Home dashboard with daily stats and spiritual progress (P0)
- * - DuasCategories: Categories of duas (P0)
- * - DuasListScreen: List of duas in category (P0)
- * - DuaDetails: Full dua with translation (P0)
- * - HadithCollections: Sahih Bukhari, Muslim, etc. (P1)
- * - HadithBooks: Books within a collection (P1)
- * - HadithList: List of hadith (P1)
- * - HadithDetails: Full hadith with commentary (P1)
  * - NamesOfAllah: 99 Names of Allah (P1)
  * - NamesOfProphet: Names of Prophet Muhammad (P1)
  * - TasbihCounter: Digital tasbih counter (P1)
+ * - PrayerAnalytics: Prayer statistics and streaks (P1)
+ * - QuranAnalytics: Quran reading progress and insights (P1)
+ * - DhikrAnalytics: Dhikr counter analytics (P1)
+ * - Achievements: Badges and achievements (P2)
  */
 import React from "react"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"

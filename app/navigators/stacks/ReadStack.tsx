@@ -2,6 +2,7 @@
  * Read Tab Stack Navigator
  *
  * Screens:
+ * - ReadHome: Library home with Quran, Tafsir, Hadith, Dua cards (P0)
  * - QuranHome: Main Quran reading screen with Surah/Juz/Page list (CRITICAL - P0)
  * - QuranReader: Verse-by-verse reading with translations (CRITICAL - P0)
  * - SurahDetails: Surah overview and metadata (P1)
@@ -14,6 +15,13 @@
  * - ReadingGroups: Community reading groups (P2)
  * - GroupDetails: Group info and members (P2)
  * - CreateGroup: Create new reading group (P2)
+ * - HadithCollections: Sahih Bukhari, Muslim, etc. (P1)
+ * - HadithBooks: Books within a collection (P1)
+ * - HadithList: List of hadith (P1)
+ * - HadithDetails: Full hadith with commentary (P1)
+ * - DuasCategories: Categories of duas (P0)
+ * - DuasList: List of duas in category (P0)
+ * - DuaDetails: Full dua with translation (P0)
  */
 import React from "react"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"

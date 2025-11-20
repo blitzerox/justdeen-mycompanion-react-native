@@ -85,7 +85,7 @@ export const HadithBooksScreen: React.FC<ReadStackScreenProps<"HadithBooks">> = 
     return (
       <Screen preset="fixed" contentContainerStyle={themed($container)}>
         <View style={themed($loadingContainer)}>
-          <ActivityIndicator size="large" color={colors.reflect} />
+          <ActivityIndicator size="large" color={colors.read} />
           <Text style={themed($loadingText)}>Loading books...</Text>
         </View>
       </Screen>
@@ -153,7 +153,7 @@ const $header: ThemedStyle<ViewStyle> = ({ spacing }) => ({
 const $headerTitle: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   fontSize: 24,
   fontWeight: "700",
-  color: colors.reflect,
+  color: colors.read,
   marginBottom: spacing.xxs,
 })
 
@@ -198,7 +198,7 @@ const $bookNumber: ThemedStyle<ViewStyle> = ({ colors }) => ({
   width: 40,
   height: 40,
   borderRadius: 20,
-  backgroundColor: colors.reflect,
+  backgroundColor: colors.read,
   alignItems: "center",
   justifyContent: "center",
 })
@@ -271,7 +271,7 @@ const $errorText: ThemedStyle<TextStyle> = ({ colors }) => ({
 })
 
 const $retryButton: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  backgroundColor: colors.reflect,
+  backgroundColor: colors.read,
   paddingHorizontal: spacing.lg,
   paddingVertical: spacing.sm,
   borderRadius: 8,
