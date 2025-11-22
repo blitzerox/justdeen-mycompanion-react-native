@@ -59,6 +59,10 @@ export type ReadStackParamList = {
   BookmarksList: undefined
   ReadingHistory: undefined
   TranslationSettings: undefined
+  TafsirHome: undefined
+  TafsirReader: {
+    surahId: number
+  }
   ReadingGroups: undefined
   GroupDetails: {
     groupId: string

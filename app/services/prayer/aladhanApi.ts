@@ -225,20 +225,18 @@ export class AlAdhanApi {
     const { timings, date } = response.data
     const dateTimestamp = parseInt(date.timestamp, 10) * 1000
 
-    // Calculate Tahajjud (last third of night - between Isha and Fajr)
-    const ishaTime = this.parseTimeToTimestamp(timings.Isha, dateTimestamp)
+    // Use Lastthird from API for Tahajjud time
+    const lastThirdTime = this.parseTimeToTimestamp(timings.Lastthird, dateTimestamp)
     const fajrTime = this.parseTimeToTimestamp(timings.Fajr, dateTimestamp)
-    const lastThird = ishaTime + (fajrTime - ishaTime) * (2 / 3)
-    const tahajjudTime = new Date(lastThird)
 
     const prayers: PrayerTime[] = [
       {
         name: "Tahajjud",
-        time: `${String(tahajjudTime.getHours()).padStart(2, "0")}:${String(tahajjudTime.getMinutes()).padStart(2, "0")}`,
-        timestamp: lastThird,
+        time: timings.Lastthird.split(" ")[0],
+        timestamp: lastThirdTime,
         isTrackable: false,
         endTime: timings.Fajr.split(" ")[0],
-        duration: this.calculateDuration(lastThird, fajrTime),
+        duration: this.calculateDuration(lastThirdTime, fajrTime),
       },
       {
         name: "Imsak",

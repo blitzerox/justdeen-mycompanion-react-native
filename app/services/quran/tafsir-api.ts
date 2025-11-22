@@ -17,23 +17,19 @@ export interface Tafsir {
 }
 
 interface TafsirVersesResponse {
-  verses: Array<{
-    id: number
+  tafsirs: Array<{
     verse_key: string
-    verse_number: number
-    chapter_id: number
-    text_uthmani: string
-    tafsirs?: Array<{
-      id?: number
-      resource_id?: number
-      name?: string
-      text: string
-      language_name?: string
-    }>
+    text: string
+    verse_id?: number
+    language_id?: number
+    resource_name?: string
   }>
   meta?: {
     tafsir_name: string
     author_name?: string
+    filters?: {
+      chapter_number: string
+    }
   }
 }
 
@@ -70,47 +66,50 @@ export async function fetchAndCacheChapterTafsir(
 ): Promise<void> {
   const db = await getDatabase()
 
-  // Check if already cached
+  // Check if already cached with actual text content
   const existing = await db.getFirstAsync<{ count: number }>(
     `SELECT COUNT(*) as count FROM quran_tafsirs t
      INNER JOIN quran_verses v ON t.verse_key = v.verse_key
-     WHERE v.chapter_id = ? AND t.tafsir_resource_id = ?`,
+     WHERE v.chapter_id = ? AND t.tafsir_resource_id = ? AND t.text IS NOT NULL AND t.text != ''`,
     chapterNumber,
     tafsirId
   )
 
   if (existing && existing.count > 0) {
-    console.log(`✅ Chapter ${chapterNumber} tafsir already cached`)
+    console.log(`✅ Chapter ${chapterNumber} tafsir already cached (${existing.count} verses)`)
     return
   }
 
-  console.log(`🔄 Fetching tafsir for chapter ${chapterNumber}...`)
-
-  // Fetch verses with tafsir
-  const data = await makeQuranAPIRequest<TafsirVersesResponse>(
-    `/verses/by_chapter/${chapterNumber}?language=en&tafsirs=${tafsirId}&per_page=300`
+  // Clear any incomplete/bad cache entries for this chapter
+  await db.runAsync(
+    `DELETE FROM quran_tafsirs WHERE verse_key LIKE ? AND tafsir_resource_id = ?`,
+    `${chapterNumber}:%`,
+    tafsirId
   )
 
-  console.log(`📚 Caching tafsir for ${data.verses.length} verses...`)
+  console.log(`🔄 Fetching tafsir for chapter ${chapterNumber}...`)
+
+  // Fetch tafsir using the correct endpoint
+  const data = await makeQuranAPIRequest<TafsirVersesResponse>(
+    `/tafsirs/${tafsirId}/by_chapter/${chapterNumber}`
+  )
+
+  console.log(`📚 Caching tafsir for ${data.tafsirs.length} verses...`)
 
   // Insert tafsirs
-  for (const verse of data.verses) {
-    if (verse.tafsirs && verse.tafsirs.length > 0) {
-      const tafsir = verse.tafsirs[0] // Get first tafsir
+  const tafsirName = data.meta?.tafsir_name || 'Tafsir Ibn Kathir'
 
-      const tafsirName = tafsir.name || data.meta?.tafsir_name || 'Tafsir Ibn Kathir'
-
-      await db.runAsync(
-        `INSERT OR REPLACE INTO quran_tafsirs (
-          verse_key, tafsir_resource_id, tafsir_name, language_name, text
-        ) VALUES (?, ?, ?, ?, ?)`,
-        verse.verse_key,
-        tafsirId,
-        tafsirName,
-        tafsir.language_name || 'english',
-        tafsir.text
-      )
-    }
+  for (const tafsir of data.tafsirs) {
+    await db.runAsync(
+      `INSERT OR REPLACE INTO quran_tafsirs (
+        verse_key, tafsir_resource_id, tafsir_name, language_name, text
+      ) VALUES (?, ?, ?, ?, ?)`,
+      tafsir.verse_key,
+      tafsirId,
+      tafsirName,
+      'english',
+      tafsir.text
+    )
   }
 
   console.log(`✅ Cached tafsir for chapter ${chapterNumber}`)

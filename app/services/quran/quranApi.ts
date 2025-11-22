@@ -7,6 +7,7 @@
 import { getAllChapters, getChapterById } from './chapters-api'
 import { getChapterVerses, searchVerses } from './verses-api'
 import { getVerseTafsir, TAFSIR_RESOURCES } from './tafsir-api'
+import { getAllTranslations } from './translations-api'
 
 export interface Surah {
   id: number
@@ -18,6 +19,21 @@ export interface Surah {
   revelationOrder: number
 }
 
+export interface Word {
+  id: number
+  position: number
+  text_uthmani?: string
+  char_type_name: string
+  translation?: {
+    text: string
+    language_name: string
+  }
+  transliteration?: {
+    text: string
+    language_name: string
+  }
+}
+
 export interface Verse {
   id: number
   verseNumber: number
@@ -26,6 +42,7 @@ export interface Verse {
   textImlaei?: string // Imlaei Arabic text
   textIndopak?: string // Indo-Pak Arabic text
   translations: Translation[]
+  words?: Word[] // Word-by-word data with transliteration
   audio?: string // Audio URL
   juzNumber?: number
   hizbNumber?: number
@@ -211,8 +228,20 @@ export class QuranApi {
    * Get verses for a Surah
    * Now fetches from Quran Foundation API with caching
    */
-  async getVerses(surahNumber: number, translationId: number = 131): Promise<Verse[]> {
+  async getVerses(surahNumber: number, translationId: number = 85): Promise<Verse[]> {
     const verses = await getChapterVerses(surahNumber, translationId)
+
+    // Look up translator name from translations cache
+    let translatorName = 'Abdel Haleem'
+    try {
+      const allTranslations = await getAllTranslations()
+      const translation = allTranslations.find(t => t.id === translationId)
+      if (translation) {
+        translatorName = translation.author_name || translation.name
+      }
+    } catch (err) {
+      console.error('Failed to look up translator name:', err)
+    }
 
     // Map to existing interface
     return verses.map((verse) => ({
@@ -226,8 +255,9 @@ export class QuranApi {
         id: t.resource_id,
         languageCode: 'en',
         text: t.text,
-        translatorName: t.resource_name || 'Clear Quran',
+        translatorName: translatorName,
       })),
+      words: verse.words,
       juzNumber: verse.juz_number,
       hizbNumber: verse.hizb_number,
       pageNumber: verse.page_number,
@@ -237,7 +267,7 @@ export class QuranApi {
   /**
    * Get a single verse
    */
-  async getVerse(verseKey: string, translationId: number = 131): Promise<Verse> {
+  async getVerse(verseKey: string, translationId: number = 85): Promise<Verse> {
     const [chapterStr] = verseKey.split(':')
     const chapterNumber = parseInt(chapterStr)
 

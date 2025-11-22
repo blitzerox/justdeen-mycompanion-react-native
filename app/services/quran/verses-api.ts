@@ -76,11 +76,11 @@ interface VersesResponse {
 export async function fetchAndCacheChapterVerses(
   chapterNumber: number,
   options: {
-    translations?: number[] // Array of translation IDs, default [131] (Clear Quran)
+    translations?: number[] // Array of translation IDs, default [85] (Abdel Haleem)
     includeWords?: boolean // Include word-by-word data, default true
   } = {}
 ): Promise<void> {
-  const { translations = [131], includeWords = true } = options
+  const { translations = [85], includeWords = true } = options
   const db = await getDatabase()
 
   // Check if already cached
@@ -135,9 +135,14 @@ export async function fetchAndCacheChapterVerses(
       verse_key: string
       verse_number: number
     }>
-  }>(`/quran/translations/${translations[0]}?chapter_number=${chapterNumber}`)
+  }>(`/translations/${translations[0]}/by_chapter/${chapterNumber}`)
 
   console.log(`📖 Fetched ${translationData.translations.length} translations for chapter ${chapterNumber}`)
+
+  // Debug: Log first translation to see the structure
+  if (translationData.translations.length > 0) {
+    console.log(`🔍 First translation structure:`, JSON.stringify(translationData.translations[0]))
+  }
 
   // Create a map of translations by verse_key for easy lookup
   const translationsMap = new Map<string, Array<{
@@ -146,15 +151,24 @@ export async function fetchAndCacheChapterVerses(
     resource_name?: string
   }>>()
 
-  translationData.translations.forEach(t => {
-    const existing = translationsMap.get(t.verse_key) || []
+  // The translation API returns translations in order, indexed by position
+  // We need to construct verse_key from chapter:verse_number
+  translationData.translations.forEach((t, index) => {
+    // Construct verse_key from chapter number and 1-based index
+    const verseKey = `${chapterNumber}:${index + 1}`
+    const existing = translationsMap.get(verseKey) || []
     existing.push({
       resource_id: t.resource_id,
       text: t.text,
       resource_name: t.resource_name
     })
-    translationsMap.set(t.verse_key, existing)
+    translationsMap.set(verseKey, existing)
   })
+
+  // Debug: Check translation data before inserting
+  console.log(`🔍 Translation map size: ${translationsMap.size}`)
+  console.log(`🔍 First verse key: ${versesData.verses[0]?.verse_key}`)
+  console.log(`🔍 First verse translations: ${JSON.stringify(translationsMap.get(versesData.verses[0]?.verse_key))}`)
 
   // Insert all verses with their translations
   for (const verse of versesData.verses) {
@@ -191,7 +205,7 @@ export async function fetchAndCacheChapterVerses(
  */
 export async function getChapterVerses(
   chapterNumber: number,
-  translationId: number = 131
+  translationId: number = 85
 ): Promise<Verse[]> {
   const db = await getDatabase()
 
@@ -203,23 +217,24 @@ export async function getChapterVerses(
     chapterNumber
   )
 
-  // If requesting a different translation than the default (131),
+  // If requesting a different translation than the default (85),
   // fetch it from the API and merge with cached verses
   let dynamicTranslations: Map<string, Translation> = new Map()
 
-  if (translationId !== 131) {
+  if (translationId !== 85) {
     try {
       const translationData = await makeQuranAPIRequest<{
         translations: Array<{
           resource_id: number
           text: string
           resource_name?: string
-          verse_key: string
         }>
-      }>(`/quran/translations/${translationId}?chapter_number=${chapterNumber}`)
+      }>(`/translations/${translationId}/by_chapter/${chapterNumber}`)
 
-      translationData.translations.forEach(t => {
-        dynamicTranslations.set(t.verse_key, {
+      // Construct verse_key from chapter number and 1-based index
+      translationData.translations.forEach((t, index) => {
+        const verseKey = `${chapterNumber}:${index + 1}`
+        dynamicTranslations.set(verseKey, {
           resource_id: t.resource_id,
           text: t.text,
           resource_name: t.resource_name
@@ -230,6 +245,12 @@ export async function getChapterVerses(
     } catch (err) {
       console.error(`Failed to fetch translation ${translationId}:`, err)
     }
+  }
+
+  // Debug: Log first row raw data
+  if (result.length > 0) {
+    console.log('🔍 Raw DB translations for first verse:', result[0].translations)
+    console.log('🔍 Raw DB words for first verse:', result[0].words ? 'HAS DATA' : 'NULL')
   }
 
   return result.map((row) => {

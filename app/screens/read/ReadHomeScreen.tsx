@@ -69,17 +69,6 @@ export const ReadHomeScreen: React.FC<ReadStackScreenProps<"ReadHome">> = ({ nav
       route: "QuranHome",
     },
     {
-      id: "tafsir",
-      title: "Tafsir",
-      subtitle: "Quranic Commentary",
-      arabicName: "تفسير",
-      quote: '"The best of you are those who learn the Quran and teach it" - Sahih Al-Bukhari',
-      icon: "ladybug",
-      backgroundColor: "#F4A261",
-      image: tafsirCover,
-      route: "QuranHome", // TODO: Update when Tafsir screen is ready
-    },
-    {
       id: "hadith",
       title: "Hadith",
       subtitle: "Sunnah",

@@ -1,38 +1,245 @@
 /**
  * Reading History Screen
  *
- * Week 12-15: Recently read verses
+ * Displays last 10 read verses with navigation to QuranReader
  */
-import React from "react"
-import { View, Text, StyleSheet } from "react-native"
-import { Screen } from "@/components"
+import React, { useState } from "react"
+import {
+  View,
+  ViewStyle,
+  TextStyle,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native"
+import { Screen, Text } from "@/components"
 import { useAppTheme } from "@/theme/context"
 import type { ReadStackScreenProps } from "@/navigators"
+import type { ThemedStyle } from "@/theme/types"
+import { getReadingHistory, type UserProgress } from "@/services/quran/user-progress"
+import { quranApi } from "@/services/quran/quranApi"
+import { FontAwesome6 } from "@expo/vector-icons"
+import { useFocusEffect } from "@react-navigation/native"
+import { useCallback } from "react"
 
-export const ReadingHistoryScreen: React.FC<ReadStackScreenProps<"ReadingHistory">> = () => {
-  const {
-    theme: { colors },
-  } = useAppTheme()
+export const ReadingHistoryScreen: React.FC<ReadStackScreenProps<"ReadingHistory">> = ({
+  navigation,
+}) => {
+  const { themed, theme: { colors, spacing } } = useAppTheme()
+
+  const [history, setHistory] = useState<UserProgress[]>([])
+  const [surahNames, setSurahNames] = useState<Map<number, string>>(new Map())
+  const [loading, setLoading] = useState(true)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
+
+  // Load history when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadHistory()
+    }, [])
+  )
+
+  const loadHistory = async () => {
+    // Only show loading indicator on initial load
+    if (isInitialLoad) {
+      setLoading(true)
+    }
+    try {
+      // Get last 10 read verses
+      const data = await getReadingHistory(10)
+      setHistory(data)
+
+      // Load surah names for display
+      const surahs = await quranApi.getSurahs()
+      const nameMap = new Map<number, string>()
+      surahs.forEach(s => nameMap.set(s.id, s.transliteration))
+      setSurahNames(nameMap)
+    } catch (error) {
+      console.error("Failed to load reading history:", error)
+    } finally {
+      setLoading(false)
+      setIsInitialLoad(false)
+    }
+  }
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return ""
+    const date = new Date(dateString)
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  const renderHistoryItem = ({ item }: { item: UserProgress }) => {
+    const surahName = surahNames.get(item.chapterId) || `Surah ${item.chapterId}`
+
+    return (
+      <TouchableOpacity
+        style={themed($historyCard)}
+        onPress={() => navigation.navigate("QuranReader", {
+          surahNumber: item.chapterId,
+          ayahNumber: item.verseNumber,
+        })}
+        activeOpacity={0.7}
+      >
+        <View style={themed($historyIcon)}>
+          <FontAwesome6 name="clock-rotate-left" size={16} color={colors.palette.white} />
+        </View>
+
+        <View style={themed($historyInfo)}>
+          <Text style={themed($historyTitle)}>{surahName}</Text>
+          <Text style={themed($historyVerse)}>Verse {item.verseNumber}</Text>
+          {item.readAt && (
+            <Text style={themed($historyDate)}>{formatDate(item.readAt)}</Text>
+          )}
+        </View>
+
+        <View style={themed($historyRight)}>
+          <Text style={themed($verseKey)}>{item.verseKey}</Text>
+          <FontAwesome6 name="chevron-right" size={14} color={colors.textDim} />
+        </View>
+      </TouchableOpacity>
+    )
+  }
+
+  if (loading) {
+    return (
+      <Screen preset="fixed" contentContainerStyle={themed($container)}>
+        <View style={themed($loadingContainer)}>
+          <ActivityIndicator size="large" color={colors.read} />
+          <Text style={themed($loadingText)}>Loading History...</Text>
+        </View>
+      </Screen>
+    )
+  }
 
   return (
-    <Screen preset="scroll" contentContainerStyle={styles.container}>
-      <View style={[styles.content, { backgroundColor: colors.background }]}>
-        <Text style={[styles.title, { color: colors.read }]}>Reading History</Text>
-        <Text style={[styles.description, { color: colors.textDim }]}>
-          Week 12-15: Recently read verses
-        </Text>
-        <Text style={[styles.placeholder, { color: colors.textDim }]}>
-          🚧 This screen will be implemented in future phases.
-        </Text>
-      </View>
+    <Screen preset="fixed" contentContainerStyle={themed($container)}>
+      <FlatList
+        data={history}
+        keyExtractor={(item, index) => `${item.verseKey}-${index}`}
+        renderItem={renderHistoryItem}
+        contentContainerStyle={themed($listContent)}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={themed($emptyContainer)}>
+            <FontAwesome6 name="clock-rotate-left" size={48} color={colors.textDim} />
+            <Text style={themed($emptyTitle)}>No Reading History</Text>
+            <Text style={themed($emptyText)}>
+              Start reading the Quran and mark verses as read to see your history here
+            </Text>
+          </View>
+        }
+        ListHeaderComponent={
+          history.length > 0 ? (
+            <Text style={themed($headerText)}>Last {history.length} Read Verses</Text>
+          ) : null
+        }
+      />
     </Screen>
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { flex: 1, padding: 20 },
-  title: { fontSize: 28, fontWeight: "700", marginBottom: 12 },
-  description: { fontSize: 15, lineHeight: 22, marginBottom: 16 },
-  placeholder: { fontSize: 13, fontStyle: "italic" },
+// Styles
+const $container: ThemedStyle<ViewStyle> = () => ({
+  flex: 1,
+})
+
+const $loadingContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flex: 1,
+  alignItems: "center",
+  justifyContent: "center",
+  gap: spacing.md,
+})
+
+const $loadingText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 16,
+  color: colors.textDim,
+})
+
+const $listContent: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  paddingHorizontal: spacing.md,
+  paddingTop: spacing.md,
+  paddingBottom: spacing.xl,
+})
+
+const $headerText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  fontSize: 14,
+  color: colors.textDim,
+  marginBottom: spacing.md,
+})
+
+const $historyCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: colors.palette.neutral100,
+  padding: spacing.md,
+  borderRadius: 12,
+  marginBottom: spacing.sm,
+  gap: spacing.md,
+})
+
+const $historyIcon: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: colors.read,
+  alignItems: "center",
+  justifyContent: "center",
+})
+
+const $historyInfo: ThemedStyle<ViewStyle> = () => ({
+  flex: 1,
+})
+
+const $historyTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 16,
+  fontWeight: "600",
+  color: colors.text,
+  marginBottom: 2,
+})
+
+const $historyVerse: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 14,
+  color: colors.text,
+  marginBottom: 2,
+})
+
+const $historyDate: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 12,
+  color: colors.textDim,
+})
+
+const $historyRight: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  alignItems: "flex-end",
+  gap: spacing.xs,
+})
+
+const $verseKey: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 13,
+  color: colors.read,
+  fontWeight: "600",
+})
+
+const $emptyContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  alignItems: "center",
+  justifyContent: "center",
+  paddingVertical: spacing.xxl,
+  gap: spacing.md,
+})
+
+const $emptyTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 18,
+  fontWeight: "600",
+  color: colors.text,
+})
+
+const $emptyText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 14,
+  color: colors.textDim,
+  textAlign: "center",
+  paddingHorizontal: 40,
 })

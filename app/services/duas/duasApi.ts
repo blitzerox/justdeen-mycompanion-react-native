@@ -36,6 +36,11 @@ export interface Dua {
 export class DuasApi {
   private api: ApisauceInstance
 
+  // Cache storage
+  private categoriesCache: DuaCategory[] | null = null
+  private duasByCategoryCache: Map<string, Dua[]> = new Map()
+  private duaCache: Map<string, Dua> = new Map()
+
   constructor() {
     this.api = create({
       baseURL: Config.CLOUDFLARE_API_URL,
@@ -48,16 +53,37 @@ export class DuasApi {
   }
 
   /**
+   * Clear all caches (useful for refresh)
+   */
+  clearCache() {
+    this.categoriesCache = null
+    this.duasByCategoryCache.clear()
+    this.duaCache.clear()
+  }
+
+  /**
    * Get all Dua categories
    */
   async getCategories(): Promise<DuaCategory[]> {
+    // Return cached data if available
+    if (this.categoriesCache) {
+      console.log("📦 Using cached dua categories")
+      return this.categoriesCache
+    }
+
+    console.log("📡 Fetching dua categories from:", this.api.getBaseURL())
     const response = await this.api.get<DuaCategory[]>("/api/duas/categories")
+    console.log("📡 Response status:", response.status, "ok:", response.ok, "problem:", response.problem)
     if (!response.ok) {
-      console.error("Failed to fetch dua categories:", response.problem)
+      console.error("Failed to fetch dua categories:", response.problem, response.originalError)
       // Return fallback data
       return this.getFallbackCategories()
     }
-    return response.data || []
+    console.log("✅ Fetched", response.data?.length, "dua categories")
+
+    // Cache the result
+    this.categoriesCache = response.data || []
+    return this.categoriesCache
   }
 
   /**
@@ -72,23 +98,48 @@ export class DuasApi {
    * Get Duas from a category
    */
   async getDuasFromCategory(categoryId: string): Promise<Dua[]> {
-    const response = await this.api.get<Dua[]>(`/api/duas/categories/${categoryId}/duas`)
+    // Return cached data if available
+    if (this.duasByCategoryCache.has(categoryId)) {
+      console.log("📦 Using cached duas for category:", categoryId)
+      return this.duasByCategoryCache.get(categoryId)!
+    }
+
+    const response = await this.api.get<{ duas: Dua[]; total: number }>(`/api/duas/categories/${categoryId}/duas`)
     if (!response.ok) {
       console.error(`Failed to fetch duas for category ${categoryId}:`, response.problem)
       return []
     }
-    return response.data || []
+
+    const duas = response.data?.duas || []
+
+    // Cache the result and individual duas
+    this.duasByCategoryCache.set(categoryId, duas)
+    duas.forEach(dua => this.duaCache.set(dua.id, dua))
+
+    return duas
   }
 
   /**
    * Get a specific Dua
    */
   async getDua(duaId: string): Promise<Dua | undefined> {
+    // Return cached data if available
+    if (this.duaCache.has(duaId)) {
+      console.log("📦 Using cached dua:", duaId)
+      return this.duaCache.get(duaId)
+    }
+
     const response = await this.api.get<Dua>(`/api/duas/${duaId}`)
     if (!response.ok) {
       console.error(`Failed to fetch dua ${duaId}:`, response.problem)
       return undefined
     }
+
+    // Cache the result
+    if (response.data) {
+      this.duaCache.set(duaId, response.data)
+    }
+
     return response.data
   }
 

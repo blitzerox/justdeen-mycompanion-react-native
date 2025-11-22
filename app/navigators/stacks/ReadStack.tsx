@@ -38,6 +38,8 @@ import { PageReaderScreen } from "@/screens/read/PageReaderScreen"
 import { BookmarksListScreen } from "@/screens/read/BookmarksListScreen"
 import { ReadingHistoryScreen } from "@/screens/read/ReadingHistoryScreen"
 import { TranslationSettingsScreen } from "@/screens/read/TranslationSettingsScreen"
+import { TafsirHomeScreen } from "@/screens/read/TafsirHomeScreen"
+import { TafsirReaderScreen } from "@/screens/read/TafsirReaderScreen"
 import { ReadingGroupsScreen } from "@/screens/read/ReadingGroupsScreen"
 import { GroupDetailsScreen } from "@/screens/read/GroupDetailsScreen"
 import { CreateGroupScreen } from "@/screens/read/CreateGroupScreen"
@@ -147,6 +149,20 @@ export const ReadStackNavigator = () => {
         component={TranslationSettingsScreen}
         options={{
           title: "Translations",
+        }}
+      />
+      <Stack.Screen
+        name="TafsirHome"
+        component={TafsirHomeScreen}
+        options={{
+          title: "Tafsir",
+        }}
+      />
+      <Stack.Screen
+        name="TafsirReader"
+        component={TafsirReaderScreen}
+        options={{
+          title: "Tafsir",
         }}
       />
       <Stack.Screen

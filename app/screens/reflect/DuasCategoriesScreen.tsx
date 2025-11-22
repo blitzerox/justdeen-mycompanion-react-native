@@ -91,7 +91,7 @@ export const DuasCategoriesScreen: React.FC<ReadStackScreenProps<"DuasCategories
     >
       <View style={themed($categoryLeft)}>
         <View style={themed($categoryNumber)}>
-          <Icon icon={item.icon as any} size={20} color={colors.palette.white} />
+          <Icon icon={(item.icon || "heart") as any} size={20} color={colors.palette.white} />
         </View>
         <View style={themed($categoryInfo)}>
           <Text style={themed($categoryName)}>{item.arabicName}</Text>

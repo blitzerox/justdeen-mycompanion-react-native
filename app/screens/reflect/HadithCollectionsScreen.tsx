@@ -5,7 +5,7 @@
  * Users can navigate to individual collection books
  * Layout matches QuranHomeScreen with Last Read/Last Bookmark cards
  */
-import React, { useState } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import {
   View,
   ViewStyle,
@@ -13,6 +13,7 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
+  ActivityIndicator,
 } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Screen, Text, Icon } from "@/components"
@@ -20,6 +21,7 @@ import { useAppTheme } from "@/theme/context"
 import type { ReadStackScreenProps } from "@/navigators"
 import type { ThemedStyle } from "@/theme/types"
 import { hadithApi, HadithCollection } from "@/services/hadith/hadithApi"
+import { hadithDownloadService, DownloadProgress } from "@/services/hadith/hadithDownloadService"
 import { FontAwesome6 } from "@expo/vector-icons"
 
 export const HadithCollectionsScreen: React.FC<ReadStackScreenProps<"HadithCollections">> = ({
@@ -31,14 +33,22 @@ export const HadithCollectionsScreen: React.FC<ReadStackScreenProps<"HadithColle
   const [searchQuery, setSearchQuery] = useState("")
   const [collections, setCollections] = useState<HadithCollection[]>([])
   const [loading, setLoading] = useState(true)
+  const [downloadProgress, setDownloadProgress] = useState<Map<string, DownloadProgress>>(new Map())
 
   // Load collections from backend
-  React.useEffect(() => {
+  useEffect(() => {
     const loadCollections = async () => {
       setLoading(true)
       try {
         const data = await hadithApi.getCollections()
         setCollections(data)
+
+        // Initialize download progress for each collection
+        const initialProgress = new Map<string, DownloadProgress>()
+        data.forEach(collection => {
+          initialProgress.set(collection.id, hadithDownloadService.getDownloadProgress(collection.id))
+        })
+        setDownloadProgress(initialProgress)
       } catch (error) {
         console.error("Failed to load hadith collections:", error)
       } finally {
@@ -46,6 +56,39 @@ export const HadithCollectionsScreen: React.FC<ReadStackScreenProps<"HadithColle
       }
     }
     loadCollections()
+  }, [])
+
+  // Subscribe to download progress updates
+  useEffect(() => {
+    const unsubscribes: (() => void)[] = []
+
+    collections.forEach(collection => {
+      const unsubscribe = hadithDownloadService.subscribe(collection.id, (progress) => {
+        setDownloadProgress(prev => {
+          const newMap = new Map(prev)
+          newMap.set(collection.id, progress)
+          return newMap
+        })
+      })
+      unsubscribes.push(unsubscribe)
+    })
+
+    return () => {
+      unsubscribes.forEach(unsub => unsub())
+    }
+  }, [collections])
+
+  const handleDownload = useCallback((collectionId: string) => {
+    hadithDownloadService.downloadCollection(collectionId)
+  }, [])
+
+  const handleDelete = useCallback((collectionId: string) => {
+    hadithDownloadService.deleteCollection(collectionId)
+  }, [])
+
+  const handleClearCache = useCallback(() => {
+    hadithApi.clearCache()
+    console.log("🧹 Cleared hadith API cache")
   }, [])
 
   // Filter collections based on search
@@ -83,32 +126,71 @@ export const HadithCollectionsScreen: React.FC<ReadStackScreenProps<"HadithColle
     </TouchableOpacity>
   )
 
-  const renderCollection = ({ item }: { item: HadithCollection }) => (
-    <TouchableOpacity
-      style={themed($collectionCard)}
-      onPress={() => navigation.navigate("HadithBooks", { collectionId: item.id })}
-      activeOpacity={0.7}
-    >
-      <View style={themed($collectionLeft)}>
-        <View style={themed($collectionNumber)}>
-          <Icon icon="book" size={20} color={colors.palette.white} />
-        </View>
-        <View style={themed($collectionInfo)}>
-          <Text style={themed($collectionName)}>{item.arabicName}</Text>
-          <Text style={themed($collectionTransliteration)}>{item.name}</Text>
-        </View>
-      </View>
+  const renderCollection = ({ item }: { item: HadithCollection }) => {
+    const progress = downloadProgress.get(item.id) || { status: "idle", progress: 0 }
+    const isDownloaded = progress.status === "completed"
+    const isDownloading = progress.status === "downloading"
 
-      <View style={themed($collectionRight)}>
-        <Text style={themed($collectionTranslation)}>{item.description}</Text>
-        <View style={themed($collectionMeta)}>
+    return (
+      <View style={themed($collectionCard)}>
+        <TouchableOpacity
+          style={themed($collectionContent)}
+          onPress={() => navigation.navigate("HadithBooks", { collectionId: item.id })}
+          activeOpacity={0.7}
+        >
+          <View style={themed($collectionHeader)}>
+            <View style={themed($collectionNumber)}>
+              <Icon icon="book" size={20} color={colors.palette.white} />
+            </View>
+            <View style={themed($collectionInfo)}>
+              <Text style={themed($collectionName)}>{item.arabicName}</Text>
+              <Text style={themed($collectionTransliteration)}>{item.name}</Text>
+            </View>
+            <FontAwesome6 name="chevron-right" size={14} color={colors.textDim} />
+          </View>
+
+          <Text style={themed($collectionDescription)} numberOfLines={2}>
+            {item.description}
+          </Text>
           <Text style={themed($collectionMetaText)}>
             {item.totalHadith.toLocaleString()} Hadiths • {item.books} Books
           </Text>
+        </TouchableOpacity>
+
+        {/* Download Section */}
+        <View style={themed($downloadSection)}>
+          {isDownloading ? (
+            <View style={themed($downloadingContainer)}>
+              <View style={themed($progressBarContainer)}>
+                <View style={[themed($progressBar), { width: `${progress.progress}%` }]} />
+              </View>
+              <Text style={themed($downloadProgressText)}>
+                {progress.currentBook}/{progress.totalBooks} books • {progress.progress}%
+              </Text>
+            </View>
+          ) : isDownloaded ? (
+            <TouchableOpacity
+              style={themed($downloadedButton)}
+              onPress={() => handleDelete(item.id)}
+              activeOpacity={0.7}
+            >
+              <FontAwesome6 name="check-circle" size={16} color={colors.palette.success500} solid />
+              <Text style={themed($downloadedText)}>Downloaded</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={themed($downloadButton)}
+              onPress={() => handleDownload(item.id)}
+              activeOpacity={0.7}
+            >
+              <FontAwesome6 name="download" size={14} color={colors.read} />
+              <Text style={themed($downloadButtonText)}>Download</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
-    </TouchableOpacity>
-  )
+    )
+  }
 
   return (
     <Screen preset="fixed" safeAreaEdges={[]} contentContainerStyle={themed($container)}>
@@ -146,6 +228,16 @@ export const HadithCollectionsScreen: React.FC<ReadStackScreenProps<"HadithColle
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Debug: Clear Cache Button */}
+      <TouchableOpacity
+        style={themed($clearCacheButton)}
+        onPress={handleClearCache}
+        activeOpacity={0.7}
+      >
+        <FontAwesome6 name="trash" size={12} color={colors.error} />
+        <Text style={themed($clearCacheText)}>Clear API Cache (Debug)</Text>
+      </TouchableOpacity>
 
       {/* Collections List */}
       <FlatList
@@ -194,20 +286,21 @@ const $listContent: ThemedStyle<ViewStyle> = ({ spacing }) => ({
 })
 
 const $collectionCard: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
   backgroundColor: colors.palette.neutral100,
-  padding: spacing.md,
   borderRadius: 12,
   marginBottom: spacing.sm,
+  overflow: "hidden",
 })
 
-const $collectionLeft: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+const $collectionContent: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  padding: spacing.md,
+  gap: spacing.sm,
+})
+
+const $collectionHeader: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flexDirection: "row",
   alignItems: "center",
   gap: spacing.md,
-  flex: 1,
 })
 
 const $collectionNumber: ThemedStyle<ViewStyle> = ({ colors }) => ({
@@ -235,19 +328,11 @@ const $collectionTransliteration: ThemedStyle<TextStyle> = ({ colors }) => ({
   color: colors.textDim,
 })
 
-const $collectionRight: ThemedStyle<ViewStyle> = () => ({
-  alignItems: "flex-end",
-})
-
-const $collectionTranslation: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+const $collectionDescription: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 14,
   color: colors.text,
-  fontWeight: "500",
-  marginBottom: spacing.xxs,
-  textAlign: "right",
+  lineHeight: 20,
 })
-
-const $collectionMeta: ThemedStyle<ViewStyle> = () => ({})
 
 const $collectionMetaText: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 12,
@@ -306,4 +391,82 @@ const $quickActionTitle: ThemedStyle<TextStyle> = ({ colors }) => ({
 const $quickActionSubtitle: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontSize: 11,
   color: colors.textDim,
+})
+
+// Download styles
+const $downloadSection: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  borderTopWidth: 1,
+  borderTopColor: colors.palette.neutral200,
+  paddingHorizontal: spacing.md,
+  paddingVertical: spacing.sm,
+})
+
+const $downloadButton: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: spacing.xs,
+  paddingVertical: spacing.xs,
+})
+
+const $downloadButtonText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 13,
+  fontWeight: "600",
+  color: colors.read,
+})
+
+const $downloadedButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: spacing.xs,
+  paddingVertical: spacing.xs,
+})
+
+const $downloadedText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 13,
+  fontWeight: "600",
+  color: colors.palette.success500,
+})
+
+const $downloadingContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  gap: spacing.xs,
+})
+
+const $progressBarContainer: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  height: 4,
+  backgroundColor: colors.palette.neutral200,
+  borderRadius: 2,
+  overflow: "hidden",
+})
+
+const $progressBar: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  height: "100%",
+  backgroundColor: colors.read,
+  borderRadius: 2,
+})
+
+const $downloadProgressText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 11,
+  color: colors.textDim,
+  textAlign: "center",
+})
+
+// Debug styles
+const $clearCacheButton: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: spacing.xs,
+  marginHorizontal: spacing.md,
+  marginBottom: spacing.sm,
+  paddingVertical: spacing.xs,
+  backgroundColor: colors.error + "10",
+  borderRadius: 8,
+})
+
+const $clearCacheText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  fontSize: 12,
+  color: colors.error,
+  fontWeight: "500",
 })

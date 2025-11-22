@@ -247,16 +247,45 @@ export async function getReadingStats(): Promise<ReadingStats> {
 }
 
 /**
- * Get bookmarked verses
+ * Get bookmarked verses (last 10)
  */
-export async function getBookmarkedVerses(): Promise<UserProgress[]> {
+export async function getBookmarkedVerses(limit: number = 10): Promise<UserProgress[]> {
   const db = await getDatabase()
 
   const results = await db.getAllAsync<any>(
     `SELECT verse_key, chapter_id, verse_number, page_number, is_read, is_bookmarked, read_at, bookmarked_at
      FROM quran_user_progress
      WHERE is_bookmarked = 1
-     ORDER BY bookmarked_at DESC`
+     ORDER BY bookmarked_at DESC
+     LIMIT ?`,
+    limit
+  )
+
+  return results.map((row) => ({
+    verseKey: row.verse_key,
+    chapterId: row.chapter_id,
+    verseNumber: row.verse_number,
+    pageNumber: row.page_number,
+    isRead: row.is_read === 1,
+    isBookmarked: row.is_bookmarked === 1,
+    readAt: row.read_at,
+    bookmarkedAt: row.bookmarked_at,
+  }))
+}
+
+/**
+ * Get reading history (last 10 read verses)
+ */
+export async function getReadingHistory(limit: number = 10): Promise<UserProgress[]> {
+  const db = await getDatabase()
+
+  const results = await db.getAllAsync<any>(
+    `SELECT verse_key, chapter_id, verse_number, page_number, is_read, is_bookmarked, read_at, bookmarked_at
+     FROM quran_user_progress
+     WHERE is_read = 1 AND read_at IS NOT NULL
+     ORDER BY read_at DESC
+     LIMIT ?`,
+    limit
   )
 
   return results.map((row) => ({

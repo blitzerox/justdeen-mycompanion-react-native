@@ -34,18 +34,22 @@ export const HadithBooksScreen: React.FC<ReadStackScreenProps<"HadithBooks">> = 
     loadBooks()
   }, [collectionId])
 
-  const loadBooks = () => {
+  const loadBooks = async () => {
     setLoading(true)
 
-    // Get collection info
-    const collectionData = hadithApi.getCollection(collectionId)
-    setCollection(collectionData || null)
+    try {
+      // Get collection info
+      const collectionData = await hadithApi.getCollection(collectionId)
+      setCollection(collectionData || null)
 
-    // Get books
-    const booksData = hadithApi.getBooks(collectionId)
-    setBooks(booksData)
-
-    setLoading(false)
+      // Get books
+      const booksData = await hadithApi.getBooks(collectionId)
+      setBooks(booksData)
+    } catch (err) {
+      console.error("Error loading books:", err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const renderBook = ({ item }: { item: HadithBook }) => (

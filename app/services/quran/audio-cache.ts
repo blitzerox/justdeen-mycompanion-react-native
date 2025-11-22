@@ -3,7 +3,7 @@
  * Downloads and caches audio files locally for offline playback
  */
 
-import * as FileSystem from 'expo-file-system'
+import * as FileSystem from 'expo-file-system/legacy'
 import { getDatabase } from './database'
 
 const AUDIO_CACHE_DIR = `${FileSystem.documentDirectory}quran_audio/`

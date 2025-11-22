@@ -40,7 +40,7 @@ export const HadithListScreen: React.FC<ReadStackScreenProps<"HadithList">> = ({
 
     try {
       // Get book info
-      const bookData = hadithApi.getBook(bookId)
+      const bookData = await hadithApi.getBook(bookId)
       setBook(bookData || null)
 
       // Get hadiths for this book
@@ -54,65 +54,75 @@ export const HadithListScreen: React.FC<ReadStackScreenProps<"HadithList">> = ({
     }
   }
 
-  const renderHadith = ({ item }: { item: Hadith }) => (
-    <View style={themed($hadithCard)}>
-      {/* Hadith Header */}
-      <View style={themed($hadithHeader)}>
-        <View style={themed($hadithNumber)}>
-          <Text style={themed($hadithNumberText)}>#{item.hadithNumber}</Text>
+  const renderHadith = ({ item }: { item: Hadith }) => {
+    return (
+      <View style={themed($hadithCard)}>
+        {/* Hadith Header */}
+        <View style={themed($hadithHeader)}>
+          <View style={themed($hadithNumber)}>
+            <Text style={themed($hadithNumberText)}>#{item.hadithNumber}</Text>
+          </View>
+          <View style={themed($hadithHeaderRight)}>
+            {item.narrator && (
+              <Text style={themed($narratorText)}>Narrated by {item.narrator}</Text>
+            )}
+            {item.grade && (
+              <View
+                style={themed($gradeBadge, {
+                  backgroundColor:
+                    item.grade === "Sahih"
+                      ? colors.palette.success100
+                      : item.grade === "Hassan"
+                        ? colors.palette.warning100
+                        : colors.palette.neutral200,
+                })}
+              >
+                <Text style={themed($gradeText)}>{item.grade}</Text>
+              </View>
+            )}
+          </View>
         </View>
-        <View style={themed($hadithHeaderRight)}>
-          <Text style={themed($narratorText)}>Narrated by {item.narrator}</Text>
-          {item.grade && (
-            <View
-              style={themed($gradeBadge, {
-                backgroundColor:
-                  item.grade === "Sahih"
-                    ? colors.palette.success100
-                    : item.grade === "Hassan"
-                      ? colors.palette.warning100
-                      : colors.palette.neutral200,
-              })}
-            >
-              <Text style={themed($gradeText)}>{item.grade}</Text>
-            </View>
-          )}
+
+        {/* Arabic Text */}
+        {item.arabicText && (
+          <View style={themed($arabicContainer)}>
+            <Text style={themed($arabicText)}>{item.arabicText}</Text>
+          </View>
+        )}
+
+        {/* English Translation */}
+        {item.englishText && (
+          <View style={themed($translationContainer)}>
+            <Text style={themed($translationText)}>{item.englishText}</Text>
+          </View>
+        )}
+
+        {/* Reference */}
+        {item.reference && (
+          <View style={themed($referenceContainer)}>
+            <Icon icon="book" size={12} color={colors.textDim} />
+            <Text style={themed($referenceText)}>{item.reference}</Text>
+          </View>
+        )}
+
+        {/* Actions */}
+        <View style={themed($actions)}>
+          <TouchableOpacity style={themed($actionButton)} activeOpacity={0.7}>
+            <Icon icon="heart" size={18} color={colors.read} />
+            <Text style={themed($actionText)}>Save</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={themed($actionButton)} activeOpacity={0.7}>
+            <Icon icon="share" size={18} color={colors.read} />
+            <Text style={themed($actionText)}>Share</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={themed($actionButton)} activeOpacity={0.7}>
+            <Icon icon="more" size={18} color={colors.read} />
+            <Text style={themed($actionText)}>More</Text>
+          </TouchableOpacity>
         </View>
       </View>
-
-      {/* Arabic Text */}
-      <View style={themed($arabicContainer)}>
-        <Text style={themed($arabicText)}>{item.arabicText}</Text>
-      </View>
-
-      {/* English Translation */}
-      <View style={themed($translationContainer)}>
-        <Text style={themed($translationText)}>{item.englishText}</Text>
-      </View>
-
-      {/* Reference */}
-      <View style={themed($referenceContainer)}>
-        <Icon icon="book" size={12} color={colors.textDim} />
-        <Text style={themed($referenceText)}>{item.reference}</Text>
-      </View>
-
-      {/* Actions */}
-      <View style={themed($actions)}>
-        <TouchableOpacity style={themed($actionButton)} activeOpacity={0.7}>
-          <Icon icon="heart" size={18} color={colors.read} />
-          <Text style={themed($actionText)}>Save</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={themed($actionButton)} activeOpacity={0.7}>
-          <Icon icon="share" size={18} color={colors.read} />
-          <Text style={themed($actionText)}>Share</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={themed($actionButton)} activeOpacity={0.7}>
-          <Icon icon="more" size={18} color={colors.read} />
-          <Text style={themed($actionText)}>More</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  )
+    )
+  }
 
   if (loading) {
     return (
@@ -247,7 +257,7 @@ const $gradeText: ThemedStyle<TextStyle> = ({ colors }) => ({
   color: colors.text,
 })
 
-const $arabicContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+const $arabicContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   marginBottom: spacing.md,
   paddingVertical: spacing.sm,
   borderTopWidth: 1,
@@ -286,7 +296,7 @@ const $referenceText: ThemedStyle<TextStyle> = ({ colors }) => ({
   fontStyle: "italic",
 })
 
-const $actions: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+const $actions: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   flexDirection: "row",
   justifyContent: "space-around",
   borderTopWidth: 1,
