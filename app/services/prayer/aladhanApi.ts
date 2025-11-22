@@ -142,12 +142,12 @@ export class AlAdhanApi {
       date,
     } = params
 
-    const response = await this.api.get<PrayerTimesResponse>("/timings", {
+    const dateParam = date || this.getCurrentDate()
+    const response = await this.api.get<PrayerTimesResponse>(`/timings/${dateParam}`, {
       latitude,
       longitude,
       method,
       school: madhab,
-      date: date || this.getCurrentDate(),
     })
 
     if (!response.ok || !response.data) {
@@ -225,9 +225,9 @@ export class AlAdhanApi {
     const { timings, date } = response.data
     const dateTimestamp = parseInt(date.timestamp, 10) * 1000
 
-    // Use Lastthird from API for Tahajjud time
+    // Use Lastthird from API for Tahajjud time, ends at Imsak
     const lastThirdTime = this.parseTimeToTimestamp(timings.Lastthird, dateTimestamp)
-    const fajrTime = this.parseTimeToTimestamp(timings.Fajr, dateTimestamp)
+    const imsakTime = this.parseTimeToTimestamp(timings.Imsak, dateTimestamp)
 
     const prayers: PrayerTime[] = [
       {
@@ -235,8 +235,8 @@ export class AlAdhanApi {
         time: timings.Lastthird.split(" ")[0],
         timestamp: lastThirdTime,
         isTrackable: false,
-        endTime: timings.Fajr.split(" ")[0],
-        duration: this.calculateDuration(lastThirdTime, fajrTime),
+        endTime: timings.Imsak.split(" ")[0],
+        duration: this.calculateDuration(lastThirdTime, imsakTime),
       },
       {
         name: "Imsak",

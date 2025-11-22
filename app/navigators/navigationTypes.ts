@@ -100,6 +100,15 @@ export type ReflectStackParamList = {
   PrayerAnalytics: undefined
   QuranAnalytics: undefined
   DhikrAnalytics: undefined
+  SettingsHome: undefined
+  ProfileSettings: undefined
+  ThemeSettings: undefined
+  LanguageSettings: undefined
+  AudioSettings: undefined
+  StorageSettings: undefined
+  PrivacySettings: undefined
+  About: undefined
+  Subscription: undefined
 }
 
 /**

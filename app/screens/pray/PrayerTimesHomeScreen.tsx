@@ -30,7 +30,7 @@ import { Screen, Text, Icon } from "@/components"
 import { useAppTheme } from "@/theme/context"
 import { useAuth } from "@/context/AuthContext"
 import { usePrayer } from "@/context/PrayerContext"
-import { FontAwesome6 } from "@expo/vector-icons"
+import { FontAwesome6, Feather, MaterialCommunityIcons, Fontisto } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
 import { DrawerNavigationProp } from "@react-navigation/drawer"
 import type { PrayStackScreenProps } from "@/navigators"
@@ -78,6 +78,10 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
   // Animation state for swipe gesture
   const translateX = useRef(new Animated.Value(0)).current
   const [isAnimating, setIsAnimating] = useState(false)
+
+  // Prayer times cache: keyed by "lat_lng_date" (e.g., "25.276987_55.296249_22-11-2025")
+  const prayerTimesCache = useRef<Map<string, PrayerTime[]>>(new Map())
+  const lastLocationRef = useRef<{ latitude: number; longitude: number } | null>(null)
 
   // Month view expansion state
   const [isMonthExpanded, setIsMonthExpanded] = useState(false)
@@ -233,18 +237,51 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
   const fetchPrayerTimesForDate = async (date: Date) => {
     if (!location) return
 
+    const formattedDate = formatDateForAPI(date)
+
+    // Check if location changed - if so, clear the cache
+    if (lastLocationRef.current) {
+      const locationChanged =
+        lastLocationRef.current.latitude !== location.latitude ||
+        lastLocationRef.current.longitude !== location.longitude
+
+      if (locationChanged) {
+        console.log('📍 Location changed, clearing prayer times cache')
+        prayerTimesCache.current.clear()
+      }
+    }
+    lastLocationRef.current = { latitude: location.latitude, longitude: location.longitude }
+
+    // Create cache key: "lat_lng_date"
+    const cacheKey = `${location.latitude.toFixed(4)}_${location.longitude.toFixed(4)}_${formattedDate}`
+
+    // Check cache first
+    const cachedTimes = prayerTimesCache.current.get(cacheKey)
+    if (cachedTimes) {
+      console.log(`🕌 Using cached prayer times for ${formattedDate}`)
+      setPrayerTimes(cachedTimes)
+      return
+    }
+
     setLoading(true)
     setError(null)
 
     try {
-      const formattedDate = formatDateForAPI(date)
+      console.log(`🕌 Fetching prayer times for date: ${formattedDate}`)
       const response = await aladhanApi.getPrayerTimes({
         latitude: location.latitude,
         longitude: location.longitude,
         date: formattedDate,
       })
+      console.log(`🕌 API response date: ${response.data.date.gregorian.date}`)
+      console.log(`🕌 Fajr time returned: ${response.data.timings.Fajr}`)
 
       const times = aladhanApi.parsePrayerTimes(response)
+
+      // Cache the result
+      prayerTimesCache.current.set(cacheKey, times)
+      console.log(`🕌 Cached prayer times for ${formattedDate}`)
+
       setPrayerTimes(times)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch prayer times"
@@ -468,17 +505,8 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
   }
 
   const getPrayerColor = (prayerName: string, index: number): string => {
-    const colors: Record<string, string> = {
-      Tahajjud: "#64C7F0",  // Light Blue/Cyan
-      Imsak: "#A78BFA",     // Purple
-      Fajr: "#5856D6",      // SF Purple
-      Sunrise: "#FFD60A",   // SF Yellow
-      Dhuhr: "#34C759",     // SF Green
-      Asr: "#FF9500",       // SF Orange
-      Maghrib: "#FF6B6B",   // Red/Pink
-      Isha: "#007AFF",      // SF Blue
-    }
-    return colors[prayerName] || "#4ECDC4"
+    // Use consistent pray tab color for all prayers
+    return colors.pray
   }
 
   const getTimeProgress = (time: string): number => {
@@ -533,171 +561,171 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
         </View>
       </View>
 
-      <ScrollView
-        style={themed($scrollView)}
-        contentContainerStyle={themed($scrollContentContainer(insets.bottom))}
-        contentInsetAdjustmentBehavior="automatic"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Month and Year Header */}
-        <View style={themed($monthYearHeader)}>
-          <View style={themed($monthYearContainer)}>
-            <TouchableOpacity onPress={() => setShowMonthPicker(true)} activeOpacity={0.7}>
-              <Text style={themed($monthText(colors))}>
-                {currentMonth.split(' ')[0]}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setShowYearPicker(true)} activeOpacity={0.7}>
-              <Text style={themed($yearText(colors))}>{selectedDate.getFullYear()}</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={themed($todayText(colors))}>Today</Text>
+      {/* Month and Year Header - Fixed at top */}
+      <View style={themed($monthYearHeader)}>
+        <View style={themed($monthYearContainer)}>
+          <TouchableOpacity onPress={() => setShowMonthPicker(true)} activeOpacity={0.7}>
+            <Text style={themed($monthText(colors))}>
+              {currentMonth.split(' ')[0]}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowYearPicker(true)} activeOpacity={0.7}>
+            <Text style={themed($yearText(colors))}>{selectedDate.getFullYear()}</Text>
+          </TouchableOpacity>
         </View>
+        <Text style={themed($todayText(colors))}>Today</Text>
+      </View>
 
-        {/* Weekly Calendar Strip */}
-        <View style={themed($weekStripContainer)} {...panResponder.panHandlers}>
-          <Animated.View
-            style={[
-              themed($weekStrip),
-              {
-                transform: [{ translateX }],
-              },
-            ]}
-          >
-            {weekDays.map((day, index) => {
+      {/* Weekly Calendar Strip - Fixed at top */}
+      <View style={themed($weekStripContainer)} {...panResponder.panHandlers}>
+        <Animated.View
+          style={[
+            themed($weekStrip),
+            {
+              transform: [{ translateX }],
+            },
+          ]}
+        >
+          {weekDays.map((day, index) => {
+            const isSelected = day.fullDate && day.fullDate.toDateString() === selectedDate.toDateString()
+
+            if (day.isEmpty) {
+              // Empty cell - non-clickable
+              return (
+                <View
+                  key={index}
+                  style={themed($dayButton(colors, false, false, true))}
+                >
+                  <Text style={themed($dayText(colors, false, false, true))}>
+                    {day.dayOfWeek}
+                  </Text>
+                </View>
+              )
+            }
+
+            // Normal cell with date
+            return (
+              <TouchableOpacity
+                key={index}
+                style={themed($dayButton(colors, day.isToday, isSelected, false))}
+                onPress={() => day.fullDate && handleDateSelect(day.fullDate)}
+                activeOpacity={0.7}
+              >
+                <Text style={themed($dayText(colors, day.isToday, isSelected, false))}>
+                  {day.dayOfWeek}
+                </Text>
+                <Text style={themed($dateText(colors, day.isToday, isSelected, false))}>
+                  {day.date}
+                </Text>
+                {day.hasEvents && day.fullDate && (
+                  <View style={themed($eventDots)}>
+                    {/* 5 dots for 5 trackable prayers: Fajr, Dhuhr, Asr, Maghrib, Isha */}
+                    {['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((prayerName) => {
+                      const status = getPrayerStatus(prayerName, day.fullDate!)
+                      let dotColor: string
+                      switch (status) {
+                        case PrayerTrackingStatus.DONE:
+                          dotColor = "#34C759" // Green
+                          break
+                        case PrayerTrackingStatus.LATE:
+                          dotColor = "#FFD60A" // Yellow
+                          break
+                        case PrayerTrackingStatus.MISSED:
+                          dotColor = "#FF3B30" // Red
+                          break
+                        default:
+                          dotColor = colors.border // Empty/gray
+                      }
+                      return <View key={prayerName} style={themed($eventDot(dotColor))} />
+                    })}
+                  </View>
+                )}
+              </TouchableOpacity>
+            )
+          })}
+        </Animated.View>
+      </View>
+
+      {/* Expanded Month View - Fixed at top */}
+      <Animated.View
+        style={[
+          themed($monthViewContainer),
+          {
+            maxHeight: monthHeight.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 400],
+            }),
+            opacity: monthHeight,
+          },
+        ]}
+      >
+        {monthDays.map((week, weekIndex) => (
+          <View key={weekIndex} style={themed($monthWeekRow)}>
+            {week.map((day, dayIndex) => {
               const isSelected = day.fullDate && day.fullDate.toDateString() === selectedDate.toDateString()
 
               if (day.isEmpty) {
-                // Empty cell - non-clickable
                 return (
-                  <View
-                    key={index}
-                    style={themed($dayButton(colors, false, false, true))}
-                  >
-                    <Text style={themed($dayText(colors, false, false, true))}>
-                      {day.dayOfWeek}
-                    </Text>
+                  <View key={dayIndex} style={themed($monthDayButton(colors, false, false, true))}>
+                    <Text style={themed($monthDayText(colors, false, false, true))}>{day.date}</Text>
                   </View>
                 )
               }
 
-              // Normal cell with date
               return (
                 <TouchableOpacity
-                  key={index}
-                  style={themed($dayButton(colors, day.isToday, isSelected, false))}
+                  key={dayIndex}
+                  style={themed($monthDayButton(colors, day.isToday, isSelected, false))}
                   onPress={() => day.fullDate && handleDateSelect(day.fullDate)}
                   activeOpacity={0.7}
                 >
-                  <Text style={themed($dayText(colors, day.isToday, isSelected, false))}>
-                    {day.dayOfWeek}
-                  </Text>
-                  <Text style={themed($dateText(colors, day.isToday, isSelected, false))}>
+                  <Text style={themed($monthDayText(colors, day.isToday, isSelected, false))}>
                     {day.date}
                   </Text>
                   {day.hasEvents && day.fullDate && (
-                    <View style={themed($eventDots)}>
-                      {/* 5 dots for 5 trackable prayers: Fajr, Dhuhr, Asr, Maghrib, Isha */}
+                    <View style={themed($monthEventDots)}>
                       {['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((prayerName) => {
                         const status = getPrayerStatus(prayerName, day.fullDate!)
                         let dotColor: string
                         switch (status) {
                           case PrayerTrackingStatus.DONE:
-                            dotColor = "#34C759" // Green
+                            dotColor = "#34C759"
                             break
                           case PrayerTrackingStatus.LATE:
-                            dotColor = "#FFD60A" // Yellow
+                            dotColor = "#FFD60A"
                             break
                           case PrayerTrackingStatus.MISSED:
-                            dotColor = "#FF3B30" // Red
+                            dotColor = "#FF3B30"
                             break
                           default:
-                            dotColor = colors.border // Empty/gray
+                            dotColor = colors.border
                         }
-                        return <View key={prayerName} style={themed($eventDot(dotColor))} />
+                        return <View key={prayerName} style={themed($monthEventDot(dotColor))} />
                       })}
                     </View>
                   )}
                 </TouchableOpacity>
               )
             })}
-          </Animated.View>
-        </View>
+          </View>
+        ))}
+      </Animated.View>
 
-        {/* Expanded Month View */}
-        <Animated.View
-          style={[
-            themed($monthViewContainer),
-            {
-              maxHeight: monthHeight.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, 400],
-              }),
-              opacity: monthHeight,
-            },
-          ]}
-        >
-          {monthDays.map((week, weekIndex) => (
-            <View key={weekIndex} style={themed($monthWeekRow)}>
-              {week.map((day, dayIndex) => {
-                const isSelected = day.fullDate && day.fullDate.toDateString() === selectedDate.toDateString()
+      {/* Drag Handle to Expand/Collapse Month View - Fixed at top */}
+      <TouchableOpacity
+        style={themed($dragHandle)}
+        onPress={toggleMonthExpansion}
+        activeOpacity={0.7}
+      >
+        <View style={themed($dragHandleBar(colors))} />
+      </TouchableOpacity>
 
-                if (day.isEmpty) {
-                  return (
-                    <View key={dayIndex} style={themed($monthDayButton(colors, false, false, true))}>
-                      <Text style={themed($monthDayText(colors, false, false, true))}>{day.date}</Text>
-                    </View>
-                  )
-                }
-
-                return (
-                  <TouchableOpacity
-                    key={dayIndex}
-                    style={themed($monthDayButton(colors, day.isToday, isSelected, false))}
-                    onPress={() => day.fullDate && handleDateSelect(day.fullDate)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={themed($monthDayText(colors, day.isToday, isSelected, false))}>
-                      {day.date}
-                    </Text>
-                    {day.hasEvents && day.fullDate && (
-                      <View style={themed($monthEventDots)}>
-                        {['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((prayerName) => {
-                          const status = getPrayerStatus(prayerName, day.fullDate!)
-                          let dotColor: string
-                          switch (status) {
-                            case PrayerTrackingStatus.DONE:
-                              dotColor = "#34C759"
-                              break
-                            case PrayerTrackingStatus.LATE:
-                              dotColor = "#FFD60A"
-                              break
-                            case PrayerTrackingStatus.MISSED:
-                              dotColor = "#FF3B30"
-                              break
-                            default:
-                              dotColor = colors.border
-                          }
-                          return <View key={prayerName} style={themed($monthEventDot(dotColor))} />
-                        })}
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                )
-              })}
-            </View>
-          ))}
-        </Animated.View>
-
-        {/* Drag Handle to Expand/Collapse Month View */}
-        <TouchableOpacity
-          style={themed($dragHandle)}
-          onPress={toggleMonthExpansion}
-          activeOpacity={0.7}
-        >
-          <View style={themed($dragHandleBar(colors))} />
-        </TouchableOpacity>
-
+      {/* Scrollable Content */}
+      <ScrollView
+        style={themed($scrollView)}
+        contentContainerStyle={themed($scrollContentContainer(insets.bottom))}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Location Permission Denied Card */}
         {permissionStatus === "denied" && !location && (
           <View style={themed($permissionCard(colors))}>
@@ -787,15 +815,31 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
                         <FontAwesome6 name="xmark" size={18} color={getStatusColor()} solid />
                       ) : null}
                     </TouchableOpacity>
-                    {index < prayerTimes.length - 1 && (
-                      <View style={themed($timelineConnector(colors))} />
-                    )}
+                    <View style={themed($timelineConnector(colors))} />
                   </View>
 
                   {/* Prayer Card */}
                   <View style={themed($prayerCard(colors, prayerColor, isPast, isNext))}>
                     <View style={themed($prayerIconContainer(prayerColor))}>
-                      <Icon icon={getPrayerIcon(prayer.name)} size={28} color={prayerColor} />
+                      {prayer.name === "Sunrise" ? (
+                        <Feather name="sunrise" size={28} color={prayerColor} />
+                      ) : prayer.name === "Maghrib" ? (
+                        <Feather name="sunset" size={28} color={prayerColor} />
+                      ) : prayer.name === "Tahajjud" ? (
+                        <MaterialCommunityIcons name="weather-night" size={28} color={prayerColor} />
+                      ) : prayer.name === "Imsak" ? (
+                        <MaterialCommunityIcons name="weather-night-partly-cloudy" size={28} color={prayerColor} />
+                      ) : prayer.name === "Isha" ? (
+                        <Fontisto name="night-clear" size={28} color={prayerColor} />
+                      ) : prayer.name === "Fajr" ? (
+                        <MaterialCommunityIcons name="weather-sunset-up" size={28} color={prayerColor} />
+                      ) : prayer.name === "Dhuhr" ? (
+                        <FontAwesome6 name="sun" size={28} color={prayerColor} />
+                      ) : prayer.name === "Asr" ? (
+                        <FontAwesome6 name="cloud-sun" size={28} color={prayerColor} />
+                      ) : (
+                        <Icon icon={getPrayerIcon(prayer.name)} size={28} color={prayerColor} />
+                      )}
                     </View>
                     <View style={themed($prayerInfoContainer)}>
                       <Text style={themed($prayerStartTime(colors, isPast))}>
@@ -825,15 +869,6 @@ export const PrayerTimesHomeScreen: React.FC<PrayStackScreenProps<"PrayerTimesHo
         {/* Footer Spacer */}
         <View style={themed($footer)} />
       </ScrollView>
-
-      {/* Floating Add Button */}
-      <TouchableOpacity
-        style={themed($fabButton(colors))}
-        onPress={() => fetchPrayerTimesForDate(selectedDate)}
-        activeOpacity={0.8}
-      >
-        <Icon icon="refresh" size={24} color="#FFFFFF" />
-      </TouchableOpacity>
 
       {/* Month Picker Modal */}
       <Modal
@@ -1221,7 +1256,7 @@ const $timelineDot = (
       case PrayerTrackingStatus.MISSED:
         return "#FF3B30" // Red
       default:
-        return isPast ? colors.textDim : colors.text
+        return isPast ? colors.textDim : colors.pray
     }
   }
 
@@ -1230,13 +1265,13 @@ const $timelineDot = (
   // Determine if this is a tracked prayer (has a status)
   const hasTracking = trackingStatus !== PrayerTrackingStatus.NONE
 
-  // Non-trackable prayers: filled circle
-  if (isTrackable === false) {
+  // Non-trackable prayers: filled purple circle
+  if (!isTrackable) {
     return {
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: isPast ? colors.textDim : colors.text,
+      backgroundColor: isPast ? colors.textDim : colors.pray,
       zIndex: 2,
       borderWidth: 0,
       alignItems: "center",
@@ -1259,11 +1294,12 @@ const $timelineDot = (
   }
 
   // Trackable prayers without tracking: hollow circle (border only)
+  // Use background color to hide the timeline connector behind the circle
   return {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "transparent",
+    backgroundColor: colors.background,
     zIndex: 2,
     borderWidth: 3,
     borderColor: circleColor,
@@ -1377,23 +1413,6 @@ const $checkButton: ThemedStyle<ViewStyle> = (colors, isChecked: boolean) => ({
 const $footer: ThemedStyle<ViewStyle> = {
   height: 100,
 }
-
-const $fabButton: ThemedStyle<ViewStyle> = (colors) => ({
-  position: "absolute",
-  bottom: 24,
-  right: 24,
-  width: 56,
-  height: 56,
-  borderRadius: 28,
-  backgroundColor: colors.pray,
-  alignItems: "center",
-  justifyContent: "center",
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.3,
-  shadowRadius: 8,
-  elevation: 6,
-})
 
 // Picker Modal Styles
 const $pickerModalOverlay: ThemedStyle<ViewStyle> = {
