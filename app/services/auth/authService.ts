@@ -288,7 +288,7 @@ export const refreshAuthToken = async (refreshToken: string): Promise<AuthResult
       user,
     }
   } catch (error: any) {
-    console.error("Token Refresh Error:", error)
+    // Silently fail - user will be redirected to login
     return {
       success: false,
       error: "Token refresh failed. Please log in again.",

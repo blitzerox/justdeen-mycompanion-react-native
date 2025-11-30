@@ -26,6 +26,7 @@ import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-c
 import { QueryClientProvider } from "@tanstack/react-query"
 
 import { AuthProvider } from "./context/AuthContext" // @demo remove-current-line
+import { OnboardingContextProvider } from "./context/OnboardingContext"
 import { PrayerProvider } from "./context/PrayerContext"
 import { initI18n } from "./i18n"
 import { AppNavigator } from "./navigators/AppNavigator"
@@ -105,11 +106,13 @@ export function App() {
             {/* @demo remove-block-end */}
             <PrayerProvider>
               <ThemeProvider>
-                <AppNavigator
-                  linking={linking}
-                  initialState={initialNavigationState}
-                  onStateChange={onNavigationStateChange}
-                />
+                <OnboardingContextProvider>
+                  <AppNavigator
+                    linking={linking}
+                    initialState={initialNavigationState}
+                    onStateChange={onNavigationStateChange}
+                  />
+                </OnboardingContextProvider>
               </ThemeProvider>
             </PrayerProvider>
             {/* @demo remove-block-start */}

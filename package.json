@@ -37,6 +37,8 @@
     "@invertase/react-native-apple-authentication": "^2.4.2",
     "@nozbe/watermelondb": "^0.28.0",
     "@nozbe/with-observables": "^1.6.0",
+    "@onboardjs/core": "^0.3.12",
+    "@onboardjs/react": "^0.4.8",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-google-signin/google-signin": "^16.0.0",
     "@react-navigation/bottom-tabs": "^7.8.4",

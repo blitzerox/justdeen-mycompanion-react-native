@@ -23,16 +23,20 @@ import { Screen, Icon } from "@/components"
 import { HomeStatsWidget, LevelCard, ActivityOverviewCard, QuranProgressCard } from "@/components/stats"
 import { useAppTheme } from "@/theme/context"
 import { useAuth } from "@/context/AuthContext"
+import { useOnboardingContext } from "@/context/OnboardingContext"
 import { FontAwesome6 } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
 import { DrawerNavigationProp } from "@react-navigation/drawer"
 import type { ReflectStackScreenProps } from "@/navigators"
-import type { DrawerParamList } from "@/navigators/navigationTypes"
+import type { DrawerParamList, AppStackParamList } from "@/navigators/navigationTypes"
+import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import type { ThemedStyle } from "@/theme/types"
 import { usePrayerTracking } from "@/hooks/usePrayerTracking"
 import { useQuranTracking } from "@/hooks/useQuranTracking"
 import { useTasbihCounter } from "@/hooks/useTasbihCounter"
 import * as storage from "@/utils/storage"
+import { navigationRef } from "@/navigators/navigationUtilities"
+import { CommonActions } from "@react-navigation/native"
 import { STORAGE_KEYS } from "@/constants/storageKeys"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { spacing } from "@/theme/spacing"
@@ -61,6 +65,7 @@ interface SpiritualMetric {
 export const ReflectHomeScreen: React.FC<ReflectStackScreenProps<"ReflectHome">> = ({ navigation }) => {
   const { themed, theme: { colors } } = useAppTheme()
   const { user, isAuthenticated } = useAuth()
+  const { resetOnboarding } = useOnboardingContext()
   const drawerNavigation = useNavigation<DrawerNavigationProp<DrawerParamList>>()
   const insets = useSafeAreaInsets()
 
@@ -244,6 +249,35 @@ export const ReflectHomeScreen: React.FC<ReflectStackScreenProps<"ReflectHome">>
         contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
         showsVerticalScrollIndicator={false}
       >
+        {/* DEV ONLY: Test Onboarding Button */}
+        {__DEV__ && (
+          <TouchableOpacity
+            style={{
+              margin: 16,
+              padding: 12,
+              backgroundColor: colors.more,
+              borderRadius: 8,
+              alignItems: "center",
+            }}
+            onPress={async () => {
+              await resetOnboarding()
+              // Navigate to Onboarding screen using root navigation ref
+              if (navigationRef.isReady()) {
+                navigationRef.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: "Onboarding" }],
+                  })
+                )
+              }
+            }}
+          >
+            <Text style={{ color: "#FFFFFF", fontWeight: "600" }}>
+              Test Onboarding Flow
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* Level Card */}
         <LevelCard />
 

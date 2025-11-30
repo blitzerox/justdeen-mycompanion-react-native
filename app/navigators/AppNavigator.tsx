@@ -9,8 +9,10 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 
 import Config from "@/config"
 import { useAuth } from "@/context/AuthContext" // @demo remove-current-line
+import { useOnboardingContext } from "@/context/OnboardingContext"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { LoginScreen } from "@/screens/LoginScreen" // @demo remove-current-line
+import { OnboardingScreen } from "@/screens/onboarding"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { useAppTheme } from "@/theme/context"
 
@@ -31,9 +33,22 @@ const AppStack = () => {
   // @demo remove-block-start
   const { isAuthenticated } = useAuth()
   // @demo remove-block-end
+  const { showOnboarding, isLoading: onboardingLoading } = useOnboardingContext()
   const {
     theme: { colors },
   } = useAppTheme()
+
+  // Determine initial route based on onboarding and auth state
+  const getInitialRoute = (): keyof AppStackParamList => {
+    if (showOnboarding) return "Onboarding"
+    if (isAuthenticated) return "Drawer"
+    return "Login"
+  }
+
+  // Don't render navigator until onboarding status is determined
+  if (onboardingLoading) {
+    return null
+  }
 
   return (
     <Stack.Navigator
@@ -44,8 +59,15 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName={isAuthenticated ? "Drawer" : "Login"}
+      initialRouteName={getInitialRoute()}
     >
+      {/* Onboarding Flow */}
+      <Stack.Screen
+        name="Onboarding"
+        component={OnboardingScreen}
+        options={{ gestureEnabled: false }}
+      />
+
       {isAuthenticated ? (
         <>
           <Stack.Screen name="Drawer" component={DrawerNavigator} />

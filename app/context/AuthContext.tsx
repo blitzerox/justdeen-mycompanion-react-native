@@ -262,11 +262,9 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
 
     const checkAndRefreshToken = async () => {
       if (isTokenExpired(user.expiresAt)) {
-        console.log("Token expired or expiring soon, refreshing...")
         const result = await handleRefreshToken()
         if (!result.success) {
-          console.error("Failed to refresh token:", result.error)
-          // Clear user if refresh fails - they'll need to log in again
+          // Silently clear user if refresh fails - they'll be redirected to login
           clearUser()
         }
       }
